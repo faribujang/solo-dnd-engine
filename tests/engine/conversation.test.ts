@@ -73,7 +73,7 @@ describe("topics assemble themselves from state", () => {
     // without naming what would lift it, so pressing one always has somewhere to go.
     const sealed: Topic = {
       id: "t_sealed", kind: "fact", label: "ask about the debt", subject_id: "npc_thorne",
-      reveals: ["f_debt"], gated_on_fact: null, asked: false, open: false,
+      reveals: ["f_debt"], gated_on_fact: null, asked: false, open: false, insight_id: null,
       closed_reason: "he will not discuss his debts",
       access: { kind: "sealed", why: "he will not discuss his debts", opens_when: "his brother is out of the Ashen Hand's book" },
     };

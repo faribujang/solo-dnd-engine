@@ -8,6 +8,7 @@ import {
 import { factsKnownBy, selectFacts, type ScoredFact } from "./selectFacts.js";
 import { topicsFor } from "../engine/conversation.js";
 import { crowdAt, interjectionsFor } from "../engine/bystanders.js";
+import { BACKGROUND_SOCIAL, backgroundOf, insightsFor, socialTagsOf } from "../rules/backgrounds.js";
 
 /**
  * Deterministic, pure, token-budgeted prompt assembly.
@@ -75,6 +76,7 @@ const BUDGETS = {
   mechanics: 200,
   room: 260,
   companions: 220,
+  background: 220,
 } as const;
 
 export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltContext {
@@ -132,6 +134,24 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
           open.length ? `Still unsaid, if it comes up: ${open.map((t) => t.label).join("; ")}` : "",
           s.conversation.friction >= 4 ? "They are losing patience." : "",
         ].filter(Boolean).join("\n"));
+    }
+  }
+
+  // 5b2 — lines this character has standing to say, and why.
+  //
+  //     A background insight must read as EARNED rather than as a menu option, and that
+  //     only works if the narrator knows what the player is actually doing: not "uses
+  //     Criminal skill" but "signals, without saying so, that they came up in the same
+  //     trade". The intent is handed over; the words are the model's.
+  if (s.conversation) {
+    const other = s.entities[s.conversation.with_id];
+    const bg = backgroundOf(player);
+    if (other && bg) {
+      const lines: string[] = [`${player.name}: ${BACKGROUND_SOCIAL[bg]?.blurb ?? ""}`];
+      for (const i of insightsFor(s, other)) lines.push(`If they play "${i.label}" — ${i.intent}`);
+      const tags = socialTagsOf(other);
+      if (tags.length) lines.push(`${other.name} reads socially as: ${tags.join(", ")}.`);
+      add("background", 2, BUDGETS.background, false, "WHERE THEY CAME FROM", lines.join("\n"));
     }
   }
 
@@ -213,7 +233,7 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
 
 /** Display order, which is not the same as shed priority. */
 function order(s: Section): number {
-  const ORDER = ["canon", "scene", "pc", "npcs", "conversation", "room", "companions", "party", "quests", "recent", "digests", "mechanics", "suggestions"];
+  const ORDER = ["canon", "scene", "pc", "npcs", "conversation", "background", "room", "companions", "party", "quests", "recent", "digests", "mechanics", "suggestions"];
   const i = ORDER.indexOf(s.id);
   return i === -1 ? 99 : i;
 }

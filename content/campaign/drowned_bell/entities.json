@@ -100,7 +100,8 @@
     "on_first_talk": [],
     "alive": true,
     "flags": {
-      "cp": 1200
+      "cp": 1200,
+      "background_id": "bg_criminal"
     },
     "pronouns": "she/her",
     "alignment": "chaotic_good",
@@ -237,7 +238,11 @@
     ],
     "alive": true,
     "flags": {
-      "talked_to": false
+      "talked_to": false,
+      "social_tags": [
+        "commoner",
+        "merchant"
+      ]
     },
     "pronouns": "he/him",
     "alignment": "lawful_neutral",
@@ -343,7 +348,10 @@
     "on_first_talk": [],
     "alive": true,
     "flags": {
-      "talked_to": false
+      "talked_to": false,
+      "social_tags": [
+        "scholar"
+      ]
     },
     "pronouns": "she/her",
     "alignment": "neutral_good",
@@ -474,7 +482,10 @@
     "on_first_talk": [],
     "alive": true,
     "flags": {
-      "talked_to": false
+      "talked_to": false,
+      "social_tags": [
+        "criminal"
+      ]
     },
     "pronouns": "he/him",
     "alignment": "lawful_neutral",
@@ -764,7 +775,10 @@
     "on_first_talk": [],
     "alive": true,
     "flags": {
-      "cp": 400
+      "cp": 400,
+      "social_tags": [
+        "soldier"
+      ]
     },
     "approval": [
       {
@@ -850,7 +864,7 @@
           "affinity": -14,
           "trust": -8
         },
-        "line": "\"Whatever you think is down there \u2014 that was somebody's grave.\""
+        "line": "\"Whatever you think is down there — that was somebody's grave.\""
       },
       {
         "on": "rested_in_danger",

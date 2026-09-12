@@ -4,7 +4,7 @@ Written for the next builder. Phases 0–8 have their **design-coherent half** d
 rules, engine, view models, content, and gates. What remains is the half that wants an
 iterate-until-green loop — rendering, tuning, and deployment.
 
-**State:** 257 tests, typecheck clean, both demos replaying byte-identically.
+**State:** 265 tests, typecheck clean, both demos replaying byte-identically.
 `SPEC.md` is the full specification; this is the map of what to pick up.
 
 ---
@@ -37,6 +37,7 @@ still be a complete, correct, playable world?**
 | `conditions` | The full SRD list, each with real mechanical flags |
 | `social` | Disposition, DC shifts, **`trustDcShift`** (±6 — trust decides where affinity only colours), prices |
 | `reputation` | What they heard about you before you arrived. Applies once, capped at ±35 |
+| `backgrounds` | **Where you came from.** Standing (how each sort of person reads your past) and insights (lines only you can say). SPEC Part X |
 | `approval` | **Per-companion reaction tables.** `situationsIn` reads events; the table is authored |
 | `inspiration` | Earn by playing your character, spend to reroll |
 | `difficulty` | Real levers: DC shift, karma strength, inspiration cap, death options, encounter budget |
@@ -254,7 +255,7 @@ Worth fixing before anything else.
 ## Verify before and after
 
 ```bash
-npm test                     # 257
+npm test                     # 265
 npx tsc --noEmit
 npm run demo && npm run rebuild -- demo    # byte-identical
 npm run demo1                              # 20 free-text turns, replays exactly

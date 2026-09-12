@@ -10,7 +10,8 @@ unlimited rewind, three dice modes, character creation and progression, death sa
 computed AC, the affordance engine that teaches the rules, 5e combat (initiative, the action
 economy, zones, opportunity attacks, the full condition list, spells with concentration, CPU
 policies and morale), conversation with topics derived from state, clarifying questions that
-cost no turn, an action evaluator, companions who react out loud, reputation that travels
+cost no turn, an action evaluator, companions who react out loud, backgrounds the world
+reacts to, reputation that travels
 ahead of you, scenes, and a world that keeps moving while you are elsewhere.
 
 ---

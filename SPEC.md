@@ -1,12 +1,12 @@
 # Solo D&D Engine — Technical Build Specification
 
 **Audience:** an implementing agent (Claude Fable 5.1) building from scratch.
-**Status:** v7. Parts I–IV are the original design. Parts V–IX are the running changelog:
+**Status:** v8. Parts I–IV are the original design. Parts V–X are the running changelog:
 what the build taught us, what other games taught us, and what has been added since.
 Where they disagree, **the later part wins** — superseded sections are marked in place.
 Authoritative for architecture and data model. Deviate only with a stated reason.
 
-**Where the engine actually is:** 257 tests, 79 source files, replay byte-identical. Phases
+**Where the engine actually is:** 265 tests, 79 source files, replay byte-identical. Phases
 0–8 of §37 are done. What is left is the client, the world, and the four gaps in §46.1.
 
 ---
@@ -2930,3 +2930,121 @@ mock with an explanatory message rather than sending the string `REPLACE_ME` to 
 byte of this work is one bad `rm` from gone, and there is no bisect, no blame, no branch,
 and no way to see what a change did. It is the single largest remaining risk to the project
 and it is thirty seconds of work — but committing is the author's call, not the scaffolder's.
+
+---
+
+# Part X — where you came from
+
+**Status: 265 tests, 85 source files. Replay byte-identical.**
+
+Backgrounds existed as a bundle of proficiencies and a starting purse — all 5e strictly asks
+of them, and all they were doing here. But *"I grew up a thief"* or *"I was born to a great
+house"* is not a skill list. It is the first thing anyone in the world learns about you, and
+at a table it changes every room you walk into.
+
+Two mechanisms, deliberately different in kind.
+
+---
+
+## 60. Standing — what your past does *to* you
+
+People react before you have spoken, keyed off **what sort of person they are**. A noble is
+welcome in a hall and resented in a tenement; an outlaw is the reverse, and both are right.
+
+NPCs carry **social tags** from a closed vocabulary short enough to hold in your head:
+`criminal`, `lawful`, `commoner`, `noble`, `clergy`, `scholar`, `soldier`, `wild`,
+`merchant`. Each background has a table saying how each sort reads it.
+
+| Criminal meets… | Reaction |
+|---|---|
+| a fence | **+12 trust** — *they can tell you have done time in the same trade* |
+| a guard | **−12 trust** — *you carry yourself like someone with something to hide* |
+| a merchant | **−6 trust, +6 fear** — *they are counting their stock while you talk* |
+
+This feeds the arrival system from §51, so it lands the same way faction and town reputation
+do: **once, on first meeting, capped, and always with its reason attached.** What you did
+with someone afterwards always outranks how they first read you.
+
+**Untagged NPCs stay neutral.** Backgrounds are opt-in for an author — tag the people whose
+reaction is interesting and leave the rest alone.
+
+---
+
+## 61. Insight — what your past lets you *do*
+
+The other half, and the more interesting one. A line only you have standing to say, in the
+bracketed style the genre already taught everyone:
+
+```
+[CRIMINAL] speak the cant
+[NOBLE]    pull rank
+[OUTLANDER] talk about the country
+```
+
+An insight is **not a better Persuasion check.** It is a door that exists for you and does
+not exist for anyone else at the table. An outlaw talking to a fence has something to work
+with that a paladin simply does not, and that asymmetry is the entire point of asking where
+somebody came from.
+
+### 61.1 It pays out through the ordinary path
+
+What an insight buys is **trust** — which then moves every DC in the conversation through
+the normal machinery (§48). No special-case bonus that only backgrounds get. You have not
+been handed the answer; you have established that you are worth talking to.
+
+### 61.2 Some of them cost
+
+`pull rank` on a farmhand works — **+10 trust, −12 affinity.** He will do what you ask and
+he will not forget that you made him. A background that is pure upside is a stat bonus with
+a costume on.
+
+### 61.3 Once per person
+
+Spent via a relationship tag. The moment of recognition is the point; one you can repeat is
+a button, not a beat.
+
+### 61.4 The DM is told the intent, never the mechanic
+
+A background line only reads as *earned* if the narrator knows what the player is actually
+doing. So the prompt carries intent rather than a label:
+
+> If they play "speak the cant" — *Use the trade's own idiom to establish you are one of
+> them, without saying so outright.*
+
+Plus what this NPC reads as socially. The words stay the model's; the standing to say them
+is code's.
+
+---
+
+## 62. The catalogue
+
+Eight backgrounds, each with mechanics *and* a social reading — the three the design brief
+named explicitly, plus five that fill out the space:
+
+| | Grew up… |
+|---|---|
+| **Criminal** | light-fingered. Knows which doors are watched and who to pay |
+| **Noble** | to a great house. Doors open, and so do resentments |
+| **Outlander** | outside the walls. Towns are the strange country, not the wild |
+| **Urchin** | in the gutters of a city. Knows every way in and out |
+| **Acolyte** | in a temple. The words come without thinking |
+| **Sage** | reading. Most rooms find it useless, a few find it priceless |
+| **Soldier** | serving. Knows what an order costs whoever carries it |
+| **Folk Hero** | ordinary, then did something. They have not forgotten |
+
+A test asserts **every playable background has a social profile**, so adding one to the SRD
+table without giving it a social reading fails the suite rather than shipping a background
+that nobody in the world reacts to.
+
+---
+
+## 63. What this is waiting on
+
+The tables are written against a world that does not exist yet. Every reaction row and every
+insight is a claim about a setting — *"they place your family before you finish your name"*
+assumes a place with houses and a memory of them.
+
+Fable should expect to **rewrite these rows for the world it builds**, not treat them as
+fixed rules. What should survive is the shape: standing is authored on both sides and matched
+by code, an insight pays out in trust rather than in a special bonus, and the DM is handed an
+intent rather than a mechanic.

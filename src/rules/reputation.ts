@@ -1,6 +1,7 @@
 import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import type { Entity } from "../schema/entity.js";
+import { standingToward } from "./backgrounds.js";
 
 /**
  * WHAT THEY HEARD ABOUT YOU BEFORE YOU ARRIVED.
@@ -88,6 +89,16 @@ export function arrivalStanding(s: GameState, npc: Entity): Standing {
     // is that they have heard of you, which shifts fear and respect but not affection.
     fear += 5;
     reasons.push(`they have heard what happened: ${f.text}`);
+  }
+
+  // 4. And what you plainly ARE. Where you came from is the first thing anyone learns
+  //    about you — before your name, usually — and it is read differently depending on
+  //    what sort of person is doing the reading. See rules/backgrounds.ts.
+  for (const st of standingToward(s, npc)) {
+    affinity += st.dims.affinity ?? 0;
+    trust += st.dims.trust ?? 0;
+    fear += st.dims.fear ?? 0;
+    reasons.push(st.reason);
   }
 
   const cap = (n: number) => Math.max(-HEARSAY_CAP, Math.min(HEARSAY_CAP, n));

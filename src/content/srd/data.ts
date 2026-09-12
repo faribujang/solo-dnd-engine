@@ -113,6 +113,22 @@ export const BACKGROUNDS: Record<string, BackgroundDef> = {
     id: "bg_sage", name: "Sage", skills: ["arcana", "history"], tools: [], gold: 10,
     personality: { traits: ["answers a question with a better question"], ideal: "What is written cannot be argued away.", bond: "One book, still unfinished.", flaw: "Would trade almost anyone for a primary source." },
   },
+  bg_noble: {
+    id: "bg_noble", name: "Noble", skills: ["history", "persuasion"], tools: [], gold: 25,
+    personality: { traits: ["waits to be offered a chair"], ideal: "Rank is a debt owed downward.", bond: "A house name that is not theirs to spend.", flaw: "Has never once been told no and believed it." },
+  },
+  bg_outlander: {
+    id: "bg_outlander", name: "Outlander", skills: ["athletics", "survival"], tools: [], gold: 10,
+    personality: { traits: ["sleeps badly indoors"], ideal: "The wild does not lie to you.", bond: "A stretch of country they would die defending.", flaw: "Says the true thing at the worst moment." },
+  },
+  bg_soldier: {
+    id: "bg_soldier", name: "Soldier", skills: ["athletics", "intimidation"], tools: [], gold: 10,
+    personality: { traits: ["counts the exits and the people in a room, in that order"], ideal: "You do not leave anyone behind.", bond: "The ones who did not come back.", flaw: "Cannot take an order and cannot quite give one up." },
+  },
+  bg_urchin: {
+    id: "bg_urchin", name: "Urchin", skills: ["sleight_of_hand", "stealth"], tools: ["thieves_tools"], gold: 10,
+    personality: { traits: ["eats like it might be taken away"], ideal: "Nobody is coming to help. Act accordingly.", bond: "The others from the same alley.", flaw: "Cannot accept a gift without looking for the hook." },
+  },
 };
 
 /** The standard array, 5e's simplest honest method. */

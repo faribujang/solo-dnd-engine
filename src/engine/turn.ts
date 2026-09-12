@@ -9,8 +9,9 @@ import { collectSkillModifiers, combineModifiers } from "../rules/modifiers.js";
 import { Rng, freshNonce, karmicLean, seedFor, seedToState } from "../rules/rng.js";
 import { worldTick } from "./ambient.js";
 import { leversOf } from "../rules/difficulty.js";
-import { agendaOf, pressOutcome, SEALED_DC, topicsFor, wouldWalkAway, type PressResult } from "./conversation.js";
+import { agendaOf, backgroundLabel, pressOutcome, SEALED_DC, topicsFor, wouldWalkAway, type PressResult } from "./conversation.js";
 import { audiencePressure } from "./bystanders.js";
+import { insightsFor } from "../rules/backgrounds.js";
 import { hasInspiration } from "../rules/inspiration.js";
 import type { Modifier } from "../rules/modifiers.js";
 
@@ -407,13 +408,48 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
       const convoEffects: Effect[] = [{ t: "set_flag", key: `talked_to_${target.id}`, value: true }];
       if (!already) convoEffects.push({ t: "begin_conversation", entity_id: target.id, agenda: agendaOf(s, target) });
 
-      // A guarded or sealed topic is ASKED FOR with a roll. Nothing is refused for want of
-      // trust: you can always try, and the dice decide what trying got you. That is the
-      // whole difference between a relationship and a locked door.
       const rolls: Roll[] = [];
       let press: PressResult | null = null;
       let friction = raised?.asked ? 1 : 0;
 
+      // A BACKGROUND INSIGHT is neither a question nor a check. It is a line you have
+      // standing to say because of where you came from, and what it buys is common
+      // ground — trust, which then moves every DC in the conversation through the normal
+      // path. No special-case bonus; the machinery is the same as everyone else's.
+      //
+      // Some of them cost you. Pulling rank on a farmhand works, and he will not forget
+      // that you did it.
+      if (raised?.insight_id) {
+        const ins = insightsFor(s, target).find((i) => i.id === raised.insight_id);
+        if (!ins) return { ok: false, reason: "You have already played that card with them." };
+
+        const dims: Record<string, number> = { trust: ins.grants_trust };
+        if (ins.costs_affinity !== 0) dims["affinity"] = ins.costs_affinity;
+
+        return finish(
+          {
+            type: "dialogue",
+            target_ids: [target.id],
+            payload: { insight: ins.id, intent: ins.intent, topic_id: raised.id },
+            rolls: [],
+            direct_effects: [
+              ...convoEffects,
+              { t: "adjust_attitude", subject: target.id, object: actor.id, dims, reason: `you spoke as ${backgroundLabel(s)}` },
+              // Spent. The moment of recognition is the point, and one you can repeat is
+              // a button rather than a beat.
+              { t: "tag_relationship", subject: target.id, object: actor.id, tag: `insight:${ins.id}` },
+              { t: "raise_topic", topic_id: raised.id, friction: 0 },
+            ],
+            duration_minutes: s.combat ? 0 : DURATION.talk,
+            witnesses: witnessIds(s, loc.id, actor.id),
+          },
+          `${ins.label} — ${target.name} takes you differently now.`,
+        );
+      }
+
+      // A guarded or sealed topic is ASKED FOR with a roll. Nothing is refused for want of
+      // trust: you can always try, and the dice decide what trying got you. That is the
+      // whole difference between a relationship and a locked door.
       if (raised && raised.access.kind !== "open") {
         const dc = raised.access.kind === "guarded" ? raised.access.dc : SEALED_DC;
         const skill = raised.access.kind === "guarded" ? raised.access.skill : "persuasion";

@@ -7,6 +7,7 @@ import { skillModifier } from "../rules/checks.js";
 import { dispositionOf, offersUnpromptedAid, SECRET_TRUST, trustDcShift, trustLabel, willComplyFromFear, willShareSecrets } from "../rules/social.js";
 import type { Fact } from "../schema/fact.js";
 import { factsKnownTo, factsKnownToPc } from "../state/selectors.js";
+import { BACKGROUND_SOCIAL, backgroundOf, insightLabel, insightsFor } from "../rules/backgrounds.js";
 
 /**
  * CONVERSATION — the largest missing system, and the one a D&D game most needs.
@@ -44,6 +45,7 @@ export const TopicKind = z.enum([
   "fact",       // something you learned
   "self",       // them: their work, their family, why they are here
   "rumour",     // what has been going around
+  "insight",    // a line only your background gives you standing to say
 ]);
 export type TopicKind = z.infer<typeof TopicKind>;
 
@@ -83,6 +85,11 @@ export interface Topic {
   /** They will not discuss this at all until the player knows something first. */
   gated_on_fact: string | null;
   asked: boolean;
+  /**
+   * Set on a background insight. Not a reveal and not a check — a line you have standing
+   * to say because of who you are, which the resolver turns into common ground.
+   */
+  insight_id: string | null;
   /** True when no roll stands between the player and the answer. */
   open: boolean;
   /** Why it is not simply open. Shown alongside, never instead of the topic. */
@@ -115,6 +122,14 @@ export function sealHolds(s: GameState, f: Fact, npcTrust: number): boolean {
  */
 export const SEALED_DC = 20;
 
+/** The player's background, as a word for the bracketed tag. "OUTLANDER". */
+export function backgroundLabel(s: GameState): string {
+  const player = s.entities[s.meta.pc_id];
+  const id = player ? backgroundOf(player) : null;
+  if (!id) return "you";
+  return (BACKGROUND_SOCIAL[id]?.id ?? id).replace(/^bg_/, "").replace(/_/g, " ");
+}
+
 /** How much they will put up with before they end it. */
 export const FRICTION_LIMIT = 6;
 
@@ -138,7 +153,7 @@ export function topicsFor(s: GameState, npcId: string): Topic[] {
   const theirs = factsKnownTo(s, npcId);
   const out: Topic[] = [];
 
-  const push = (t: Omit<Topic, "asked" | "open" | "closed_reason">) => {
+  const push = (t: Omit<Topic, "asked" | "open" | "closed_reason" | "insight_id"> & { insight_id?: string | null }) => {
     const asked = raised.has(t.id);
     let access = t.access;
 
@@ -154,7 +169,7 @@ export function topicsFor(s: GameState, npcId: string): Topic[] {
       : access.kind === "guarded" ? `${npc.name} ${access.why} — DC ${access.dc}`
       : access.why;
 
-    out.push({ ...t, access, asked, open: access.kind === "open", closed_reason: closed });
+    out.push({ ...t, access, asked, open: access.kind === "open", closed_reason: closed, insight_id: t.insight_id ?? null });
   };
 
   // 1. Themselves — always available, and the way most conversations actually start.
@@ -217,6 +232,23 @@ export function topicsFor(s: GameState, npcId: string): Topic[] {
         subject_id: sid, reveals: [], access: { kind: "open" }, gated_on_fact: null,
       });
     }
+  }
+
+  // 4b. Lines only THIS character can say.
+  //
+  //     A background insight is not a better Persuasion check — it is a door that exists
+  //     for you and does not exist for anyone else at the table. An outlaw talking to a
+  //     fence has something to work with that a paladin simply does not, and that
+  //     asymmetry is the entire point of asking where someone came from.
+  //
+  //     Always open: you are not rolling to know your own past.
+  for (const ins of insightsFor(s, npc)) {
+    push({
+      id: `t_insight_${ins.id}`, kind: "insight",
+      label: insightLabel(backgroundLabel(s), ins),
+      subject_id: npcId, reveals: [], access: { kind: "open" },
+      gated_on_fact: null, insight_id: ins.id,
+    });
   }
 
   // 5. What is going around. Only where they would plausibly hear things.

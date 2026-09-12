@@ -674,6 +674,16 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       break;
     }
 
+    case "tag_relationship": {
+      // Tags are how a relationship remembers a KIND of thing that happened, as opposed to
+      // a number: "caught lying", "spoke the cant". Cheap to check and cheap to author.
+      const key = `${eff.subject}->${eff.object}`;
+      const rel = s.relationships[key];
+      if (!rel) break;
+      if (!rel.tags.includes(eff.tag)) rel.tags.push(eff.tag);
+      break;
+    }
+
     case "join_party": {
       const e = s.entities[eff.entity_id];
       if (!e || !e.alive) break;
