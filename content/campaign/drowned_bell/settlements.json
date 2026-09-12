@@ -1,0 +1,19 @@
+{
+  "set_mudwallow": {
+    "id": "set_mudwallow",
+    "name": "Mudwallow",
+    "region_id": "reg_mudwallow",
+    "location_ids": [
+      "loc_flagon",
+      "loc_lane"
+    ],
+    "population": 140,
+    "reputation_with_pc": 5,
+    "services": [
+      {
+        "kind": "inn",
+        "location_id": "loc_flagon"
+      }
+    ]
+  }
+}

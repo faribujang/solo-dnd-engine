@@ -1,0 +1,28 @@
+{
+  "id": "drowned_bell",
+  "title": "The Drowned Bell",
+  "pc_id": "pc_main",
+  "seed": "drowned-bell-0001",
+  "turn": 0,
+  "next_ids": {},
+  "created_at": "1492-01-86T00:00:00Z",
+  "schema_version": 1,
+  "party_ids": [
+    "pc_main",
+    "cmp_sela"
+  ],
+  "player_controlled": [
+    "pc_main"
+  ],
+  "campaign_id": "cmp_mudwallow",
+  "session_zero": {
+    "tone": "grim",
+    "lines": [],
+    "veils": [
+      "sexual violence"
+    ],
+    "difficulty": "normal",
+    "levelling": "xp"
+  },
+  "taught": []
+}

@@ -1,0 +1,32 @@
+{
+  "name": "solo-dnd-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Solo D&D 5e campaign engine. Code owns truth, the LLM owns voice.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "play": "node --env-file-if-exists=.env --import tsx src/cli/play.ts",
+    "rebuild": "node --env-file-if-exists=.env --import tsx src/cli/rebuild.ts",
+    "inspect": "node --env-file-if-exists=.env --import tsx src/cli/inspect.ts",
+    "seed": "node --env-file-if-exists=.env --import tsx src/cli/seed.ts",
+    "demo": "node --env-file-if-exists=.env --import tsx src/cli/demo.ts",
+    "demo1": "node --env-file-if-exists=.env --import tsx src/cli/demo1.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

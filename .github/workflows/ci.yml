@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # The alarm worth stopping for. If a change takes determinism out of the reducer
+      # this is what catches it, and nothing else will.
+      - name: Replay must be byte-identical
+        run: |
+          npm run demo
+          npm run rebuild -- demo
+          npm run demo1

@@ -1,0 +1,8 @@
+# Normalise to LF in the repo. Without this a Windows checkout commits CRLF and CI on
+# Linux sees every file as modified.
+* text=auto eol=lf
+
+# Journals and saves are compared BYTE FOR BYTE by the replay test. Never let a filter
+# near them.
+*.jsonl -text
+saves/** -text

@@ -1,0 +1,334 @@
+{
+  "loc_flagon": {
+    "id": "loc_flagon",
+    "name": "The Rusty Flagon",
+    "region_id": "reg_mudwallow",
+    "short_desc": "A low tavern room, smoke-stained, with rain drumming on the shutters.",
+    "long_desc": "The Flagon leans as though it is tired. Six tables, four of them broken to firewood years ago and never replaced. Behind the bar a cracked mirror shows you a version of yourself the light does not flatter. A ledger lies open beside the taps, its most recent column written in a hand that pressed hard enough to tear the paper.",
+    "exits": [
+      {
+        "dir": "out",
+        "to": "loc_lane",
+        "desc": "the warped front door",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": true
+      }
+    ],
+    "features": [
+      {
+        "id": "feat_ledger",
+        "name": "the ledger",
+        "desc": "Thorne's accounts, kept in a cramped hand. The last page is all one creditor.",
+        "interactions": [
+          "read",
+          "search"
+        ],
+        "state": {
+          "read": false
+        }
+      }
+    ],
+    "zones": [
+      {
+        "id": "by_the_door",
+        "name": "by the door",
+        "adjacent": [
+          "common_floor"
+        ]
+      },
+      {
+        "id": "common_floor",
+        "name": "the common floor",
+        "adjacent": [
+          "by_the_door",
+          "behind_the_bar"
+        ]
+      },
+      {
+        "id": "behind_the_bar",
+        "name": "behind the bar",
+        "adjacent": [
+          "common_floor"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "rain on shutters",
+      "smell": "wet wool and old ale"
+    },
+    "on_enter_triggers": [],
+    "discovered": true,
+    "visited_count": 1,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {},
+    "coords": {
+      "x": 10,
+      "y": 10
+    },
+    "settlement_id": "set_mudwallow",
+    "map_visibility": "landmark"
+  },
+  "loc_lane": {
+    "id": "loc_lane",
+    "name": "Mudwallow Lane",
+    "region_id": "reg_mudwallow",
+    "short_desc": "A rutted lane running down to the water, ankle-deep in cold mud.",
+    "long_desc": "The lane was cobbled once. Now the stones surface here and there like the backs of animals. It slopes toward the flood, and everything the village has lost in forty years has eventually washed down it and stopped at the Drowned Gate.",
+    "exits": [
+      {
+        "dir": "in",
+        "to": "loc_flagon",
+        "desc": "the Flagon's door",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": true
+      },
+      {
+        "dir": "down",
+        "to": "loc_bell_gate",
+        "desc": "the flooded path to the shrine",
+        "travel_minutes": 12,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": {
+          "skill": "athletics",
+          "band": "easy"
+        },
+        "revealed": true
+      }
+    ],
+    "features": [
+      {
+        "id": "feat_mud",
+        "name": "the churned mud",
+        "desc": "Something metal glints in the ruts where a cart has cut deep.",
+        "interactions": [
+          "search"
+        ],
+        "state": {
+          "searched": false
+        }
+      }
+    ],
+    "zones": [
+      {
+        "id": "the_lane",
+        "name": "the lane",
+        "adjacent": []
+      }
+    ],
+    "contains_item_ids": [
+      "item_inst_key"
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "running water",
+      "smell": "river silt"
+    },
+    "on_enter_triggers": [],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 1,
+    "encounter_table_id": null,
+    "flags": {
+      "climbable": true
+    },
+    "coords": {
+      "x": 14,
+      "y": 16
+    },
+    "settlement_id": "set_mudwallow",
+    "map_visibility": "landmark"
+  },
+  "loc_bell_gate": {
+    "id": "loc_bell_gate",
+    "name": "The Drowned Gate",
+    "region_id": "reg_shrine",
+    "short_desc": "A shrine arch standing in shin-deep floodwater, its altar green with algae.",
+    "long_desc": "The shrine was built for a bell that no longer hangs here. The arch survives, and beneath it an altar of black stone that the water has not managed to move in four decades. Behind the altar the wall is not quite a wall \u2014 the stones there were cut to a different pattern, by someone in a hurry.",
+    "exits": [
+      {
+        "dir": "up",
+        "to": "loc_lane",
+        "desc": "the path back to the lane",
+        "travel_minutes": 12,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": true
+      },
+      {
+        "dir": "down",
+        "to": "loc_bell_crypt",
+        "desc": "a stair behind the altar",
+        "travel_minutes": 3,
+        "locked_by": "item_def_rusted_key",
+        "hidden_until_flag": "crypt_lever_pulled",
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [
+      {
+        "id": "feat_altar",
+        "name": "the black altar",
+        "desc": "Cut from one piece. Something behind it does not match the rest of the wall.",
+        "interactions": [
+          "search",
+          "listen",
+          "pray"
+        ],
+        "state": {
+          "searched": false
+        }
+      }
+    ],
+    "zones": [
+      {
+        "id": "the_arch",
+        "name": "under the arch",
+        "adjacent": [
+          "the_altar"
+        ]
+      },
+      {
+        "id": "the_altar",
+        "name": "at the altar",
+        "adjacent": [
+          "the_arch"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "water lapping stone",
+      "smell": "algae and cold iron"
+    },
+    "on_enter_triggers": [
+      {
+        "id": "t_first_sight_of_gate",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "then": [
+          {
+            "t": "reveal_location",
+            "location_id": "loc_bell_crypt"
+          },
+          {
+            "t": "add_fact",
+            "text": "The Drowned Gate's altar has been cut into and repaired badly, by someone working fast.",
+            "subjects": [
+              "loc_bell_gate"
+            ],
+            "importance": 4,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          },
+          {
+            "t": "add_lead",
+            "quest_id": "q_missing_bell",
+            "text": "Something was hidden behind the altar at the Drowned Gate.",
+            "points_to_location_id": "loc_bell_gate",
+            "source_entity_id": null
+          }
+        ],
+        "once": true
+      }
+    ],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 2,
+    "encounter_table_id": "enc_citadel_l1",
+    "flags": {},
+    "coords": {
+      "x": 18,
+      "y": 26
+    },
+    "map_visibility": "landmark"
+  },
+  "loc_bell_crypt": {
+    "id": "loc_bell_crypt",
+    "name": "The Bell Crypt",
+    "region_id": "reg_shrine",
+    "short_desc": "A flooded vault under the shrine. The silver bell hangs here, black with tarnish.",
+    "long_desc": "The water is waist-deep and colder than the flood above it. The bell hangs from a beam that should have rotted through a generation ago and has not. Around its rim, in letters worn nearly flat, someone has written a name and then tried to scratch it out.",
+    "exits": [
+      {
+        "dir": "up",
+        "to": "loc_bell_gate",
+        "desc": "the stair to the shrine",
+        "travel_minutes": 3,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": true
+      }
+    ],
+    "features": [
+      {
+        "id": "feat_bell",
+        "name": "the silver bell",
+        "desc": "Tarnished black. A name around the rim, scratched at but still legible.",
+        "interactions": [
+          "read",
+          "ring",
+          "take"
+        ],
+        "state": {
+          "rung": false,
+          "read": false
+        }
+      }
+    ],
+    "zones": [
+      {
+        "id": "the_stair",
+        "name": "on the stair",
+        "adjacent": [
+          "the_water"
+        ]
+      },
+      {
+        "id": "the_water",
+        "name": "in the water",
+        "adjacent": [
+          "the_stair"
+        ]
+      }
+    ],
+    "contains_item_ids": [
+      "item_inst_bell"
+    ],
+    "ambient": {
+      "light": "dark",
+      "sound": "dripping",
+      "smell": "still water"
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 3,
+    "encounter_table_id": null,
+    "flags": {
+      "no_fast_travel": true
+    },
+    "coords": {
+      "x": 18,
+      "y": 30
+    },
+    "map_visibility": "discoverable"
+  }
+}

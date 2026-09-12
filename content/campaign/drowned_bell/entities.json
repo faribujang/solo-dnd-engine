@@ -1,0 +1,886 @@
+{
+  "pc_main": {
+    "id": "pc_main",
+    "kind": "pc",
+    "name": "Vessa Quill",
+    "aliases": [
+      "you",
+      "vessa"
+    ],
+    "descriptor": "a lean, watchful scribe-turned-thief with ink still under her nails",
+    "location_id": "loc_flagon",
+    "zone_id": "common_floor",
+    "faction_ids": [],
+    "abilities": {
+      "str": 10,
+      "dex": 16,
+      "con": 12,
+      "int": 14,
+      "wis": 12,
+      "cha": 13
+    },
+    "level": 2,
+    "class_id": "cls_rogue",
+    "race_id": "race_human",
+    "hp": {
+      "current": 17,
+      "max": 17,
+      "temp": 0
+    },
+    "ac": 14,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth",
+        "investigation",
+        "perception",
+        "persuasion",
+        "sleight_of_hand"
+      ],
+      "saves": [
+        "dex",
+        "int"
+      ],
+      "weapons": [
+        "simple",
+        "shortsword"
+      ],
+      "tools": [
+        "thieves_tools"
+      ]
+    },
+    "expertise": [
+      "stealth",
+      "investigation"
+    ],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [
+      "item_inst_sword",
+      "item_inst_lantern",
+      "item_inst_draught",
+      "item_inst_tools"
+    ],
+    "equipped": {
+      "main_hand": "item_inst_sword",
+      "off_hand": null,
+      "armor": "item_inst_leathers",
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "writes down everything",
+        "never sits with her back to a door"
+      ],
+      "ideal": "A debt written down is a debt that can be settled.",
+      "bond": "She owes Thorne more than money and knows it.",
+      "flaw": "Cannot leave a locked thing locked.",
+      "voice": "dry, precise, quietly funny"
+    },
+    "goals": [
+      {
+        "text": "Settle the ledger at the Flagon",
+        "priority": 1,
+        "quest_id": "q_thornes_debt"
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [
+      "fact_seed_0001"
+    ],
+    "ai_policy": null,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "cp": 1200
+    },
+    "pronouns": "she/her",
+    "alignment": "chaotic_good",
+    "controller": "human",
+    "xp": 420
+  },
+  "npc_thorne": {
+    "id": "npc_thorne",
+    "kind": "npc",
+    "name": "Thorne Blackwater",
+    "aliases": [
+      "the innkeeper",
+      "old thorne",
+      "thorne"
+    ],
+    "descriptor": "a grizzled innkeeper missing his left ear, counting coins while he talks",
+    "location_id": "loc_flagon",
+    "zone_id": "behind_the_bar",
+    "faction_ids": [
+      "fac_ashen_hand"
+    ],
+    "abilities": {
+      "str": 11,
+      "dex": 10,
+      "con": 13,
+      "int": 11,
+      "wis": 14,
+      "cha": 9
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 22,
+      "max": 22,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "persuasion"
+      ],
+      "saves": [
+        "wis"
+      ],
+      "weapons": [],
+      "tools": [
+        "brewers_supplies"
+      ]
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "speaks in short sentences",
+        "counts coins while talking"
+      ],
+      "ideal": "A debt paid is a night's sleep earned.",
+      "bond": "The Flagon was his father's and will not be sold.",
+      "flaw": "Will sell out anyone to the Ashen Hand to keep it.",
+      "voice": "clipped, wary, dry humour"
+    },
+    "goals": [
+      {
+        "text": "Clear the Ashen Hand's claim before midwinter",
+        "priority": 1,
+        "quest_id": "q_thornes_debt"
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 6,
+        "to_hour": 23,
+        "location_id": "loc_flagon"
+      },
+      {
+        "from_hour": 23,
+        "to_hour": 6,
+        "location_id": "loc_flagon"
+      }
+    ],
+    "known_fact_ids": [
+      "fact_seed_0001",
+      "fact_seed_0002"
+    ],
+    "ai_policy": null,
+    "on_death": [],
+    "on_first_talk": [
+      {
+        "id": "t_thorne_opens_up",
+        "on": "dialogue",
+        "match": {
+          "target_ids": [
+            "npc_thorne"
+          ]
+        },
+        "then": [
+          {
+            "t": "add_lead",
+            "quest_id": "q_missing_bell",
+            "text": "Thorne says the silver bell was taken down the lane, not stolen out of the village.",
+            "points_to_location_id": "loc_lane",
+            "source_entity_id": "npc_thorne"
+          },
+          {
+            "t": "adjust_attitude",
+            "subject": "npc_thorne",
+            "object": "pc_main",
+            "dims": {
+              "trust": 5
+            },
+            "reason": "You asked instead of accusing"
+          }
+        ],
+        "once": true
+      }
+    ],
+    "alive": true,
+    "flags": {
+      "talked_to": false
+    },
+    "pronouns": "he/him",
+    "alignment": "lawful_neutral",
+    "xp": 0
+  },
+  "npc_mira": {
+    "id": "npc_mira",
+    "kind": "npc",
+    "name": "Mira Selke",
+    "aliases": [
+      "the scholar",
+      "mira"
+    ],
+    "descriptor": "a soaked antiquarian in a good coat, sketching the lane's cobbles",
+    "location_id": "loc_lane",
+    "zone_id": "the_lane",
+    "faction_ids": [],
+    "abilities": {
+      "str": 9,
+      "dex": 12,
+      "con": 10,
+      "int": 16,
+      "wis": 13,
+      "cha": 12
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 11,
+      "max": 11,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "history",
+        "investigation",
+        "arcana"
+      ],
+      "saves": [
+        "int"
+      ],
+      "weapons": [],
+      "tools": [
+        "calligraphers_supplies"
+      ]
+    },
+    "expertise": [
+      "history"
+    ],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "answers a question with a better question",
+        "keeps her notes dry before herself"
+      ],
+      "ideal": "What is written down cannot be argued away.",
+      "bond": "She has spent four years looking for this bell.",
+      "flaw": "Would trade almost anyone for a primary source.",
+      "voice": "quick, warm, faintly condescending"
+    },
+    "goals": [
+      {
+        "text": "Record the bell's inscription before the Ashen Hand melts it",
+        "priority": 1,
+        "quest_id": "q_missing_bell"
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 7,
+        "to_hour": 19,
+        "location_id": "loc_lane"
+      },
+      {
+        "from_hour": 19,
+        "to_hour": 7,
+        "location_id": "loc_flagon"
+      }
+    ],
+    "known_fact_ids": [
+      "fact_seed_0003"
+    ],
+    "ai_policy": null,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "talked_to": false
+    },
+    "pronouns": "she/her",
+    "alignment": "neutral_good",
+    "xp": 0
+  },
+  "npc_garret": {
+    "id": "npc_garret",
+    "kind": "npc",
+    "name": "Garret Ashe",
+    "aliases": [
+      "the guard",
+      "garret"
+    ],
+    "descriptor": "a river-warden in a wet cloak, standing where nobody has asked him to stand",
+    "location_id": "loc_bell_gate",
+    "zone_id": "the_arch",
+    "faction_ids": [
+      "fac_ashen_hand"
+    ],
+    "abilities": {
+      "str": 14,
+      "dex": 12,
+      "con": 14,
+      "int": 10,
+      "wis": 11,
+      "cha": 10
+    },
+    "level": 2,
+    "class_id": "cls_guard",
+    "race_id": "race_human",
+    "hp": {
+      "current": 16,
+      "max": 16,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "athletics",
+        "perception"
+      ],
+      "saves": [
+        "str"
+      ],
+      "weapons": [
+        "spear"
+      ],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "repeats his orders back to himself",
+        "will not meet your eye"
+      ],
+      "ideal": "Someone has to stand here.",
+      "bond": "His sister took the Ashen Hand's coin first.",
+      "flaw": "Frightened of the water and pretending otherwise.",
+      "voice": "flat, over-rehearsed"
+    },
+    "goals": [
+      {
+        "text": "Keep everyone off the shrine stair",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [
+      "fact_seed_0002",
+      "fact_seed_0004"
+    ],
+    "ai_policy": null,
+    "on_death": [
+      {
+        "id": "t_garret_falls",
+        "on": "death",
+        "match": {
+          "target_ids": [
+            "npc_garret"
+          ]
+        },
+        "then": [
+          {
+            "t": "faction_rep",
+            "faction_id": "fac_ashen_hand",
+            "delta": -30
+          },
+          {
+            "t": "set_flag",
+            "key": "ashen_hand_alerted",
+            "value": true
+          },
+          {
+            "t": "add_fact",
+            "text": "Garret Ashe was killed at the Drowned Gate. The Ashen Hand will want to know who did it.",
+            "subjects": [
+              "npc_garret",
+              "fac_ashen_hand"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ],
+        "once": true
+      }
+    ],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "talked_to": false
+    },
+    "pronouns": "he/him",
+    "alignment": "lawful_neutral",
+    "xp": 0,
+    "recruitable": true,
+    "recruit_condition": "Show him the Ashen Hand will not protect his sister, and give him somewhere else to stand.",
+    "flee_behavior": "run",
+    "approval": [
+      {
+        "on": "spared_enemy",
+        "dims": {
+          "respect": -6
+        },
+        "line": "\"That was mercy. Mercy gets people killed later.\""
+      },
+      {
+        "on": "killed_surrendered",
+        "dims": {
+          "respect": 4,
+          "fear": 4
+        },
+        "line": "He doesn't look away. That is its own kind of answer."
+      },
+      {
+        "on": "intimidated",
+        "dims": {
+          "respect": 6
+        },
+        "line": "\"That's how you get answers out of people like us.\""
+      },
+      {
+        "on": "persuaded",
+        "dims": {
+          "respect": -2
+        },
+        "line": "\"They'll say what you want. Doesn't make it true.\""
+      },
+      {
+        "on": "gave_charity",
+        "dims": {
+          "affinity": -3
+        },
+        "line": "\"That coin was going to feed you.\""
+      },
+      {
+        "on": "protected_ally",
+        "dims": {
+          "affinity": 8,
+          "trust": 6
+        },
+        "line": "\"...you didn't have to do that.\""
+      },
+      {
+        "on": "fled_combat",
+        "dims": {
+          "respect": -8
+        },
+        "line": "\"Right. Of course.\""
+      },
+      {
+        "on": "pressed_on_hurt",
+        "dims": {
+          "respect": 6
+        },
+        "line": "\"Good. Don't stop.\""
+      },
+      {
+        "on": "stole",
+        "dims": {
+          "affinity": 3
+        },
+        "line": "He pretends he didn't see, which is a kindness of a sort."
+      },
+      {
+        "on": "desecrated",
+        "dims": {
+          "fear": 5
+        },
+        "line": "\"Whatever you woke up down here is on you.\""
+      }
+    ]
+  },
+  "mon_bonepicker": {
+    "id": "mon_bonepicker",
+    "kind": "monster",
+    "name": "the bonepicker",
+    "aliases": [
+      "bonepicker",
+      "the thing in the water"
+    ],
+    "descriptor": "a long grey shape that has been under the crypt water a very long time",
+    "location_id": "loc_bell_crypt",
+    "zone_id": "the_water",
+    "faction_ids": [],
+    "abilities": {
+      "str": 13,
+      "dex": 15,
+      "con": 10,
+      "int": 5,
+      "wis": 10,
+      "cha": 6
+    },
+    "level": 1,
+    "class_id": null,
+    "race_id": null,
+    "hp": {
+      "current": 13,
+      "max": 13,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [],
+      "ideal": "",
+      "bond": "",
+      "flaw": "",
+      "voice": ""
+    },
+    "goals": [],
+    "schedule": [],
+    "known_fact_ids": [],
+    "ai_policy": "aggressive",
+    "on_death": [
+      {
+        "id": "t_bonepicker_dies",
+        "on": "death",
+        "match": {
+          "target_ids": [
+            "mon_bonepicker"
+          ]
+        },
+        "then": [
+          {
+            "t": "add_fact",
+            "text": "The thing guarding the bell wore the rags of an Ashen Hand courier.",
+            "subjects": [
+              "mon_bonepicker",
+              "fac_ashen_hand"
+            ],
+            "importance": 4,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          },
+          {
+            "t": "set_flag",
+            "key": "crypt_cleared",
+            "value": true
+          }
+        ],
+        "once": true
+      }
+    ],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {},
+    "pronouns": "it/its",
+    "alignment": "neutral_evil",
+    "xp": 0
+  },
+  "cmp_sela": {
+    "id": "cmp_sela",
+    "kind": "companion",
+    "name": "Sela Vance",
+    "aliases": [
+      "the cleric",
+      "sela"
+    ],
+    "descriptor": "a war-priest gone quiet, with a mace she keeps wrapped in cloth",
+    "pronouns": "she/her",
+    "alignment": "lawful_good",
+    "xp": 380,
+    "controller": "cpu",
+    "group_id": "grp_main",
+    "location_id": "loc_flagon",
+    "zone_id": "common_floor",
+    "faction_ids": [],
+    "abilities": {
+      "str": 12,
+      "dex": 10,
+      "con": 13,
+      "int": 8,
+      "wis": 16,
+      "cha": 14
+    },
+    "level": 2,
+    "class_id": "cls_cleric",
+    "race_id": "race_human",
+    "hp": {
+      "current": 16,
+      "max": 16,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "medicine",
+        "religion",
+        "insight"
+      ],
+      "saves": [
+        "wis",
+        "cha"
+      ],
+      "weapons": [
+        "simple"
+      ],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {
+        "1": {
+          "max": 3,
+          "used": 0
+        }
+      },
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "will not raise her voice",
+        "counts the wounded before the dead"
+      ],
+      "ideal": "Mercy costs less than it looks like it does.",
+      "bond": "She left a war she could not stop and has not forgiven herself.",
+      "flaw": "Cannot walk past someone who needs help, whatever it costs the party.",
+      "voice": "level, unhurried, and harder than it sounds"
+    },
+    "goals": [
+      {
+        "text": "Keep this party alive without losing what is left of herself",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [
+      "fact_seed_0001"
+    ],
+    "ai_policy": "support",
+    "flee_behavior": "beg",
+    "personal_arc_quest_id": "q_sela_war",
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "cp": 400
+    },
+    "approval": [
+      {
+        "on": "spared_enemy",
+        "dims": {
+          "affinity": 8,
+          "respect": 5
+        },
+        "line": "\"Good. That one didn't need to die.\""
+      },
+      {
+        "on": "killed_surrendered",
+        "dims": {
+          "affinity": -12,
+          "trust": -6
+        },
+        "line": "\"It had stopped. You saw that it had stopped.\""
+      },
+      {
+        "on": "protected_ally",
+        "dims": {
+          "affinity": 7,
+          "trust": 5
+        },
+        "line": "\"I saw that. Thank you.\""
+      },
+      {
+        "on": "let_ally_fall",
+        "dims": {
+          "affinity": -10,
+          "trust": -8
+        },
+        "line": "\"We do not leave people down. Not ever.\""
+      },
+      {
+        "on": "gave_charity",
+        "dims": {
+          "affinity": 6
+        },
+        "line": "\"That will matter to them longer than it costs you.\""
+      },
+      {
+        "on": "helped_stranger",
+        "dims": {
+          "affinity": 6,
+          "respect": 3
+        },
+        "line": "\"You didn't have to. That's rather the point.\""
+      },
+      {
+        "on": "intimidated",
+        "dims": {
+          "affinity": -5
+        },
+        "line": "\"There were other ways to ask.\""
+      },
+      {
+        "on": "persuaded",
+        "dims": {
+          "affinity": 5,
+          "respect": 4
+        },
+        "line": "\"See? Nobody had to bleed for that.\""
+      },
+      {
+        "on": "lied",
+        "dims": {
+          "trust": -5
+        },
+        "line": "She says nothing, which is worse."
+      },
+      {
+        "on": "stole",
+        "dims": {
+          "affinity": -6,
+          "trust": -6
+        },
+        "line": "\"Put it back. I'll wait.\""
+      },
+      {
+        "on": "desecrated",
+        "dims": {
+          "affinity": -14,
+          "trust": -8
+        },
+        "line": "\"Whatever you think is down there \u2014 that was somebody's grave.\""
+      },
+      {
+        "on": "rested_in_danger",
+        "dims": {
+          "respect": -3
+        },
+        "line": "\"Here? Really here?\""
+      },
+      {
+        "on": "pressed_on_hurt",
+        "dims": {
+          "affinity": -4,
+          "respect": 2
+        },
+        "line": "\"You're bleeding. I can fix that, if you'd stop.\""
+      },
+      {
+        "on": "fled_combat",
+        "dims": {
+          "respect": -4
+        },
+        "line": "\"We can come back. I'd rather come back.\""
+      },
+      {
+        "on": "investigated",
+        "dims": {
+          "respect": 3
+        },
+        "line": "\"You look before you leap. Rare.\""
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "npc_thorne->pc_main": {
+    "subject": "npc_thorne",
+    "object": "pc_main",
+    "dims": { "affinity": 22, "trust": 8, "fear": 0, "respect": 30 },
+    "opinion": "Watched her grow up behind his bar. Trusts her hands and not her curiosity. Would rather she left the ledger alone and cannot say so without saying why.",
+    "tags": ["knew_her_as_a_child", "guilty_toward_pc"],
+    "history": [
+      {
+        "turn": 0,
+        "event_id": null,
+        "dims": { "affinity": 22, "respect": 30 },
+        "reason": "Twenty years of her sitting at the end of his bar"
+      }
+    ]
+  },
+
+  "npc_mira->pc_main": {
+    "subject": "npc_mira",
+    "object": "pc_main",
+    "dims": { "affinity": 5, "trust": 0, "fear": 0, "respect": 10 },
+    "opinion": "A useful pair of hands who can read. Has not yet decided whether Vessa is a colleague or a tool.",
+    "tags": ["sees_pc_as_useful"],
+    "history": [
+      {
+        "turn": 0,
+        "event_id": null,
+        "dims": { "affinity": 5, "respect": 10 },
+        "reason": "Hired her this morning on the strength of her handwriting"
+      }
+    ]
+  },
+
+  "npc_garret->pc_main": {
+    "subject": "npc_garret",
+    "object": "pc_main",
+    "dims": { "affinity": -15, "trust": -20, "fear": 5, "respect": 0 },
+    "opinion": "Has orders about her specifically and is not proud of it. Expects her to try the stair and hopes she does it while he is looking the other way.",
+    "tags": ["under_orders_about_pc", "ashamed"],
+    "history": [
+      {
+        "turn": 0,
+        "event_id": null,
+        "dims": { "affinity": -15, "trust": -20 },
+        "reason": "The Ashen Hand named her when they posted him here"
+      }
+    ]
+  },
+
+  "pc_main->npc_thorne": {
+    "subject": "pc_main",
+    "object": "npc_thorne",
+    "dims": { "affinity": 30, "trust": 25, "fear": 0, "respect": 20 },
+    "opinion": "The closest thing to family she has left, and the reason she has never once looked at the last page of that ledger.",
+    "tags": ["family_by_habit"],
+    "history": []
+  }
+}

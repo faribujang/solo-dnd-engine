@@ -1,0 +1,18 @@
+node_modules/
+
+# Saves are a player's campaign, not source. The demo regenerates them on `npm run demo`.
+saves/
+
+# Keys. `.env.example` is the committed template.
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db
+
+# Scratch
+*.mts.tmp
+dbg*.ts
+dbg*.mts

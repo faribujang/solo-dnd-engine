@@ -1,0 +1,400 @@
+{
+  "defs": {
+    "item_def_shortsword": {
+      "id": "item_def_shortsword",
+      "name": "Shortsword",
+      "kind": "weapon",
+      "desc": "A plain soldier's blade, well kept.",
+      "weight": 2,
+      "value_cp": 1000,
+      "damage": {
+        "dice": "1d6",
+        "type": "piercing",
+        "versatile": null
+      },
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "finesse",
+        "light"
+      ],
+      "tags": [
+        "martial",
+        "metal"
+      ],
+      "stackable": false
+    },
+    "item_def_leather_armor": {
+      "id": "item_def_leather_armor",
+      "name": "Leather Armor",
+      "kind": "armor",
+      "desc": "Boiled and oiled against the rain.",
+      "weight": 10,
+      "value_cp": 1000,
+      "damage": null,
+      "ac_base": 11,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "light_armor"
+      ],
+      "stackable": false
+    },
+    "item_def_lantern": {
+      "id": "item_def_lantern",
+      "name": "Hooded Lantern",
+      "kind": "tool",
+      "desc": "Throws bright light for thirty feet and dim light for thirty more.",
+      "weight": 2,
+      "value_cp": 500,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "light_source"
+      ],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false
+    },
+    "item_def_rusted_key": {
+      "id": "item_def_rusted_key",
+      "name": "Rusted Key",
+      "kind": "key",
+      "desc": "Iron, pitted to lace, with a shrine's mark still faintly stamped on the bow.",
+      "weight": 0,
+      "value_cp": 0,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "quest"
+      ],
+      "stackable": false
+    },
+    "item_def_healing_draught": {
+      "id": "item_def_healing_draught",
+      "name": "Healing Draught",
+      "kind": "consumable",
+      "desc": "Tastes of iron filings and mint. Restores 2d4+2 hit points.",
+      "weight": 0.5,
+      "value_cp": 5000,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "consumable"
+      ],
+      "tags": [
+        "potion"
+      ],
+      "stackable": true
+    },
+    "item_def_silver_bell": {
+      "id": "item_def_silver_bell",
+      "name": "The Silver Bell",
+      "kind": "treasure",
+      "desc": "Tarnished black. A name runs round the rim, scratched at but not erased.",
+      "weight": 40,
+      "value_cp": 150000,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "quest",
+        "silver"
+      ],
+      "stackable": false
+    },
+    "item_def_ledger_page": {
+      "id": "item_def_ledger_page",
+      "name": "Torn Ledger Page",
+      "kind": "misc",
+      "desc": "One column of debts in a cramped hand. The last entry is not a sum of money.",
+      "weight": 0,
+      "value_cp": 0,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "quest",
+        "paper"
+      ],
+      "stackable": false
+    },
+    "item_def_crowbar": {
+      "id": "item_def_crowbar",
+      "name": "Crowbar",
+      "kind": "tool",
+      "desc": "Two feet of cold iron with a bad attitude.",
+      "weight": 5,
+      "value_cp": 200,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Pry it open",
+          "skill": "athletics",
+          "band": "medium",
+          "tag": "pry",
+          "requires": {
+            "t": "feature",
+            "interaction": "search"
+          },
+          "advantage": true
+        }
+      ]
+    },
+    "item_def_rope": {
+      "id": "item_def_rope",
+      "name": "Hempen Rope",
+      "kind": "tool",
+      "desc": "Fifty feet, and it has held so far.",
+      "weight": 10,
+      "value_cp": 100,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Climb down",
+          "skill": "athletics",
+          "band": "easy",
+          "tag": "climb",
+          "requires": {
+            "t": "location_flag",
+            "key": "climbable"
+          },
+          "advantage": true
+        }
+      ]
+    },
+    "item_def_thieves_tools": {
+      "id": "item_def_thieves_tools",
+      "name": "Thieves' Tools",
+      "kind": "tool",
+      "desc": "Picks, a tension wrench, and a small mirror on a wire.",
+      "weight": 1,
+      "value_cp": 2500,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Pick the lock",
+          "skill": "sleight_of_hand",
+          "band": "medium",
+          "tag": "pick_lock",
+          "requires": {
+            "t": "locked_exit"
+          },
+          "advantage": false
+        }
+      ]
+    }
+  },
+  "instances": {
+    "item_inst_sword": {
+      "id": "item_inst_sword",
+      "def_id": "item_def_shortsword",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "her father's, and not a gift",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_leathers": {
+      "id": "item_inst_leathers",
+      "def_id": "item_def_leather_armor",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "worn",
+      "flags": {}
+    },
+    "item_inst_lantern": {
+      "id": "item_inst_lantern",
+      "def_id": "item_def_lantern",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 1,
+      "charges": 6,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {
+        "lit": false
+      }
+    },
+    "item_inst_draught": {
+      "id": "item_inst_draught",
+      "def_id": "item_def_healing_draught",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 2,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_key": {
+      "id": "item_inst_key",
+      "def_id": "item_def_rusted_key",
+      "owner": {
+        "t": "location",
+        "id": "loc_lane"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "worn",
+      "flags": {
+        "half_buried": true
+      }
+    },
+    "item_inst_bell": {
+      "id": "item_inst_bell",
+      "def_id": "item_def_silver_bell",
+      "owner": {
+        "t": "location",
+        "id": "loc_bell_crypt"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "worn",
+      "flags": {}
+    },
+    "item_inst_tools": {
+      "id": "item_inst_tools",
+      "def_id": "item_def_thieves_tools",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_stock_draught_1": {
+      "id": "item_inst_stock_draught_1",
+      "def_id": "item_def_healing_draught",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_thorne"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_stock_draught_2": {
+      "id": "item_inst_stock_draught_2",
+      "def_id": "item_def_healing_draught",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_thorne"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_stock_rope": {
+      "id": "item_inst_stock_rope",
+      "def_id": "item_def_rope",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_thorne"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_stock_lantern": {
+      "id": "item_inst_stock_lantern",
+      "def_id": "item_def_lantern",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_thorne"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_stock_crowbar": {
+      "id": "item_inst_stock_crowbar",
+      "def_id": "item_def_crowbar",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_thorne"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "",
+      "condition": "fine",
+      "flags": {}
+    }
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "clocks": {
+    "clk_hand_closes": {
+      "id": "clk_hand_closes",
+      "name": "The Hand closes in",
+      "visible": true,
+      "segments": 6,
+      "filled": 1,
+      "per_day": 1,
+      "done": false,
+      "quest_id": "q_thornes_debt",
+      "arc_id": "arc_drowned_bell",
+      "on_complete": [
+        {
+          "t": "set_flag",
+          "key": "ashen_hand_alerted",
+          "value": true
+        },
+        {
+          "t": "faction_rep",
+          "faction_id": "fac_ashen_hand",
+          "delta": -20
+        },
+        {
+          "t": "add_fact",
+          "text": "The Ashen Hand came for Thorne's debt in person.",
+          "subjects": [
+            "npc_thorne",
+            "fac_ashen_hand"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        }
+      ]
+    },
+    "clk_flood": {
+      "id": "clk_flood",
+      "name": "The water rises",
+      "visible": true,
+      "segments": 4,
+      "filled": 0,
+      "per_day": 1,
+      "done": false,
+      "quest_id": "q_missing_bell",
+      "arc_id": "arc_drowned_bell",
+      "on_complete": [
+        {
+          "t": "set_flag",
+          "key": "crypt_flooded",
+          "value": true
+        },
+        {
+          "t": "add_fact",
+          "text": "The Bell Crypt has flooded to the ceiling. Whatever is down there is staying down there.",
+          "subjects": [
+            "loc_bell_crypt"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        }
+      ]
+    }
+  },
+  "vows": {
+    "vow_the_ledger": {
+      "id": "vow_the_ledger",
+      "sworn_by": "pc_main",
+      "text": "Find out what my name is doing in the last column of that ledger, and take it back.",
+      "rank": "dangerous",
+      "progress": 0,
+      "status": "sworn",
+      "advanced_by_quest_ids": [
+        "q_thornes_debt",
+        "q_missing_bell"
+      ],
+      "sworn_turn": 0
+    }
+  },
+  "encounter_tables": {
+    "enc_citadel_l1": {
+      "id": "enc_citadel_l1",
+      "name": "The flooded road",
+      "chance_per_hour": 0.3,
+      "entries": [
+        {
+          "id": "enc_quiet_water",
+          "kind": "quiet",
+          "weight": 4,
+          "min_danger": 0,
+          "hours": [],
+          "once": false,
+          "brief": "Nothing but the water and the walking.",
+          "then": []
+        },
+        {
+          "id": "enc_the_drowned_cart",
+          "kind": "discovery",
+          "weight": 2,
+          "min_danger": 0,
+          "hours": [],
+          "once": true,
+          "brief": "A cart half-sunk in the silt, its axle broken years ago.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "A merchant's cart lies broken in the silt below the shrine path; the Ashen Hand's mark is burned into the tailboard.",
+              "subjects": [
+                "fac_ashen_hand"
+              ],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "enc_pilgrim",
+          "kind": "social",
+          "weight": 2,
+          "min_danger": 0,
+          "hours": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ],
+          "once": false,
+          "brief": "A pilgrim going the other way, soaked and unwilling to say why.",
+          "then": []
+        },
+        {
+          "id": "enc_cold_snap",
+          "kind": "environment",
+          "weight": 2,
+          "min_danger": 1,
+          "hours": [],
+          "once": false,
+          "brief": "The rain turns to sleet and the path turns treacherous.",
+          "then": [
+            {
+              "t": "set_flag",
+              "key": "weather_pending",
+              "value": "sleet"
+            }
+          ]
+        },
+        {
+          "id": "enc_bonepicker_road",
+          "kind": "combat",
+          "weight": 1,
+          "min_danger": 2,
+          "hours": [
+            19,
+            20,
+            21,
+            22,
+            23,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "once": false,
+          "brief": "Something long and grey rises out of the flood ahead of you.",
+          "then": [
+            {
+              "t": "start_combat",
+              "enemy_ids": [
+                "mon_bonepicker"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "fact_seed_0001",
+    "turn": 0,
+    "world_minute": 1020,
+    "text": "The village of Mudwallow lost its silver bell forty years ago, in the winter the river came up.",
+    "kind": "lore",
+    "subjects": ["loc_flagon", "q_missing_bell"],
+    "location_id": "loc_flagon",
+    "quest_ids": ["q_missing_bell"],
+    "importance": 4,
+    "secret": false,
+    "known_by": ["pc_main", "npc_thorne", "npc_mira"],
+    "source": "authored",
+    "superseded_by": null
+  },
+  {
+    "id": "fact_seed_0002",
+    "turn": 0,
+    "world_minute": 1020,
+    "text": "Thorne Blackwater owes the Ashen Hand a debt that comes due at midwinter.",
+    "kind": "npc",
+    "subjects": ["npc_thorne", "fac_ashen_hand"],
+    "location_id": "loc_flagon",
+    "quest_ids": ["q_thornes_debt"],
+    "importance": 4,
+    "secret": true,
+    "known_by": ["npc_thorne", "npc_garret"],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Thorne will not discuss what he owes, to you or anyone",
+      "opens_when": "Garret vouches for you, or the debt is settled",
+      "lifted_by_flag": "thorne_debt_spoken_for"
+    }
+  },
+  {
+    "id": "fact_seed_0003",
+    "turn": 0,
+    "world_minute": 1020,
+    "text": "Mira Selke has records of the bell still being rung in 1454, fourteen years after it was reported stolen.",
+    "kind": "quest",
+    "subjects": ["npc_mira", "q_missing_bell"],
+    "location_id": "loc_lane",
+    "quest_ids": ["q_missing_bell"],
+    "importance": 4,
+    "secret": false,
+    "known_by": ["npc_mira"],
+    "source": "authored",
+    "superseded_by": null
+  },
+  {
+    "id": "fact_seed_0004",
+    "turn": 0,
+    "world_minute": 1020,
+    "text": "Garret Ashe was posted at the Drowned Gate by the Ashen Hand, and told to watch for Vessa Quill by name.",
+    "kind": "npc",
+    "subjects": ["npc_garret", "fac_ashen_hand", "pc_main"],
+    "location_id": "loc_bell_gate",
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": ["npc_garret"],
+    "source": "authored",
+    "superseded_by": null
+  }
+]

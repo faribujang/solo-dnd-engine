@@ -1,0 +1,53 @@
+{
+  "groups": {
+    "grp_main": {
+      "id": "grp_main",
+      "member_ids": [
+        "pc_main",
+        "cmp_sela"
+      ],
+      "lead_id": "pc_main"
+    }
+  },
+  "arcs": {
+    "arc_drowned_bell": {
+      "id": "arc_drowned_bell",
+      "title": "The Drowned Bell",
+      "status": "active",
+      "summary": "A lost bell, a debt not written in money, and a village that would rather not remember either.",
+      "themes": [
+        "debt",
+        "what the water keeps"
+      ],
+      "quest_ids": [
+        "q_missing_bell",
+        "q_thornes_debt",
+        "q_sela_war"
+      ],
+      "climax_quest_id": "q_missing_bell",
+      "seeds": [
+        {
+          "id": "seed_garrets_sister",
+          "text": "Garret's sister still takes the Ashen Hand's coin, somewhere upriver.",
+          "kind": "npc",
+          "subject_ids": [
+            "npc_garret",
+            "fac_ashen_hand"
+          ]
+        }
+      ]
+    }
+  },
+  "campaigns": {
+    "cmp_mudwallow": {
+      "id": "cmp_mudwallow",
+      "title": "What the Water Keeps",
+      "status": "active",
+      "premise": "A scribe-turned-thief comes home to settle a ledger, and finds the village's oldest loss is not lost at all.",
+      "arc_ids": [
+        "arc_drowned_bell"
+      ]
+    }
+  },
+  "legacy": []
+}

@@ -1,0 +1,319 @@
+{
+  "q_missing_bell": {
+    "id": "q_missing_bell",
+    "title": "The Bell That Was Not Stolen",
+    "giver_entity_id": "npc_mira",
+    "status": "active",
+    "visibility": "known",
+    "summary": "Mira Selke will pay to record the inscription on the village's lost silver bell \u2014 if you can find where it actually went.",
+    "dm_notes": "TRUTH the player does not know: Thorne moved the bell himself forty years ago to keep the Ashen Hand from melting it, and the thing guarding it in the crypt is the courier they sent after him.",
+    "current_step_id": "step_ask",
+    "steps": [
+      {
+        "id": "step_ask",
+        "desc": "Learn from someone in the village where the bell went",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_learned_from_thorne",
+            "on": "dialogue",
+            "match": {
+              "target_ids": [
+                "npc_thorne"
+              ]
+            },
+            "then": [],
+            "once": true
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "reveal_location",
+            "location_id": "loc_bell_gate"
+          },
+          {
+            "t": "add_fact",
+            "text": "The silver bell was carried down Mudwallow Lane toward the Drowned Gate, not out of the village.",
+            "subjects": [
+              "q_missing_bell",
+              "loc_bell_gate"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "step_enter",
+        "desc": "Find the way into the Bell Crypt",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "quest_step_done",
+            "quest_id": "q_missing_bell",
+            "step_id": "step_ask"
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_reached_crypt",
+            "on": "enter_location",
+            "match": {
+              "actor_id": "pc_main",
+              "location_id": "loc_bell_crypt"
+            },
+            "then": [],
+            "once": true
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "add_fact",
+            "text": "The Bell Crypt lies under the Drowned Gate, behind the altar and down a flooded stair.",
+            "subjects": [
+              "loc_bell_crypt"
+            ],
+            "importance": 4,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "step_recover",
+        "desc": "Recover the silver bell",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "quest_step_done",
+            "quest_id": "q_missing_bell",
+            "step_id": "step_enter"
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_bell_taken",
+            "on": "item_transfer",
+            "match": {
+              "location_id": "loc_bell_crypt"
+            },
+            "when": {
+              "t": "has_item",
+              "entity_id": "pc_main",
+              "item_def_id": "item_def_silver_bell",
+              "min": 1
+            },
+            "then": [
+              {
+                "t": "set_flag",
+                "key": "bell_recovered",
+                "value": true
+              }
+            ],
+            "once": true
+          }
+        ],
+        "on_complete": []
+      }
+    ],
+    "leads": [
+      {
+        "text": "Mira says the bell never left the village \u2014 the tolls were still being heard in 1454.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_mira",
+        "points_to_location_id": null
+      }
+    ],
+    "rewards": {
+      "xp": 300,
+      "gold": 50,
+      "item_def_ids": [
+        "item_def_ledger_page"
+      ],
+      "relationship_deltas": [
+        {
+          "subject": "npc_mira",
+          "object": "pc_main",
+          "dims": {
+            "affinity": 20,
+            "respect": 15
+          }
+        }
+      ]
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [],
+    "blocks": []
+  },
+  "q_thornes_debt": {
+    "id": "q_thornes_debt",
+    "title": "The Last Column",
+    "giver_entity_id": "npc_thorne",
+    "status": "active",
+    "visibility": "known",
+    "summary": "Thorne's ledger ends in a debt to the Ashen Hand that is not written in money. He has until midwinter.",
+    "dm_notes": "TRUTH: the last entry names Vessa. Thorne pledged her to the Hand to buy the bell's hiding place forty years of silence.",
+    "current_step_id": "step_read",
+    "steps": [
+      {
+        "id": "step_read",
+        "desc": "Read the last column of Thorne's ledger",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_read_ledger",
+            "on": "skill_check",
+            "match": {
+              "location_id": "loc_flagon",
+              "payload_key": "read_ledger"
+            },
+            "then": [],
+            "once": true
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "add_fact",
+            "text": "The last entry in Thorne's ledger is not a sum of money. It is a name.",
+            "subjects": [
+              "npc_thorne",
+              "q_thornes_debt"
+            ],
+            "importance": 5,
+            "secret": true,
+            "known_by": [
+              "pc_main"
+            ]
+          },
+          {
+            "t": "adjust_attitude",
+            "subject": "npc_thorne",
+            "object": "pc_main",
+            "dims": {
+              "fear": 12
+            },
+            "reason": "You have been at his ledger"
+          }
+        ]
+      }
+    ],
+    "leads": [],
+    "rewards": {
+      "xp": 200,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    },
+    "deadline_world_minute": 4000,
+    "failure_triggers": [
+      {
+        "id": "t_thorne_dies_quest_fails",
+        "on": "death",
+        "match": {
+          "target_ids": [
+            "npc_thorne"
+          ]
+        },
+        "then": [
+          {
+            "t": "add_fact",
+            "text": "Thorne Blackwater died with the last column of his ledger unexplained.",
+            "subjects": [
+              "npc_thorne"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ],
+        "once": true
+      }
+    ],
+    "requires": [],
+    "blocks": []
+  },
+  "q_sela_war": {
+    "id": "q_sela_war",
+    "title": "What She Left Behind",
+    "giver_entity_id": "cmp_sela",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Sela will not say which war she walked out of. Someone in Mudwallow knows.",
+    "dm_notes": "TRUTH: she was the one who called the retreat, and eleven people died covering it. She thinks she chose wrong. She did not.",
+    "current_step_id": "step_trust",
+    "steps": [
+      {
+        "id": "step_trust",
+        "desc": "Earn enough of Sela's trust that she will talk about it",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_sela_opens",
+            "on": "dialogue",
+            "match": {
+              "target_ids": [
+                "cmp_sela"
+              ]
+            },
+            "when": {
+              "t": "affinity",
+              "subject": "cmp_sela",
+              "object": "pc_main",
+              "dim": "trust",
+              "op": "gte",
+              "value": 30
+            },
+            "then": [],
+            "once": true
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "add_fact",
+            "text": "Sela called a retreat once, and eleven people died covering it. She has not put it down since.",
+            "subjects": [
+              "cmp_sela"
+            ],
+            "importance": 5,
+            "secret": true,
+            "known_by": [
+              "pc_main",
+              "cmp_sela"
+            ]
+          }
+        ]
+      }
+    ],
+    "leads": [],
+    "rewards": {
+      "xp": 300,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": [
+        {
+          "subject": "cmp_sela",
+          "object": "pc_main",
+          "dims": {
+            "trust": 20,
+            "affinity": 15
+          }
+        }
+      ]
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [],
+    "blocks": []
+  }
+}
