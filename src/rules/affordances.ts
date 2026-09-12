@@ -9,6 +9,8 @@ import { conditionFlags, canMove } from "./conditions.js";
 import { spellsFor, spellDC } from "../content/srd/spells.js";
 import { canFastTravel, reachable } from "../engine/pathfind.js";
 import { readApproaches, topicsFor } from "../engine/conversation.js";
+import { featureOfKind, featuresOf, usesLeft } from "./features.js";
+import type { Entity } from "../schema/entity.js";
 
 /**
  * THE AFFORDANCE ENGINE.
@@ -39,7 +41,7 @@ export interface Affordance {
   why_unavailable?: string;
   /** One line of rules, shown the first time this concept appears. Keyed for `taught`. */
   teaches?: { key: string; text: string };
-  group: "move" | "talk" | "check" | "attack" | "item" | "rest" | "self" | "spell" | "turn";
+  group: "move" | "talk" | "check" | "attack" | "item" | "rest" | "self" | "spell" | "turn" | "feature";
   /** Hit chance in percent, where an attack roll is involved. */
   hit_chance?: number;
 }
@@ -52,6 +54,53 @@ const TEACH = {
   death_save: { key: "death_save", text: "At 0 HP you are dying. Each turn roll a d20: 10 or more is a success. Three successes and you stabilise; three failures and you die." },
   locked: { key: "locked", text: "A locked way needs its key, or another way through." },
 } as const;
+
+/**
+ * Class features, on the bar.
+ *
+ * The whole point of the affordance engine is that the rules are visible rather than
+ * remembered, and a feature nobody can see is a feature nobody uses. A spent one stays on
+ * the bar greyed, with what would bring it back — same rule as everything else: the reason
+ * is the lesson.
+ *
+ * Passive features are deliberately absent. Sneak Attack is not a button, and putting it on
+ * the bar would teach the player to look for a button that does not exist.
+ */
+function featureAffordances(s: GameState, actor: Entity): Affordance[] {
+  const out: Affordance[] = [];
+  const inCombat = !!s.combat;
+
+  for (const f of featuresOf(actor)) {
+    const usable = f.effect.t === "heal_self" || f.effect.t === "extra_action"
+      || f.effect.t === "rage" || f.effect.t === "heal_pool" || f.effect.t === "inspiration_die";
+    if (!usable) continue;
+    if (f.effect.t === "extra_action" && !inCombat) continue;
+
+    const left = usesLeft(actor, f);
+    const spent = left <= 0;
+    const already = f.effect.t === "rage" && actor.flags["raging"] === true;
+
+    const detail =
+      f.uses === "unlimited" ? f.text
+      : `${left} left · back after a ${f.recharge === "short_rest" ? "short" : "long"} rest`;
+
+    out.push({
+      action: { type: "use_feature", feature_id: f.id },
+      label: f.name,
+      cost: f.effect.t === "heal_pool" ? "action" : "bonus",
+      detail,
+      available: !spent && !already,
+      ...(spent
+        ? { why_unavailable: `Spent. Back after a ${f.recharge === "short_rest" ? "short" : "long"} rest.` }
+        : already
+          ? { why_unavailable: "You are already raging." }
+          : {}),
+      group: "feature",
+      teaches: { key: `feature_${f.id}`, text: f.text },
+    });
+  }
+  return out;
+}
 
 export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affordance[] {
   const actor = mustEntity(s, actorId);
@@ -237,6 +286,8 @@ export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affor
     });
   }
 
+  out.push(...featureAffordances(s, actor));
+
   return out;
 }
 
@@ -320,10 +371,18 @@ export function combatAffordances(s: GameState, actorId: string): Affordance[] {
       ...gate("moves", canMove(actor) ? undefined : "You cannot move.") });
   }
 
-  out.push({ action: { type: "dash" }, label: "Dash", cost: "action", detail: "+1 zone of movement", group: "turn", ...gate("action") });
-  out.push({ action: { type: "disengage" }, label: "Disengage", cost: "action", detail: "leave without provoking", group: "turn", ...gate("action") });
+  // Cunning Action moves these onto the bonus pip, and the BAR has to say so — a rogue who
+  // cannot see that Dash is free for them is playing a fighter with worse hit points.
+  const cunning = featureOfKind(actor, "bonus_action_unlocks")?.effect.actions ?? [];
+  const pipFor = (t: string): "bonus" | "action" => (cunning.includes(t) ? "bonus" : "action");
+  const cunningNote = (t: string) => (cunning.includes(t) ? " · Cunning Action" : "");
+
+  out.push({ action: { type: "dash" }, label: "Dash", cost: pipFor("dash"), detail: `+1 zone of movement${cunningNote("dash")}`, group: "turn", ...gate(pipFor("dash")) });
+  out.push({ action: { type: "disengage" }, label: "Disengage", cost: pipFor("disengage"), detail: `leave without provoking${cunningNote("disengage")}`, group: "turn", ...gate(pipFor("disengage")) });
   out.push({ action: { type: "dodge" }, label: "Dodge", cost: "action", detail: "attacks on you have disadvantage", group: "turn", ...gate("action") });
   out.push({ action: { type: "flee" }, label: "Flee the fight", cost: "action", detail: "may provoke; you are out of the fight", group: "turn", ...gate("action") });
+
+  out.push(...featureAffordances(s, actor));
   out.push({ action: { type: "end_turn" }, label: "End turn", cost: "free", detail: `round ${c.round}`, group: "turn", ...gate(null) });
   return out;
 }

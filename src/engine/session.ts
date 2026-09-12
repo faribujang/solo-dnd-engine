@@ -130,6 +130,8 @@ export function describe(a: Action): string {
     case "wait": return `wait ${a.minutes}`;
     case "rest": return `rest ${a.kind}`;
     case "recruit": return `ask ${a.target_id} to join you`;
+    case "use_feature": return `use ${a.feature_id}`;
+    case "level_up": return "level up";
     case "death_save": return "death save";
     case "equip": return `equip ${a.item_instance_id} → ${a.slot ?? "unequip"}`;
     case "end_turn": return "end turn";

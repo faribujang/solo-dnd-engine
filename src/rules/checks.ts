@@ -1,5 +1,6 @@
 import type { Ability, Degree, DifficultyBand, Skill } from "../schema/common.js";
 import type { Entity } from "../schema/entity.js";
+import { featureOfKind } from "./features.js";
 
 /**
  * The band → DC table. The intent parser proposes a BAND; only this table turns it into a
@@ -50,6 +51,15 @@ export function abilityModOf(e: Entity, ability: Ability): number {
 }
 
 /** Ability mod + proficiency (doubled with expertise) for a skill check. */
+/**
+ * JACK OF ALL TRADES. Half proficiency, rounded down, on every check you are NOT already
+ * proficient in — which is the bard's whole identity as the party's second-best everything.
+ */
+export function jackBonus(e: Entity, skill: Skill): number {
+  if (e.proficiencies.skills.includes(skill)) return 0;
+  return featureOfKind(e, "half_proficiency") ? Math.floor(e.proficiency_bonus / 2) : 0;
+}
+
 export function skillModifier(e: Entity, skill: Skill): number {
   return skillParts(e, skill).reduce((n, p) => n + p.value, 0);
 }
@@ -63,6 +73,12 @@ export function skillParts(e: Entity, skill: Skill): Array<{ label: string; valu
   const out: Array<{ label: string; value: number }> = [{ label: ability, value: abilityModOf(e, ability) }];
   if (e.expertise.includes(skill)) out.push({ label: "expertise", value: e.proficiency_bonus * 2 });
   else if (e.proficiencies.skills.includes(skill)) out.push({ label: "proficiency", value: e.proficiency_bonus });
+  else {
+    // Jack of All Trades reaches the roll card as its own named part, so a bard can see
+    // where their surprising +2 in a skill nobody taught them came from.
+    const jack = jackBonus(e, skill);
+    if (jack > 0) out.push({ label: "jack of all trades", value: jack });
+  }
   return out.filter((p) => p.value !== 0);
 }
 

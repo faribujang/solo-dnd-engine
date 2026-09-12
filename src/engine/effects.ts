@@ -13,6 +13,7 @@ import { scheduledLocation } from "../state/selectors.js";
 import { refreshAC } from "../rules/equipment.js";
 import { levelForXp } from "../rules/progression.js";
 import { levelUpPlan } from "../rules/character.js";
+import { featureOfKind, rechargeFeatures } from "../rules/features.js";
 import { inspirationCap, inspirationOf } from "../rules/inspiration.js";
 import { Clock, vowComplete } from "../schema/clock.js";
 
@@ -194,7 +195,15 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const e = s.entities[eff.entity_id];
       if (!e || !e.alive) break;
       const wasDown = e.hp.current === 0;
-      let amount = eff.amount;
+
+      // RAGE halves the three weapon damage types. Applied here rather than at the attack
+      // so it covers everything that hurts you, not only what rolled to hit you.
+      const rageFeat = featureOfKind(e, "rage");
+      const resisted = e.flags["raging"] === true
+        && !!rageFeat
+        && rageFeat.effect.resists.includes(eff.damage_type);
+
+      let amount = resisted ? Math.floor(eff.amount / 2) : eff.amount;
       const absorbed = Math.min(e.hp.temp, amount);
       e.hp.temp -= absorbed;
       amount -= absorbed;
@@ -495,6 +504,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
         e.conditions = e.conditions.filter((x) => x.expires_round === null);
         delete e.flags["guided"]; delete e.flags["blessed"];
       }
+      for (const e of Object.values(s.entities)) delete e.flags["raging"];
       emitted.push(derived(s, ctx, { type: "combat_end", location_id: c.location_id, payload: { winner: eff.winner, rounds: c.round } }));
       // The aftermath of a fight is its own scene: catching your breath is not the fight.
       emitted.push(...breakScene(s, ctx, { kind: "fight_over" }));
@@ -525,6 +535,9 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       }
       c.current = i;
       const who = s.entities[c.order[i]!.entity_id]!;
+      // Sneak Attack is once per TURN, not once per attack, so the gate resets here rather
+      // than on a rest. Missing this is how a rogue quietly triples their damage.
+      delete who.flags["sneak_used_this_turn"];
       c.order[i]!.economy = {
         action: who.hp.current > 0 && !who.conditions.some((x) => ["incapacitated","paralyzed","stunned","unconscious","petrified"].includes(x.id)),
         bonus: who.hp.current > 0,
@@ -671,6 +684,23 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       if (!c) break;
       if (!c.raised.includes(eff.topic_id)) c.raised.push(eff.topic_id);
       c.friction = Math.max(0, Math.min(10, c.friction + eff.friction));
+      break;
+    }
+
+    case "recharge_features": {
+      const e = s.entities[eff.entity_id];
+      if (!e) break;
+      rechargeFeatures(e, eff.kind);
+      // A long rest also refills the paladin's pool and drops any lingering stance.
+      if (eff.kind === "long") delete e.flags["lay_on_hands_used"];
+      break;
+    }
+
+    case "grant_action": {
+      // Action Surge. One more ACTION, not a whole extra turn — the distinction is the
+      // entire balance of the feature.
+      const cb = s.combat ? s.combat.order.find((o) => o.entity_id === eff.entity_id) : undefined;
+      if (cb) cb.economy.action = true;
       break;
     }
 

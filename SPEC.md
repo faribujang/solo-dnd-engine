@@ -1,12 +1,12 @@
 # Solo D&D Engine — Technical Build Specification
 
 **Audience:** an implementing agent (Claude Fable 5.1) building from scratch.
-**Status:** v8. Parts I–IV are the original design. Parts V–X are the running changelog:
+**Status:** v9. Parts I–IV are the original design. Parts V–XI are the running changelog:
 what the build taught us, what other games taught us, and what has been added since.
 Where they disagree, **the later part wins** — superseded sections are marked in place.
 Authoritative for architecture and data model. Deviate only with a stated reason.
 
-**Where the engine actually is:** 265 tests, 79 source files, replay byte-identical. Phases
+**Where the engine actually is:** 285 tests, 79 source files, replay byte-identical. Phases
 0–8 of §37 are done. What is left is the client, the world, and the four gaps in §46.1.
 
 ---
@@ -3048,3 +3048,118 @@ Fable should expect to **rewrite these rows for the world it builds**, not treat
 fixed rules. What should survive is the shape: standing is authored on both sides and matched
 by code, an insight pays out in trust rather than in a special bonus, and the DM is handed an
 intent rather than a mechanic.
+
+---
+
+# Part XI — classes, and features that do something
+
+**Status: 285 tests, 87 source files. Replay byte-identical.**
+
+Two things closed the character system, and one of them turned out to be a prerequisite for
+the other.
+
+---
+
+## 64. A class feature was a string
+
+`features: { 1: ["Second Wind"] }` — enough to print on a sheet, and enough to fool a
+reader of this repo into thinking fighters could catch their breath. They could not. The
+engine supported two classes and **neither one's signature ability did anything.**
+
+The fix follows the trigger DSL's shape for the trigger DSL's reason: **a closed tagged
+union of mechanical shapes, evaluated by code, authored as data.** A new class becomes a
+data entry rather than a new branch in the combat resolver — which is the only thing that
+makes ten classes tractable.
+
+| Shape | Implements | Handled in |
+|---|---|---|
+| `heal_self` | Second Wind | `turn.ts` |
+| `heal_pool` | Lay on Hands | `turn.ts` |
+| `extra_action` | Action Surge | `turn.ts` + `grant_action` |
+| `bonus_action_unlocks` | Cunning Action | `combatActions.ts` |
+| `sneak_damage` | Sneak Attack | `combatActions.ts` |
+| `rage` | Rage | `combatActions.ts` + `effects.ts` |
+| `half_proficiency` | Jack of All Trades | `checks.ts` |
+| `inspiration_die` | Bardic Inspiration | `turn.ts` |
+| `extra_attack` | Extra Attack | `turn.ts` |
+| `narrative` | **nothing, and says so** | — |
+
+That last row is the honest half. A feature marked `narrative` is **not secretly working**.
+It reaches the DM in the prompt and the player on their sheet, it changes no number, and it
+is discoverable by reading the data rather than by noticing an absence in a combat log.
+
+### 64.1 Three that were worth getting exactly right
+
+**Sneak Attack** needs a finesse or ranged weapon, once per *turn*, and either advantage
+**or an ally beside the target while you lack disadvantage**. That second clause is the one
+that gets dropped, and it is the one that makes a rogue want a friend in the fight. In
+zone-based combat "beside" means *in the target's zone*. The once-per-turn gate resets in
+`next_turn`, not on a rest — missing that is how a rogue quietly triples their damage.
+
+**Cunning Action** declares which actions move to the bonus pip rather than being special-
+cased in three places. The affordance bar reads the declaration too, so the rogue's Dash
+shows as **bonus · Cunning Action** instead of silently costing something different from
+what the bar says.
+
+**Extra Attack** resolves both swings in **one action and one event**. A player who has to
+press attack twice for one action has been taught the economy wrong. A target that drops on
+the first swing stops the sequence.
+
+### 64.2 Passives are not buttons
+
+Sneak Attack, Extra Attack and Jack of All Trades are not offered on the bar and are refused
+as verbs. Putting them there would teach the player to hunt for a button that does not
+exist. Only things you *activate* appear — and a spent one stays visible, greyed, with what
+brings it back.
+
+---
+
+## 65. Rolled hit points
+
+`levelUpPlan` had always accepted a rolled die and nothing ever passed one, because there
+was no level-up **action** — levelling existed only as an effect the tests called directly.
+There is one now: it rolls the class hit die at resolution, bakes it onto the event, and
+shows it on the roll card. Committed dice make it exploit-proof for free, since rewinding
+and levelling again gives back the same die.
+
+---
+
+## 66. Ten classes
+
+| | Hit die | Caster | Signature, and whether it works |
+|---|---|---|---|
+| **Fighter** | d10 | — | Second Wind ✓ · Action Surge ✓ · Extra Attack ✓ |
+| **Rogue** | d8 | — | Sneak Attack ✓ · Cunning Action ✓ |
+| **Barbarian** | d12 | — | Rage ✓ (damage *and* resistance) |
+| **Paladin** | d10 | half | Lay on Hands ✓ · Divine Smite — declared, not yet wired |
+| **Ranger** | d10 | half | Extra Attack ✓ · Natural Explorer *narrative* |
+| **Bard** | d8 | full | Bardic Inspiration ✓ · Jack of All Trades ✓ |
+| **Cleric** | d8 | full | Channel Divinity *narrative* |
+| **Wizard** | d6 | full | Arcane Recovery — declared, not yet wired |
+| **Druid** | d8 | full | Wild Shape *narrative* — see below |
+| **Warlock** | d8 | **pact** | Pact Magic *narrative* — see below |
+
+Two are deliberately left as `narrative` rather than half-built:
+
+- **Wild Shape.** Becoming a different stat block is its own system — a second entity that
+  the reducer swaps in, with its own HP pool that the druid falls back out of. It touches
+  damage, death saves, inventory and initiative. It deserves a design pass, not a flag.
+- **Pact Magic.** Warlock slots are few, always at maximum level, and recharge on a **short**
+  rest — a different recharge rule threaded through the slot system. `caster: "pact"` is
+  recorded on the class so nothing has to guess later, and the rest resolver does not yet
+  read it.
+
+A test asserts every mechanical feature validates against the schema, so a malformed entry
+fails the suite rather than being silently skipped at runtime.
+
+---
+
+## 67. For Fable
+
+Adding a class should now be **data only**. If it needs a new branch in a resolver, that is
+the signal a new shape belongs in the union — add the shape, name where it is handled, and
+the next three classes get it free.
+
+The two deferred systems above are real design work, not gaps to be filled in passing.
+Wild Shape in particular should not be attempted as "swap the stat block and hope"; it needs
+a decision about what happens to concentration, inventory and death while transformed.

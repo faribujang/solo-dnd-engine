@@ -4,7 +4,7 @@ Written for the next builder. Phases 0–8 have their **design-coherent half** d
 rules, engine, view models, content, and gates. What remains is the half that wants an
 iterate-until-green loop — rendering, tuning, and deployment.
 
-**State:** 265 tests, typecheck clean, both demos replaying byte-identically.
+**State:** 285 tests, typecheck clean, both demos replaying byte-identically.
 `SPEC.md` is the full specification; this is the map of what to pick up.
 
 ---
@@ -37,6 +37,7 @@ still be a complete, correct, playable world?**
 | `conditions` | The full SRD list, each with real mechanical flags |
 | `social` | Disposition, DC shifts, **`trustDcShift`** (±6 — trust decides where affinity only colours), prices |
 | `reputation` | What they heard about you before you arrived. Applies once, capped at ±35 |
+| `features` | **Class features as mechanics.** A closed union of shapes; each says where it is handled |
 | `backgrounds` | **Where you came from.** Standing (how each sort of person reads your past) and insights (lines only you can say). SPEC Part X |
 | `approval` | **Per-companion reaction tables.** `situationsIn` reads events; the table is authored |
 | `inspiration` | Earn by playing your character, spend to reroll |
@@ -131,9 +132,13 @@ is rendering, and it is the largest remaining piece.
 
 ### Carried forward — small, known, unbuilt
 
-- **Fighter and rogue class features** — Second Wind, Sneak Attack, Cunning Action.
-  `flags.features` scaffolding exists; mechanics do not.
-- **Rolled hit dice on level-up.** `levelUpPlan` accepts a die; nothing offers the roll.
+- ~~Fighter and rogue class features~~ — **done.** Ten classes now, with a declarative
+  feature union (`rules/features.ts`). Adding a class should be DATA; if it needs a new
+  resolver branch, add a shape to the union instead. SPEC Part XI.
+- ~~Rolled hit dice on level-up~~ — **done**, via a `level_up` action that rolls at
+  resolution.
+- **Wild Shape and Pact Magic are deliberately unbuilt** and marked `narrative`. Both are
+  real systems, not flags — read SPEC §66 before starting either.
 All four of the long-standing small gaps are now **done** — see SPEC Part IX:
 
 - **Companions speak.** A vocal reaction emits a `dialogue` event carrying the authored
@@ -255,7 +260,7 @@ Worth fixing before anything else.
 ## Verify before and after
 
 ```bash
-npm test                     # 265
+npm test                     # 285
 npx tsc --noEmit
 npm run demo && npm run rebuild -- demo    # byte-identical
 npm run demo1                              # 20 free-text turns, replays exactly

@@ -12,6 +12,7 @@ import {
   adjacentZones, castingMod, combatOver, combatantOf, currentCombatant, hasSlot, inReach,
   isHostile, rollInitiative, sameZone,
 } from "./combat.js";
+import { featureOfKind, sneakAttackApplies, sneakDice } from "../rules/features.js";
 
 /**
  * Resolution for everything that only makes sense in a fight. Same contract as turn.ts:
@@ -90,6 +91,7 @@ export function weaponAttack(s: GameState, rng: Rng, attacker: Entity, target: E
   const weaponInst = attacker.equipped.main_hand ? s.items[attacker.equipped.main_hand] : undefined;
   const weapon = weaponInst ? s.item_defs[weaponInst.def_id] : undefined;
   const finesse = weapon?.properties.includes("finesse") ?? false;
+  const ranged = weapon?.properties.includes("ammunition") || weapon?.properties.includes("thrown") || false;
   const ability = finesse && abilityModOf(attacker, "dex") >= abilityModOf(attacker, "str") ? "dex" : "str";
   const abilityBonus = abilityModOf(attacker, ability);
   const toHit = abilityBonus + attacker.proficiency_bonus;
@@ -118,6 +120,31 @@ export function weaponAttack(s: GameState, rng: Rng, attacker: Entity, target: E
     const dmg = rollDamage(rng, weapon?.damage?.dice ?? "1d4", abilityBonus, crit);
     rolls.push(dmg);
     damage = dmg.total;
+
+    // RAGE is a stance, so it adds to every melee swing without being spent again.
+    const rageFeat = featureOfKind(attacker, "rage");
+    if (attacker.flags["raging"] === true && rageFeat && !ranged) {
+      damage += rageFeat.effect.damage_bonus;
+      mech += `[rage +${rageFeat.effect.damage_bonus}] `;
+    }
+
+    // SNEAK ATTACK. The conditions live in rules/features.ts, because the clause everyone
+    // drops — an ally beside the target counts, not only advantage — is the one that makes
+    // a rogue want a friend in the fight.
+    if (sneakAttackApplies(s, attacker, target, {
+      advantage: advantage === "advantage",
+      disadvantage: advantage === "disadvantage",
+      finesseOrRanged: finesse || ranged,
+    })) {
+      const n = sneakDice(attacker.level);
+      const sneak = rollDamage(rng, `${n}d6`, 0, crit);
+      rolls.push(sneak);
+      damage += sneak.total;
+      // Once per TURN, not per attack. Cleared when their turn comes round again.
+      effects.push({ t: "set_entity_flag", entity_id: attacker.id, key: "sneak_used_this_turn", value: true });
+      mech += `[sneak ${n}d6 = ${sneak.total}] `;
+    }
+
     effects.push({ t: "damage", entity_id: target.id, amount: damage, damage_type: weapon?.damage?.type ?? "bludgeoning" });
     if (target.flags["guided"] === true) effects.push({ t: "set_entity_flag", entity_id: target.id, key: "guided", value: false });
     effects.push(...concentrationCheck(s, rng, target, damage));
@@ -138,6 +165,29 @@ export function concentrationCheck(s: GameState, rng: Rng, target: Entity, damag
   return [{ t: "set_concentration", entity_id: target.id, spell_id: null }];
 }
 
+/**
+ * CUNNING ACTION, and why it is worth the indirection.
+ *
+ * A rogue's Dash, Disengage and Hide cost a BONUS action instead of an action. That one
+ * line is most of what makes a rogue feel like a rogue at the table: everyone else chooses
+ * between moving and swinging, and the rogue does both.
+ *
+ * Rather than special-casing "if rogue" in three places, the feature declares which actions
+ * it moves onto the bonus economy (rules/features.ts), and this reads the declaration. A
+ * class that gets the same trick later is data, not another branch.
+ */
+function economyFor(actor: Entity, actionType: string): "action" | "bonus" {
+  const feat = featureOfKind(actor, "bonus_action_unlocks");
+  return feat?.effect.actions.includes(actionType) ? "bonus" : "action";
+}
+
+/** Spend whichever pip this action actually costs for this character. */
+function spendFor(actor: Entity, actionType: string): Effect {
+  return economyFor(actor, actionType) === "bonus"
+    ? { t: "spend", entity_id: actor.id, bonus: true }
+    : { t: "spend", entity_id: actor.id, action: true };
+}
+
 export function resolveCombat(s: GameState, actor: Entity, action: CombatAction, rng: Rng, lean: number): CombatResult {
   const c = s.combat;
   if (!c) return { ok: false, reason: "You are not in a fight." };
@@ -151,18 +201,24 @@ export function resolveCombat(s: GameState, actor: Entity, action: CombatAction,
     case "end_turn":
       return { ok: true, type: "effect", payload: { end_turn: true }, rolls: [], effects: [{ t: "next_turn" }], target_ids: [], mechanics: `${actor.name} ends their turn.` };
 
-    case "dash":
-      if (!me.economy.action) return { ok: false, reason: "You have already used your action." };
+    case "dash": {
+      const pip = economyFor(actor, "dash");
+      if (pip === "bonus" && !me.economy.bonus) return { ok: false, reason: "You have already used your bonus action." };
+      if (pip === "action" && !me.economy.action) return { ok: false, reason: "You have already used your action." };
       if (!canMove(actor)) return { ok: false, reason: "You cannot move." };
-      return { ok: true, type: "effect", payload: { dash: true }, rolls: [],
-        effects: [{ t: "spend", entity_id: actor.id, action: true }, { t: "grant_moves", entity_id: actor.id, moves: 1 }],
-        target_ids: [], mechanics: "Dash: your action buys another zone of movement." };
+      return { ok: true, type: "effect", payload: { dash: true, cunning: pip === "bonus" }, rolls: [],
+        effects: [spendFor(actor, "dash"), { t: "grant_moves", entity_id: actor.id, moves: 1 }],
+        target_ids: [], mechanics: `Dash: your ${pip} action buys another zone of movement.` };
+    }
 
-    case "disengage":
-      if (!me.economy.action) return { ok: false, reason: "You have already used your action." };
-      return { ok: true, type: "effect", payload: { disengage: true }, rolls: [],
-        effects: [{ t: "spend", entity_id: actor.id, action: true }, { t: "mark", entity_id: actor.id, disengaged: true }],
-        target_ids: [], mechanics: "Disengage: leaving a zone will not provoke attacks this turn." };
+    case "disengage": {
+      const pip = economyFor(actor, "disengage");
+      if (pip === "bonus" && !me.economy.bonus) return { ok: false, reason: "You have already used your bonus action." };
+      if (pip === "action" && !me.economy.action) return { ok: false, reason: "You have already used your action." };
+      return { ok: true, type: "effect", payload: { disengage: true, cunning: pip === "bonus" }, rolls: [],
+        effects: [spendFor(actor, "disengage"), { t: "mark", entity_id: actor.id, disengaged: true }],
+        target_ids: [], mechanics: `Disengage: your ${pip} action means leaving a zone will not provoke attacks this turn.` };
+    }
 
     case "dodge":
       if (!me.economy.action) return { ok: false, reason: "You have already used your action." };

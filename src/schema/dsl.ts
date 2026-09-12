@@ -121,6 +121,8 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("begin_conversation"), entity_id: Id, agenda: z.string().default("") }),
   z.object({ t: z.literal("end_conversation"), reason: z.string().default("") }),
   z.object({ t: z.literal("raise_topic"), topic_id: z.string(), friction: z.number().int().default(0) }),
+  z.object({ t: z.literal("grant_action"), entity_id: Id }),
+  z.object({ t: z.literal("recharge_features"), entity_id: Id, kind: z.enum(["short", "long"]) }),
   z.object({ t: z.literal("tag_relationship"), subject: Id, object: Id, tag: z.string() }),
   z.object({ t: z.literal("join_party"), entity_id: Id }),
   z.object({ t: z.literal("leave_party"), entity_id: Id, reason: z.string().default("") }),

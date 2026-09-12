@@ -2,7 +2,7 @@ import type { DifficultyBand, Roll, Skill } from "../schema/common.js";
 import type { Effect } from "../schema/dsl.js";
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
-import { rollD20 } from "../rules/dice.js";
+import { rollD20, rollDamage } from "../rules/dice.js";
 import { abilityModOf, dcForBand, skillModifier, skillParts, DEGREE_LABEL } from "../rules/checks.js";
 void abilityModOf; void combatOver;
 import { collectSkillModifiers, combineModifiers } from "../rules/modifiers.js";
@@ -12,6 +12,10 @@ import { leversOf } from "../rules/difficulty.js";
 import { agendaOf, backgroundLabel, pressOutcome, SEALED_DC, topicsFor, wouldWalkAway, type PressResult } from "./conversation.js";
 import { audiencePressure } from "./bystanders.js";
 import { insightsFor } from "../rules/backgrounds.js";
+import { canUse, featureById, featureOfKind } from "../rules/features.js";
+import { levelUpPlan } from "../rules/character.js";
+import { levelForXp } from "../rules/progression.js";
+import { CLASSES } from "../content/srd/data.js";
 import { hasInspiration } from "../rules/inspiration.js";
 import type { Modifier } from "../rules/modifiers.js";
 
@@ -65,6 +69,8 @@ export type Action =
   | { type: "buy"; merchant_id: string; item_def_id: string; qty?: number }
   | { type: "sell"; merchant_id: string; item_instance_id: string }
   | { type: "recruit"; target_id: string }
+  | { type: "use_feature"; feature_id: string; target_id?: string; amount?: number }
+  | { type: "level_up" }
   | CombatAction;
 
 export interface Resolution {
@@ -363,16 +369,35 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
         effects.push({ t: "spend", entity_id: actor.id, action: true });
       }
 
-      const swing = weaponAttack(s, rng, actor, target, lean);
-      rolls.push(...swing.rolls);
-      effects.push(...swing.effects);
-      mech += swing.mech;
+      // EXTRA ATTACK. The Attack action buys more than one swing from level 5, which is
+      // the single biggest power jump a martial character gets and the reason a fighter
+      // stops feeling like a wizard with a sword.
+      //
+      // Both swings resolve NOW, against the same target, and both land in one event: a
+      // player who has to press attack twice for one action has been taught the economy
+      // wrong. A target that drops on the first swing stops the sequence.
+      const attacks = featureOfKind(actor, "extra_attack")?.effect.attacks ?? 1;
+      let hit = false;
+      let damage = 0;
+      let dropped = false;
+
+      for (let n = 0; n < attacks && !dropped; n++) {
+        const swing = weaponAttack(s, rng, actor, target, lean);
+        rolls.push(...swing.rolls);
+        effects.push(...swing.effects);
+        mech += (n > 0 ? " Then: " : "") + swing.mech;
+        hit = hit || swing.hit;
+        damage += swing.damage;
+        // Effects have not been applied yet — they are baked onto the event — so track the
+        // running total rather than reading hp, which has not moved.
+        if (damage >= target.hp.current) dropped = true;
+      }
 
       return finish(
         {
           type: "attack",
           target_ids: [target.id],
-          payload: { hit: swing.hit, damage: swing.damage },
+          payload: { hit, damage, attacks },
           rolls,
           direct_effects: effects,
           duration_minutes: s.combat ? 0 : DURATION.attack,
@@ -500,6 +525,168 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
           witnesses: witnessIds(s, loc.id, actor.id),
         },
         `Speak with ${target.name}${action.topic ? ` about ${action.topic}` : ""}.`,
+      );
+    }
+
+    // -------------------------------------------------------- use_feature
+    case "use_feature": {
+      const feat = featureById(actor, action.feature_id);
+      if (!feat) return { ok: false, reason: "You have no such feature." };
+      if (!canUse(actor, feat)) {
+        const when = feat.recharge === "short_rest" ? "a short rest" : feat.recharge === "long_rest" ? "a long rest" : "later";
+        return { ok: false, reason: `${feat.name} is spent. You will have it back after ${when}.` };
+      }
+
+      const spend: Effect[] = feat.uses === "unlimited"
+        ? []
+        : [{ t: "set_entity_flag", entity_id: actor.id, key: `feat_used_${feat.id}`, value: (typeof actor.flags[`feat_used_${feat.id}`] === "number" ? actor.flags[`feat_used_${feat.id}`] as number : 0) + 1 }];
+
+      const inCombat = !!s.combat;
+      const me = inCombat ? combatantOf(s.combat!, actor.id) : undefined;
+
+      switch (feat.effect.t) {
+        case "heal_self": {
+          // Second Wind. A bonus action, so it never competes with swinging.
+          if (me && !me.economy.bonus) return { ok: false, reason: "You have already used your bonus action." };
+          const roll = rollDamage(rng, feat.effect.dice, feat.effect.plus_level ? actor.level : 0, false);
+          return finish(
+            {
+              type: "rest", target_ids: [],
+              payload: { feature: feat.id, healed: roll.total },
+              rolls: [roll],
+              direct_effects: [
+                ...spend,
+                { t: "heal", entity_id: actor.id, amount: roll.total },
+                ...(me ? [{ t: "spend" as const, entity_id: actor.id, bonus: true }] : []),
+              ],
+              duration_minutes: inCombat ? 0 : 1,
+              witnesses: witnessIds(s, loc.id, actor.id),
+            },
+            `${feat.name}: ${fmt(roll)} — ${actor.name} heals ${roll.total}.`,
+          );
+        }
+
+        case "extra_action": {
+          // Action Surge. Not a free turn: one more ACTION, this turn only.
+          if (!me) return { ok: false, reason: `${feat.name} only means something in a fight.` };
+          if (me.economy.action) return { ok: false, reason: "You still have your action. Use it first." };
+          return finish(
+            {
+              type: "effect", target_ids: [],
+              payload: { feature: feat.id, action_surge: true },
+              rolls: [],
+              direct_effects: [...spend, { t: "grant_action", entity_id: actor.id }],
+              duration_minutes: 0,
+              witnesses: [],
+            },
+            `${feat.name}: ${actor.name} has another action this turn.`,
+          );
+        }
+
+        case "rage": {
+          // A stance. It ends when the fight does, which is close enough to RAW's ten
+          // rounds that the difference has never mattered at a table.
+          if (me && !me.economy.bonus) return { ok: false, reason: "You have already used your bonus action." };
+          if (actor.flags["raging"] === true) return { ok: false, reason: "You are already raging." };
+          return finish(
+            {
+              type: "effect", target_ids: [],
+              payload: { feature: feat.id, raging: true },
+              rolls: [],
+              direct_effects: [
+                ...spend,
+                { t: "set_entity_flag", entity_id: actor.id, key: "raging", value: true },
+                ...(me ? [{ t: "spend" as const, entity_id: actor.id, bonus: true }] : []),
+              ],
+              duration_minutes: 0,
+              witnesses: witnessIds(s, loc.id, actor.id),
+            },
+            `${feat.name}: +${feat.effect.damage_bonus} melee damage, and half from blades, arrows and clubs.`,
+          );
+        }
+
+        case "heal_pool": {
+          // Lay on Hands. A pool measured in hit points, spent a point at a time.
+          const pool = feat.effect.per_level * actor.level;
+          const usedRaw = actor.flags["lay_on_hands_used"];
+          const used = typeof usedRaw === "number" ? usedRaw : 0;
+          const want = Math.max(1, action.amount ?? 5);
+          if (used + want > pool) return { ok: false, reason: `Only ${pool - used} left in the pool.` };
+
+          const who = action.target_id ? s.entities[action.target_id] : actor;
+          if (!who) return { ok: false, reason: "There is nobody by that name here." };
+          if (who.location_id !== loc.id) return { ok: false, reason: `${who.name} is not here.` };
+
+          return finish(
+            {
+              type: "rest", target_ids: [who.id],
+              payload: { feature: feat.id, healed: want },
+              rolls: [],
+              direct_effects: [
+                { t: "set_entity_flag", entity_id: actor.id, key: "lay_on_hands_used", value: used + want },
+                { t: "heal", entity_id: who.id, amount: want },
+                ...(me ? [{ t: "spend" as const, entity_id: actor.id, action: true }] : []),
+              ],
+              duration_minutes: inCombat ? 0 : 1,
+              witnesses: witnessIds(s, loc.id, actor.id),
+            },
+            `${feat.name}: ${who.name} recovers ${want}. ${pool - used - want} left in the pool.`,
+          );
+        }
+
+        case "inspiration_die": {
+          // Bardic Inspiration. The ally holds the die and chooses when to spend it, which
+          // is why it lands as Inspiration rather than as a one-off bonus.
+          const who = action.target_id ? s.entities[action.target_id] : undefined;
+          if (!who) return { ok: false, reason: "Inspire whom?" };
+          if (who.location_id !== loc.id) return { ok: false, reason: `${who.name} is not here.` };
+          if (me && !me.economy.bonus) return { ok: false, reason: "You have already used your bonus action." };
+          return finish(
+            {
+              type: "effect", target_ids: [who.id],
+              payload: { feature: feat.id, inspired: who.id },
+              rolls: [],
+              direct_effects: [
+                ...spend,
+                { t: "grant_inspiration", entity_id: who.id, reason: "heroism" },
+                ...(me ? [{ t: "spend" as const, entity_id: actor.id, bonus: true }] : []),
+              ],
+              duration_minutes: 0,
+              witnesses: witnessIds(s, loc.id, actor.id),
+            },
+            `${feat.name}: ${who.name} has a ${feat.effect.die} to spend when they choose.`,
+          );
+        }
+
+        default:
+          // Sneak Attack, Extra Attack, Jack of All Trades and the narrative ones are not
+          // things you DO — they apply where they apply. Offering them as a verb would
+          // teach the player the wrong shape.
+          return { ok: false, reason: `${feat.name} is not something you activate; it applies on its own.` };
+      }
+    }
+
+    // --------------------------------------------------------- level up
+    case "level_up": {
+      if (actor.flags["level_up_ready"] !== true && levelForXp(actor.xp) <= actor.level) {
+        return { ok: false, reason: "You have not earned a level yet." };
+      }
+      const cls = actor.class_id ? CLASSES[actor.class_id] : undefined;
+      const die = cls?.hit_die ?? 8;
+      // ROLLED hit points, not the average. Committed dice make this exploit-proof for
+      // free: rewinding and levelling again gives you the same die.
+      const roll = rollDamage(rng, `1d${die}`, 0, false);
+      const plan = levelUpPlan(actor, roll.total);
+      return finish(
+        {
+          type: "level_up", target_ids: [],
+          payload: { to: actor.level + 1, hp_gain: plan.hp_gain, rolled: roll.total, features: plan.features },
+          rolls: [roll],
+          direct_effects: [{ t: "level_up", entity_id: actor.id, hp_gain: plan.hp_gain }],
+          duration_minutes: 0,
+          witnesses: [],
+        },
+        `Level ${actor.level + 1}: hit die ${fmt(roll)} + con = ${plan.hp_gain} hp.${plan.features.length ? ` Gained ${plan.features.join(", ")}.` : ""}`,
       );
     }
 
@@ -777,6 +964,15 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
         mech = `Wait ${minutes} minutes.`;
       }
 
+      // Class features recharge. Second Wind and Action Surge on a short rest; Rage and
+      // Lay on Hands on a long one. See rules/features.ts.
+      if (action.type === "rest") {
+        effects.push({ t: "recharge_features", entity_id: actor.id, kind: action.kind });
+        for (const id of s.meta.party_ids) {
+          if (id !== actor.id) effects.push({ t: "recharge_features", entity_id: id, kind: action.kind });
+        }
+      }
+
       // The world moves while the player rests. All of it is random, so it is decided HERE
       // and baked onto the event as concrete effects; the reducer stays pure.
       const tick = worldTick(s, minutes, rng);
@@ -824,6 +1020,8 @@ function actionKey(a: Action): string {
     case "buy": return `buy:${a.merchant_id}:${a.item_def_id}`;
     case "sell": return `sell:${a.merchant_id}:${a.item_instance_id}`;
     case "recruit": return `recruit:${a.target_id}`;
+    case "use_feature": return `feature:${a.feature_id}:${a.target_id ?? "-"}`;
+    case "level_up": return "level_up";
     case "end_turn": return "end_turn";
     case "dash": return "dash";
     case "disengage": return "disengage";
