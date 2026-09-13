@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { Rng, seedToState } from "../rules/rng.js";
-import { estimateTokens, type LLMClient, type LLMRequest, type LLMResponse } from "./client.js";
+import { estimateTokens, type LLMClient, type LLMRequest, type LLMResponse, type StreamHandlers } from "./client.js";
+import { chunkForStreaming } from "./stream.js";
 import { Intent, Narration, SceneDigest, AmbientBeat } from "./contracts.js";
 import { classify } from "../engine/questions.js";
 
@@ -59,6 +60,24 @@ export class MockLLM implements LLMClient {
       usage: { input_tokens: estimateTokens(req.system + req.user), output_tokens: estimateTokens(raw) },
       ms: this.latencyMs,
     };
+  }
+
+  /**
+   * Pretend to stream. The value is computed exactly as `complete` computes it — same
+   * generator draws, same result — and the prose is then handed out in word-sized pieces.
+   * That equivalence is what lets the streaming turn path share the replay tests with the
+   * non-streaming one.
+   */
+  async stream<T>(req: LLMRequest<T>, on: StreamHandlers): Promise<LLMResponse<T>> {
+    const res = await this.complete(req);
+    const text = (res.value as { narration?: unknown } | null)?.narration;
+    if (typeof text === "string" && on.onText) {
+      for (const piece of chunkForStreaming(text)) {
+        on.onText(piece);
+        if (this.latencyMs > 0) await new Promise((r) => setTimeout(r, Math.min(30, this.latencyMs)));
+      }
+    }
+    return res;
   }
 
   // ---------------------------------------------------------------- intent

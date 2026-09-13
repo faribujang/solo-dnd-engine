@@ -26,6 +26,8 @@ export const CampaignMeta = z.object({
   session_zero: SessionZero.default({}),
   taught: z.array(z.string()).default([]),   // rules concepts already explained once
   campaign_id: Id.nullable().default(null),
+  /** Which authored content this save was made from — the directory under content/campaign. */
+  content_dir: z.string().default(""),
   seed: z.string(),                           // every die derives from this + the situation
   turn: z.number().int().nonnegative().default(0),
   next_ids: z.record(z.string(), z.number().int().nonnegative()).default({}), // id counters

@@ -2,8 +2,8 @@
 
 A single-player 5e campaign where the state is a database and the Dungeon Master is only a voice.
 
-Built to [`SPEC.md`](./SPEC.md). **The engine is complete: 257 tests, byte-identical replay.**
-What remains is the client and the world — see [`HANDOFF.md`](./HANDOFF.md).
+Built to [`SPEC.md`](./SPEC.md). **The engine and the server are complete: 348 tests, byte-identical replay.**
+What remains is the client — see [`HANDOFF.md`](./HANDOFF.md).
 
 Built so far: schemas, store, reducer, trigger DSL, the full LLM turn loop, a living world,
 unlimited rewind, three dice modes, character creation and progression, death saves,
@@ -36,7 +36,8 @@ suite runs on it.
 npm install
 npm run demo1                # 20 turns of free text through the whole pipeline
 npm run play -- demo1 --mock # play it yourself
-npm run check                # typecheck + 257 tests
+npm run check                # typecheck + 348 tests
+npm run serve -- --mock      # or play it over HTTP on :8787
 ```
 
 To use a real model, copy the env template and fill in
@@ -156,7 +157,7 @@ src/view/       view models — the whole contract a client consumes
 src/cli/        seed, play, demo, demo1, rebuild, inspect
 content/campaign/drowned_bell/    the starter campaign
 config/         model routing; no model id is hardcoded in src/
-tests/          257 tests, including every phase gate
+tests/          348 tests, including every phase gate
 saves/          gitignored
 ```
 

@@ -1,8 +1,9 @@
 import { zodToJsonSchema } from "./jsonSchema.js";
 import {
   estimateTokens, LLMSchemaError, LLMTransportError,
-  type LLMClient, type LLMRequest, type LLMResponse,
+  type LLMClient, type LLMRequest, type LLMResponse, type StreamHandlers,
 } from "./client.js";
+import { NarrationTap, SseLineReader } from "./stream.js";
 
 /**
  * One adapter for both real providers. Gemini and OpenRouter are close enough to the
@@ -32,9 +33,74 @@ export class OpenAICompatClient implements LLMClient {
 
   async complete<T>(req: LLMRequest<T>): Promise<LLMResponse<T>> {
     const started = Date.now();
+    const { res, release } = await this.send(req, false);
+    try {
+      const json = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+      const raw = json.choices?.[0]?.message?.content ?? "";
+      return this.finish(req, raw, json.usage, started);
+    } finally {
+      release();
+    }
+  }
+
+  /**
+   * The same call with `stream: true`. Chunks arrive as server-sent events carrying pieces
+   * of the JSON text; we accumulate them into the same raw string `complete` would have got,
+   * and run a tap over the `narration` field so the prose reaches the caller as it decodes.
+   * Validation happens once, on the whole, exactly as before.
+   */
+  async stream<T>(req: LLMRequest<T>, on: StreamHandlers): Promise<LLMResponse<T>> {
+    const started = Date.now();
+    const { res, release } = await this.send(req, true);
+    try {
+      if (!res.body) {
+        // A gateway that ignored `stream: true` and answered whole. Fine — same result.
+        const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }>; usage?: Usage };
+        const raw = json.choices?.[0]?.message?.content ?? "";
+        const text = narrationOf(raw);
+        if (text && on.onText) on.onText(text);
+        return this.finish(req, raw, json.usage, started);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      const lines = new SseLineReader();
+      const tap = new NarrationTap();
+      let raw = "";
+      let usage: Usage | undefined;
+
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        for (const data of lines.push(decoder.decode(value, { stream: true }))) {
+          if (data === "[DONE]") continue;
+          let evt: { choices?: Array<{ delta?: { content?: string } }>; usage?: Usage };
+          try { evt = JSON.parse(data); } catch { continue; }
+          const delta = evt.choices?.[0]?.delta?.content;
+          if (typeof delta === "string" && delta.length > 0) {
+            raw += delta;
+            const text = tap.push(delta);
+            if (text && on.onText) on.onText(text);
+          }
+          if (evt.usage) usage = evt.usage;
+        }
+      }
+      return this.finish(req, raw, usage, started);
+    } finally {
+      release();
+    }
+  }
+
+  /** One fetch for both paths. The caller must `release()` to clear the timeout. */
+  private async send<T>(req: LLMRequest<T>, stream: boolean): Promise<{ res: Response; release: () => void }> {
     const f = this.opts.fetchImpl ?? fetch;
     const controller = new AbortController();
+    // The timer covers the whole exchange, including a long streamed body.
     const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs ?? 45_000);
+    const release = () => clearTimeout(timer);
 
     let res: Response;
     try {
@@ -62,19 +128,20 @@ export class OpenAICompatClient implements LLMClient {
               schema: zodToJsonSchema(req.schema),
             },
           },
+          ...(stream ? { stream: true, stream_options: { include_usage: true } } : {}),
         }),
       });
     } catch (err) {
+      release();
       throw new LLMTransportError(
         `${this.name}: ${err instanceof Error ? err.message : String(err)}`,
         null,
         true,   // network faults and timeouts are worth another go
       );
-    } finally {
-      clearTimeout(timer);
     }
 
     if (!res.ok) {
+      release();
       const body = await res.text().catch(() => "");
       // 429 and 5xx are worth retrying or falling through; 4xx means we asked wrongly.
       const retryable = res.status === 429 || res.status >= 500;
@@ -85,12 +152,10 @@ export class OpenAICompatClient implements LLMClient {
       );
     }
 
-    const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
-    const raw = json.choices?.[0]?.message?.content ?? "";
+    return { res, release };
+  }
 
+  private finish<T>(req: LLMRequest<T>, raw: string, usage: Usage | undefined, started: number): LLMResponse<T> {
     let parsedJson: unknown;
     try {
       parsedJson = JSON.parse(raw);
@@ -109,11 +174,23 @@ export class OpenAICompatClient implements LLMClient {
       provider: this.name,
       model: this.opts.model,
       usage: {
-        input_tokens: json.usage?.prompt_tokens ?? estimateTokens(req.system + req.user),
-        output_tokens: json.usage?.completion_tokens ?? estimateTokens(raw),
+        input_tokens: usage?.prompt_tokens ?? estimateTokens(req.system + req.user),
+        output_tokens: usage?.completion_tokens ?? estimateTokens(raw),
       },
       ms: Date.now() - started,
     };
+  }
+}
+
+type Usage = { prompt_tokens?: number; completion_tokens?: number };
+
+/** The `narration` field of a finished JSON object, for the non-streaming fallback. */
+function narrationOf(raw: string): string {
+  try {
+    const v = JSON.parse(raw) as { narration?: unknown };
+    return typeof v.narration === "string" ? v.narration : "";
+  } catch {
+    return "";
   }
 }
 

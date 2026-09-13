@@ -1,5 +1,6 @@
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
+import type { Roll } from "../schema/common.js";
 import type { LLMClient } from "../llm/client.js";
 import type { Intent } from "../llm/contracts.js";
 import { Narration } from "../llm/contracts.js";
@@ -29,6 +30,28 @@ import { takeTurn } from "./session.js";
  * something different.
  */
 
+/**
+ * Moments in the turn a caller may want to see as they happen, rather than all at once
+ * when the turn returns. They exist for one reason: the serving contract puts the roll
+ * card on the player's screen BEFORE the narrator has written a word, and only the turn
+ * loop knows when that moment is.
+ *
+ * `onMechanics` may be async. A server commits the mechanics inside it, so that a crash
+ * during narration leaves a world with the dice already landed and no prose — which is
+ * exactly the `mechanics_only` outcome, reached a different way.
+ */
+export interface TurnHooks {
+  onIntent?: (info: { intent: Intent; action: Action }) => void;
+  onMechanics?: (info: {
+    state: GameState;
+    journal: GameEvent[];
+    mechanics: string;
+    rolls: Roll[];
+  }) => void | Promise<void>;
+  /** Prose as it arrives. Only fires when the client can stream; otherwise never. */
+  onProse?: (delta: string) => void;
+}
+
 export interface LLMTurnOptions {
   /** Verbatim recent turns for the prompt, oldest first. */
   recent?: readonly string[];
@@ -38,6 +61,7 @@ export interface LLMTurnOptions {
   skipNarration?: boolean;
   /** Action keys already tried this scene, so chips do not repeat. */
   triedThisScene?: readonly string[];
+  hooks?: TurnHooks;
 }
 
 export interface LLMTurnOutcome {
@@ -109,6 +133,8 @@ export async function takeLLMTurn(
     };
   }
 
+  opts.hooks?.onIntent?.({ intent: parsed.intent, action: parsed.action });
+
   // ---------------------------------------------------------- 3. reduce
   // takeTurn also runs any CPU combat turns that follow, and ends the fight when a side is
   // done, so the narrator sees the whole exchange rather than half of it.
@@ -116,6 +142,18 @@ export async function takeLLMTurn(
   const reduced = { state: played.state, journal: played.journal, fired: played.fired, truncated: played.truncated };
   let working = reduced.state;
   const journal: GameEvent[] = [...reduced.journal];
+
+  // The world has moved and the dice have landed. This is the moment the serving contract
+  // cares about most: whoever is listening gets the roll card NOW, and the narrator has not
+  // been asked for anything yet.
+  if (opts.hooks?.onMechanics) {
+    await opts.hooks.onMechanics({
+      state: working,
+      journal: [...journal],
+      mechanics: resolution.mechanics,
+      rolls: journal.flatMap((e) => e.rolls),
+    });
+  }
 
   /**
    * The turn WITHOUT prose.
@@ -177,15 +215,21 @@ export async function takeLLMTurn(
   // failure the player can survive. Mechanics already happened; prose is decoration.
   let narration;
   try {
-    narration = await llm.complete({
-      role: "narrate",
+    const request = {
+      role: "narrate" as const,
       system: context.system,
       user: context.user,
       schema: Narration,
       schemaName: "Narration",
       maxTokens: 1200,
       temperature: 0.8,
-    });
+    };
+    // Streamed when someone is listening and the client can; the resolved value is the
+    // same either way, which is what keeps the replay tests honest across both paths.
+    const onProse = opts.hooks?.onProse;
+    narration = llm.stream && onProse
+      ? await llm.stream(request, { onText: onProse })
+      : await llm.complete(request);
   } catch {
     return mechanicsOnly("mechanics_only");
   }

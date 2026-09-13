@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LLMTransportError, type LLMClient, type LLMRequest, type LLMResponse, type Role } from "./client.js";
+import { LLMTransportError, type LLMClient, type LLMRequest, type LLMResponse, type Role, type StreamHandlers } from "./client.js";
 
 /**
  * Role-based model routing with a fallback chain.
@@ -53,6 +53,28 @@ export class Router implements LLMClient {
   ) {}
 
   async complete<T>(req: LLMRequest<T>): Promise<LLMResponse<T>> {
+    return this.run(req, (provider, r) => provider.complete(r));
+  }
+
+  /**
+   * Streamed where the provider can, whole where it cannot. A provider without `stream`
+   * still satisfies the caller: the prose is handed over once, at the end, and the caller
+   * cannot tell the difference except by the clock.
+   */
+  async stream<T>(req: LLMRequest<T>, on: StreamHandlers): Promise<LLMResponse<T>> {
+    return this.run(req, async (provider, r) => {
+      if (provider.stream) return provider.stream(r, on);
+      const res = await provider.complete(r);
+      const text = (res.value as { narration?: unknown } | null)?.narration;
+      if (typeof text === "string" && on.onText) on.onText(text);
+      return res;
+    });
+  }
+
+  private async run<T>(
+    req: LLMRequest<T>,
+    invoke: (provider: LLMClient, r: LLMRequest<T>) => Promise<LLMResponse<T>>,
+  ): Promise<LLMResponse<T>> {
     const roleCfg = this.config.roles[req.role];
     if (!roleCfg) throw new Error(`No model configured for role "${req.role}"`);
 
@@ -69,7 +91,7 @@ export class Router implements LLMClient {
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
-          const res = await provider.complete({
+          const res = await invoke(provider, {
             ...req,
             maxTokens: req.maxTokens ?? roleCfg.max_tokens,
             temperature: req.temperature ?? roleCfg.temperature,

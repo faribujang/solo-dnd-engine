@@ -1,12 +1,12 @@
 # Solo D&D Engine — Technical Build Specification
 
 **Audience:** an implementing agent (Claude Fable 5.1) building from scratch.
-**Status:** v9. Parts I–IV are the original design. Parts V–XI are the running changelog:
+**Status:** v10. Parts I–IV are the original design. Parts V–XII are the running changelog:
 what the build taught us, what other games taught us, and what has been added since.
 Where they disagree, **the later part wins** — superseded sections are marked in place.
 Authoritative for architecture and data model. Deviate only with a stated reason.
 
-**Where the engine actually is:** 285 tests, 79 source files, replay byte-identical. Phases
+**Where the engine actually is:** 348 tests, 79 source files, replay byte-identical. Phases
 0–8 of §37 are done. What is left is the client, the world, and the four gaps in §46.1.
 
 ---
@@ -3163,3 +3163,131 @@ the next three classes get it free.
 The two deferred systems above are real design work, not gaps to be filled in passing.
 Wild Shape in particular should not be attempted as "swap the stat block and hope"; it needs
 a decision about what happens to concentration, inventory and death while transformed.
+
+---
+
+# Part XII — serving, generating, and two determinism bugs
+
+**Status: 348 tests, 91 source files. Replay byte-identical.**
+
+Phase 8 is complete. What was written in this part: the serving layer the contract described,
+streaming narration, the generator loop, the succession CLI — and two determinism bugs the
+last two of those flushed out.
+
+---
+
+## 68. The narrator streams, and prose is the only thing that waits
+
+The contract (§45.1) said mechanics go out before a word is written. The implementation
+needed the model to hand prose over as it arrives, and it needed to do that **without giving
+up whole-document validation** — the moment a client acts on a half-parsed answer, the model
+is holding state again.
+
+The answer is a tap on one field. `narration` is the first key in the schema, so a small
+reader watches the raw stream, finds that string, and decodes its characters as they land.
+Everything else — facts, proposals, chips — arrives whole and is validated whole, exactly as
+before. One call, no extra cost, and a `stream()` that resolves to precisely what `complete()`
+would have returned.
+
+That equivalence is load-bearing: the streaming path and the non-streaming path share the
+replay tests, so there is nothing for them to disagree about. A provider that ignores
+`stream: true` degrades to one `onText` at the end and nobody notices but the clock.
+
+---
+
+## 69. The service, and the three things it owns
+
+`GameService` implements the contract free of any HTTP framework, so a test drives it as
+easily as a socket does. It owns three things the engine deliberately does not:
+
+**The lock.** One turn at a time per save. Two tabs, or one device that double-tapped: the
+second waits, finds the version moved, and is refused. Different saves proceed in parallel.
+
+**The version.** The journal's length, which was already the truth and is now also the API's.
+
+**The order.** Mechanics are committed to disk *and sent* before the narrator is called. The
+test for this does not race the clock — it kills the narrator outright and checks the world
+moved anyway.
+
+Around those: a transcript (`feed.jsonl`, which is **not** the journal — the journal replays
+the world, the feed remembers the conversation), a cost ledger with a ceiling that falls back
+to mechanics-only turns rather than quietly spending money, and a per-save turn-rate guard.
+
+`src/server/http.ts` is plain `node:http`. Nine routes and one stream do not need a
+dependency, and a dependency there would be the first thing to rot. A version conflict is a
+**409 before the stream opens**, so a client handles it with its ordinary error path instead
+of a stream that ends after one frame.
+
+### 69.1 A save is content plus three decisions
+
+Which campaign, which session-zero agreement, and who the player is. Those decisions are
+recorded once in `creation.json` and replayed by `applyCreation` — because the journal
+replays *from the starting world*, and a save whose starting world cannot be reconstructed
+cannot be rebuilt. `rebuild` and `/rewind` both go through the same function as creation:
+one transformation, two callers, nothing to disagree about.
+
+---
+
+## 70. The generator loop
+
+`generate.ts` had the stages, prompts, schemas and lint. This is the thing that runs them,
+and the staging is the point: each stage sees the **frozen** output of the last as text it
+cannot edit, so a later stage can only add. Ask for a whole campaign in one call and the
+third quest references a town the second never built.
+
+Two rules the loop enforces:
+
+- **Nothing is written until validation passes.** A half-written campaign directory is worse
+  than none, because it looks loadable.
+- **A wrong reference is an error, not something to repair.** An earlier draft quietly moved
+  a player standing in a nonexistent room to the nearest real one. That hides the exact class
+  of failure the staged pipeline exists to surface, so it now only fills in a *blank*.
+
+Generated output is ordinary authored JSON in the same layout `loadCampaign` reads. The test
+generates a campaign from a scripted author and then **plays it** — moves between its rooms,
+renders its screen — because "it validates" and "it is a game" are different claims.
+
+---
+
+## 71. Succession, and the gate earning its keep
+
+`planSuccession` was pure and tested since phase 8; `npm run succeed` runs it. One plan, one
+journaled event, and a snapshot taken first so it is undoable.
+
+The first version of that CLI wrote the legacy ledger, the campaign's status, the arcs and
+the promoted seeds **beside the journal**. It worked. It also failed `npm run rebuild` within
+a minute, which is exactly what that gate is for — everything a succession changes is now an
+effect (`add_legacy`, `set_campaign_status`, `set_arc_status`, `promote_seed`), so a
+generation-skip replays and rewinds like any other turn.
+
+---
+
+## 72. Two bugs worth naming
+
+**`known_by: []` meant "the player knows it".** The `add_fact` effect fell back to the PC
+when the list was empty, which made a fact *nobody* knows impossible to write — and that is
+precisely what a succession seed is. A thread the next party already knows about is not a
+hook, it is a briefing. Every caller already passed `known_by` explicitly and no authored
+content relied on the fallback, so the field is now taken literally.
+
+**Clocks fired in object order.** `advance_time` iterated `Object.values(s.clocks)`.
+Authored content lists clocks in the order somebody wrote them; a save writes them
+key-sorted. When one tick finishes *two* clocks, their consequences fire in a different
+sequence on replay than they did live — which renumbers every fact minted afterwards and
+fails the rebuild gate.
+
+Four hundred ordinary turns never found it. A twelve-year time skip found it immediately,
+which is the argument for having a feature that moves the clock further than gameplay ever
+does.
+
+---
+
+## 73. What is left
+
+**Phase 7, the client.** Every view model, the whole API, and a static-file server that
+serves `web/dist` are waiting for it. That is the only substantial piece of the original
+roadmap still unbuilt.
+
+Beyond it: phases 9 (co-op) and 10 (deploy), both outside the "through phase 8" scope, and
+the three small carried-forward items in §54 — Wild Shape, Pact Magic's short-rest slots, and
+the split-party loop.

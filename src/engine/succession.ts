@@ -115,7 +115,22 @@ export function planSuccession(
         secret: false,
         known_by: [],   // nobody knows it yet; the next party has to find it
       });
+      effects.push({ t: "promote_seed", arc_id: arc.id, seed_id: seed.id });
       summary.push(`Unfinished: ${seed.text}`);
+    }
+  }
+
+  // 4. Close the books.
+  //
+  //    These used to be done by the caller, beside the journal — and the rebuild gate
+  //    caught it immediately, which is exactly what that gate is for. Everything a
+  //    succession changes is an effect, so the whole generation-skip replays as one
+  //    ordinary event and can be rewound like one.
+  if (opts.campaignId) {
+    effects.push({ t: "add_legacy", entries: legacy });
+    effects.push({ t: "set_campaign_status", campaign_id: opts.campaignId, status: "complete" });
+    for (const arcId of campaign?.arc_ids ?? []) {
+      if (s.arcs[arcId]?.status === "active") effects.push({ t: "set_arc_status", arc_id: arcId, status: "complete" });
     }
   }
 

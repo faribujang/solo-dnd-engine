@@ -11,11 +11,44 @@ export interface CampaignSummary {
 }
 
 /**
+ * One entry in the player-facing feed: what they said, what the narrator answered, what
+ * the dice did. The feed is NOT the journal. The journal is truth and replays the world;
+ * the feed is the transcript, kept so a refresh or a new device shows the conversation
+ * rather than a bare room. Rolls are stored already rendered as roll cards, because the
+ * client that reads them has no engine to compute one.
+ */
+export interface FeedRow {
+  turn: number;
+  /** Journal length after this row's turn, so a client can line it up with history. */
+  version: number;
+  kind: "player" | "narration" | "mechanics" | "answer" | "system" | "ambient";
+  text: string;
+  rolls: unknown[];
+  at: string;
+}
+
+/**
  * Persistence boundary. Game code never touches the filesystem; it goes through this.
  * `JsonFileStore` is the phase-0 implementation, `PostgresStore` arrives in phase 6, and
  * nothing above this interface changes when it does.
  */
 export interface StateStore {
+  // ---- the transcript and the ledgers. None of these are the journal.
+  appendFeed(campaignId: string, rows: readonly FeedRow[]): Promise<void>;
+  readFeed(campaignId: string, limit?: number): Promise<FeedRow[]>;
+  /** After a rewind: rows from turns that no longer happened go with them. */
+  truncateFeed(campaignId: string, maxTurn: number): Promise<void>;
+  appendCosts(campaignId: string, rows: readonly unknown[]): Promise<void>;
+  readCosts(campaignId: string): Promise<unknown[]>;
+  readRejects(campaignId: string): Promise<unknown[]>;
+  /**
+   * How this save was made from its campaign: which content, which session-zero choices,
+   * which character. Recorded once so a replay can rebuild the SAME starting world — the
+   * journal replays from the initial state, and the initial state is content plus this.
+   */
+  writeCreation(campaignId: string, creation: unknown): Promise<void>;
+  readCreation(campaignId: string): Promise<unknown | null>;
+
   load(campaignId: string): Promise<GameState>;
   /** Persist new state and append the events that produced it to the journal. */
   commit(campaignId: string, events: readonly GameEvent[], next: GameState): Promise<void>;

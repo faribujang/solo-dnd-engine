@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { GameEvent } from "../schema/event.js";
 import { GameState } from "../schema/state.js";
-import type { CampaignSummary, StateStore } from "./store.js";
+import type { CampaignSummary, FeedRow, StateStore } from "./store.js";
 
 /**
  * Phase-0 persistence: one directory per campaign, plain JSON, no database.
@@ -34,6 +34,8 @@ export class JsonFileStore implements StateStore {
     await fs.writeFile(path.join(d, "journal.jsonl"), "", "utf8");
     await fs.writeFile(path.join(d, "facts.jsonl"), "", "utf8");
     await fs.writeFile(path.join(d, "rejects.jsonl"), "", "utf8");
+    await fs.writeFile(path.join(d, "feed.jsonl"), "", "utf8");
+    await fs.writeFile(path.join(d, "costs.jsonl"), "", "utf8");
     await fs.writeFile(path.join(d, "digests.json"), stable([]), "utf8");
     await fs.writeFile(path.join(d, "settlements.json"), stable({}), "utf8");
     await fs.writeFile(path.join(d, "campaign_layer.json"), stable({ groups: {}, arcs: {}, campaigns: {}, legacy: [], combat: null }), "utf8");
@@ -136,6 +138,50 @@ export class JsonFileStore implements StateStore {
     await fs.appendFile(path.join(this.dir(id), "rejects.jsonl"), line, "utf8");
   }
 
+  async readRejects(id: string): Promise<unknown[]> {
+    return readJsonl(path.join(this.dir(id), "rejects.jsonl"));
+  }
+
+  // ---- the transcript
+
+  async appendFeed(id: string, rows: readonly FeedRow[]): Promise<void> {
+    if (rows.length === 0) return;
+    const line = rows.map((r) => stableLine(r)).join("\n") + "\n";
+    await fs.appendFile(path.join(this.dir(id), "feed.jsonl"), line, "utf8");
+  }
+
+  async readFeed(id: string, limit = 60): Promise<FeedRow[]> {
+    const rows = (await readJsonl(path.join(this.dir(id), "feed.jsonl"))) as FeedRow[];
+    return limit > 0 ? rows.slice(-limit) : rows;
+  }
+
+  async truncateFeed(id: string, maxTurn: number): Promise<void> {
+    const rows = (await readJsonl(path.join(this.dir(id), "feed.jsonl"))) as FeedRow[];
+    const kept = rows.filter((r) => r.turn <= maxTurn);
+    const body = kept.map((r) => stableLine(r)).join("\n") + (kept.length ? "\n" : "");
+    await fs.writeFile(path.join(this.dir(id), "feed.jsonl"), body, "utf8");
+  }
+
+  // ---- the ledgers
+
+  async appendCosts(id: string, rows: readonly unknown[]): Promise<void> {
+    if (rows.length === 0) return;
+    const line = rows.map((r) => stableLine(r)).join("\n") + "\n";
+    await fs.appendFile(path.join(this.dir(id), "costs.jsonl"), line, "utf8");
+  }
+
+  async readCosts(id: string): Promise<unknown[]> {
+    return readJsonl(path.join(this.dir(id), "costs.jsonl"));
+  }
+
+  async writeCreation(id: string, creation: unknown): Promise<void> {
+    await fs.writeFile(path.join(this.dir(id), "creation.json"), stable(creation), "utf8");
+  }
+
+  async readCreation(id: string): Promise<unknown | null> {
+    return readJsonOr(path.join(this.dir(id), "creation.json"), null);
+  }
+
   async writeJournal(id: string, events: readonly GameEvent[]): Promise<void> {
     const body = events.map((e) => stableLine(e)).join("\n") + (events.length ? "\n" : "");
     await fs.writeFile(path.join(this.dir(id), "journal.jsonl"), body, "utf8");
@@ -183,7 +229,9 @@ export class JsonFileStore implements StateStore {
       };
       const st = await fs.stat(path.join(this.dir(name), "campaign.json"));
       out.push({
-        id: meta.id,
+        // The DIRECTORY name, not `meta.id`. This is the key every other call takes, and
+        // handing back one that does not work as a lookup is worse than handing back none.
+        id: name,
         title: meta.title,
         turn: meta.turn,
         world_minute: world.world_minute,

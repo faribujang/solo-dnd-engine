@@ -117,6 +117,24 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("add_clock"), clock: z.unknown() }),
   z.object({ t: z.literal("advance_vow"), vow_id: Id, ticks: z.number().int() }),
   z.object({ t: z.literal("set_vow_status"), vow_id: Id, status: z.enum(["sworn", "fulfilled", "forsworn"]) }),
+
+  // ---- succession. A campaign ending is a turn like any other, so every change it makes
+  // is an effect. The alternative — mutating the world beside the journal — is how a save
+  // stops replaying, and the rebuild gate catches it immediately.
+  z.object({
+    t: z.literal("add_legacy"),
+    entries: z.array(z.object({
+      campaign_id: Id,
+      completed_turn: z.number().int().nonnegative(),
+      world_minute: z.number().int().nonnegative(),
+      party_ids: z.array(Id).default([]),
+      text: z.string(),
+      subject_ids: z.array(Id).default([]),
+    })),
+  }),
+  z.object({ t: z.literal("set_campaign_status"), campaign_id: Id, status: z.enum(["available", "active", "complete"]) }),
+  z.object({ t: z.literal("set_arc_status"), arc_id: Id, status: z.enum(["locked", "active", "complete", "abandoned"]) }),
+  z.object({ t: z.literal("promote_seed"), arc_id: Id, seed_id: Id }),
   // Conversation. Talking is a state you enter and leave, not a single action.
   z.object({ t: z.literal("begin_conversation"), entity_id: Id, agenda: z.string().default("") }),
   z.object({ t: z.literal("end_conversation"), reason: z.string().default("") }),

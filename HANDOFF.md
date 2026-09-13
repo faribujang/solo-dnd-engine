@@ -4,7 +4,7 @@ Written for the next builder. Phases 0–8 have their **design-coherent half** d
 rules, engine, view models, content, and gates. What remains is the half that wants an
 iterate-until-green loop — rendering, tuning, and deployment.
 
-**State:** 285 tests, typecheck clean, both demos replaying byte-identically.
+**State:** 348 tests, typecheck clean, both demos replaying byte-identically.
 `SPEC.md` is the full specification; this is the map of what to pick up.
 
 ---
@@ -74,7 +74,23 @@ No component should reach into `GameState`.
 - `conversationModel` — who, their disposition, every topic with open/closed **and the reason**
 - `linkText(state, prose)` — entity linking as a post-process, no markup from the model
 
-### The serving contract (`src/server/contract.ts`) — types only, no implementation
+### The server (`src/server/`) — BUILT
+
+`contract.ts` is the decisions; `service.ts` implements them free of any HTTP framework, and
+`http.ts` puts it on a socket with plain `node:http`. `npm run serve`.
+
+- **One turn at a time per save** (a lock). Different saves proceed in parallel.
+- **The version is the journal's length.** A stale turn is a 409 before the stream opens.
+- **Mechanics are committed and sent before the narrator is called.** Proved by killing the
+  narrator and checking the world moved anyway.
+- `feed.jsonl` is the TRANSCRIPT, not the journal. The journal replays the world; the feed
+  remembers the conversation so a refresh does not lose the thread.
+- A cost ledger with a ceiling that degrades to mechanics-only turns, and a turn-rate guard.
+- `creation.json` records which content, which session zero and which character a save was
+  made from — `rebuild` and `/rewind` rebuild the starting world through the same
+  `applyCreation` the server used to make it.
+
+### The original contract, for reference
 
 Three decisions that are expensive to get wrong and cheap to state:
 
@@ -93,10 +109,13 @@ falls back to replaying the journal.
 
 ## What is yours
 
-### Phase 7 — the client
+### Phase 7 — the client — **the only substantial piece left**
 
-Everything above is a data structure waiting for a component. The engine work is done; this
-is rendering, and it is the largest remaining piece.
+Everything above is a data structure waiting for a component, and now there is an API in
+front of them: `GET /api/saves/:id` returns the whole screen plus a version, and
+`POST /api/saves/:id/turn` streams `intent → mechanics → state → prose… → done`. Build
+against that rather than importing the engine. `npm run serve` serves `web/dist` when it
+exists, so one process is the whole deployment.
 
 1. **Narrative feed with streaming.** Put `narration` first in the schema and incrementally
    parse, so prose appears as it arrives. One call, no extra cost. `linkText` gives you the
@@ -122,13 +141,13 @@ is rendering, and it is the largest remaining piece.
    this early**: it changes how much vertical space the feed gets on a phone.
 10. **Mobile first.** One column, bottom tab bar, feed always one tap away.
 
-### Phase 8 — content
+### Phase 8 — content — **DONE**
 
-- `src/content/generate.ts` has the pipeline, stage prompts, stage schemas, and the lint
-  (referential integrity + the three-clue rule). **The generator loop itself is unwritten:**
-  run the stages, validate, freeze.
-- `planSuccession` is done and tested. The **CLI that runs it** is not.
-- One hand-authored campaign of three arcs, to prove the shape before generating more.
+- The generator loop is `src/content/generateRun.ts`, run by `npm run generate`. Each stage
+  sees the frozen output of the last; nothing is written until validation passes.
+- `npm run succeed` ends a campaign and ages the world, as ONE journaled event.
+- Still worth doing: a second hand-authored campaign, to prove the shape holds for content
+  somebody else wrote.
 
 ### Carried forward — small, known, unbuilt
 
@@ -175,6 +194,21 @@ Four things are not, because a reasonable guess is wrong in a way that is expens
 ---
 
 ## Things that will bite you
+
+**`known_by: []` means NOBODY.** Taken literally. It used to fall back to "the player knows
+it", which made a fact nobody knows impossible to write — and that is exactly what a
+succession seed is.
+
+**Iterate records in SORTED key order wherever the loop can emit effects.** Authored content
+is in written order; a save is key-sorted. `advance_time` finishing two clocks in one tick
+fired them in different sequences on replay and renumbered every fact after them. Four
+hundred turns never found it; a twelve-year skip found it at once.
+
+**The feed is not the journal.** `feed.jsonl` is the transcript and can be truncated or lost
+without harming the world. `journal.jsonl` is the world.
+
+**Everything a CLI changes must be an effect.** The first `succeed.ts` wrote the legacy
+ledger beside the journal. It worked, and it failed `npm run rebuild` within a minute.
 
 **`meta.turn` counts root events, not player inputs.** The CPU takes turns too.
 
@@ -243,7 +277,10 @@ A world the character grew up in should be mostly landmarks.
 
 ```bash
 cp .env.example .env          # optional — no keys means MockLLM, which is fully supported
-npm run check                 # typecheck + 257 tests
+npm run check                 # typecheck + 348 tests
+npm run serve -- --mock       # play it over HTTP on :8787
+npm run succeed -- <save>     # end a campaign, age the world
+npm run generate -- "Title"   # author a new campaign (needs a real model)
 npm run play -- demo1 --mock  # play it in a terminal
 ```
 
@@ -260,7 +297,7 @@ Worth fixing before anything else.
 ## Verify before and after
 
 ```bash
-npm test                     # 285
+npm test                     # 348
 npx tsc --noEmit
 npm run demo && npm run rebuild -- demo    # byte-identical
 npm run demo1                              # 20 free-text turns, replays exactly

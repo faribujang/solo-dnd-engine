@@ -7,7 +7,7 @@ import { rewind, timeline } from "../engine/rollback.js";
 import { makeLLM } from "../llm/factory.js";
 import { affordances } from "../rules/affordances.js";
 import { actionKeyOf } from "../rules/suggest.js";
-import { loadCampaign } from "../content/loadCampaign.js";
+import { initialStateFor } from "../content/createSave.js";
 import { JsonFileStore } from "../state/jsonFileStore.js";
 import { dispositionOf } from "../rules/social.js";
 import {
@@ -190,7 +190,10 @@ async function command(line: string): Promise<boolean> {
         return false;
       }
 
-      const initial = await loadCampaign(path.join("content", "campaign", "drowned_bell"));
+      // Rewind replays from the world this save STARTED from, which is content plus how
+      // the character was made. Guessing the campaign here would rewind into a stranger.
+      const initial = await initialStateFor(store, path.join("content", "campaign"), saveId, state.meta.content_dir || saveId);
+      initial.meta.session_zero = state.meta.session_zero;
       const journal = await store.readJournal(saveId);
       const back = rewind(initial, journal, target);
 

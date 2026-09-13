@@ -37,9 +37,25 @@ export interface LLMResponse<T> {
   ms: number;
 }
 
+/**
+ * Callbacks for a streamed call. `onText` receives the narrator's PROSE as it decodes —
+ * specifically the value of the top-level `narration` field — so a client can show words
+ * while the rest of the structured answer is still arriving. Every other field is delivered
+ * whole, in the resolved response, and validated whole.
+ */
+export interface StreamHandlers {
+  onText?: (delta: string) => void;
+}
+
 export interface LLMClient {
   readonly name: string;
   complete<T>(req: LLMRequest<T>): Promise<LLMResponse<T>>;
+  /**
+   * Same contract as `complete` — identical resolved value, identical validation — with
+   * prose handed on as it arrives. Optional: a client that cannot stream is used through
+   * `complete`, and the caller emits the prose once at the end instead.
+   */
+  stream?<T>(req: LLMRequest<T>, on: StreamHandlers): Promise<LLMResponse<T>>;
 }
 
 /** Thrown when a provider answers, but not with something matching the schema. */

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { loadCampaign } from "../content/loadCampaign.js";
+import { initialStateFor } from "../content/createSave.js";
 import { reduceAll } from "../engine/reduce.js";
 import { JsonFileStore, stable } from "../state/jsonFileStore.js";
 
@@ -23,7 +23,11 @@ if (!(await store.exists(saveId))) {
   process.exit(1);
 }
 
-const initial = await loadCampaign(path.join("content", "campaign", campaignName));
+// The world this save started from — authored content PLUS whatever session zero and
+// character creation did to it. A save made through the server has a character the
+// campaign never contained, and replaying from bare content would rebuild a different
+// world and report a difference that is not a bug. See content/createSave.ts.
+const initial = await initialStateFor(store, path.join("content", "campaign"), saveId, campaignName);
 const live = await store.load(saveId);
 
 // Session zero is chosen per SAVE, not authored into the campaign — difficulty, dice mode,

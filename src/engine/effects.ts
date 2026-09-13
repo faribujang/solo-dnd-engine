@@ -414,7 +414,15 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
 
     case "add_fact": {
       const id = nextId(s, "fact");
-      const knownBy = eff.known_by.length > 0 ? [...eff.known_by] : [s.meta.pc_id];
+      /**
+       * `known_by` is taken LITERALLY, empty included.
+       *
+       * It used to fall back to "the player knows it" when the list was empty, which made
+       * a fact nobody knows impossible to write — and that is exactly what a succession
+       * seed is. A thread the next party already knows about is not a hook, it is a
+       * briefing. Every caller passes this explicitly; nothing relied on the fallback.
+       */
+      const knownBy = [...eff.known_by];
       s.facts.push({
         id,
         turn: s.meta.turn,
@@ -451,7 +459,16 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       s.world.world_minute += eff.minutes;
       // Clocks that run on their own advance with the calendar, whether or not anyone
       // is watching. That is the point of them.
-      for (const c of Object.values(s.clocks)) {
+      // SORTED, and not incidentally.
+      //
+      // Authored content lists clocks in the order somebody wrote them; a save writes them
+      // key-sorted. Iterate in object order and two clocks completing in the same tick fire
+      // their `on_complete` effects in a different sequence on replay than they did live —
+      // which renumbers every fact minted after them and fails the rebuild gate. It only
+      // shows up when one tick finishes two clocks, which is why a twelve-year succession
+      // found it and four hundred ordinary turns did not.
+      for (const id of Object.keys(s.clocks).sort()) {
+        const c = s.clocks[id]!;
         if (c.done || c.per_day === 0) continue;
         const before = c.filled;
         // Carry the remainder at full precision. Rounding it (toFixed) loses enough that
@@ -711,6 +728,33 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const rel = s.relationships[key];
       if (!rel) break;
       if (!rel.tags.includes(eff.tag)) rel.tags.push(eff.tag);
+      break;
+    }
+
+    case "add_legacy": {
+      // The world's long memory, append-only for the same reason the fact ledger is: a
+      // later campaign should be able to ask what happened and get the record, not a
+      // summary somebody rewrote.
+      s.legacy = [...s.legacy, ...eff.entries.map((e) => ({ ...e, party_ids: [...e.party_ids], subject_ids: [...e.subject_ids] }))];
+      break;
+    }
+
+    case "set_campaign_status": {
+      const c = s.campaigns[eff.campaign_id];
+      if (c) c.status = eff.status;
+      break;
+    }
+
+    case "set_arc_status": {
+      const a = s.arcs[eff.arc_id];
+      if (a) a.status = eff.status;
+      break;
+    }
+
+    case "promote_seed": {
+      const arc = s.arcs[eff.arc_id];
+      const seed = arc?.seeds.find((x) => x.id === eff.seed_id);
+      if (seed) seed.promoted = true;
       break;
     }
 
