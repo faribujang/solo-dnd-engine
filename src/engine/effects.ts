@@ -14,6 +14,7 @@ import { refreshAC } from "../rules/equipment.js";
 import { levelForXp } from "../rules/progression.js";
 import { levelUpPlan } from "../rules/character.js";
 import { featureOfKind, rechargeFeatures } from "../rules/features.js";
+import { shiftPresence } from "../rules/factions.js";
 import { inspirationCap, inspirationOf } from "../rules/inspiration.js";
 import { Clock, vowComplete } from "../schema/clock.js";
 
@@ -728,6 +729,30 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const rel = s.relationships[key];
       if (!rel) break;
       if (!rel.tags.includes(eff.tag)) rel.tags.push(eff.tag);
+      break;
+    }
+
+    case "set_presence": {
+      const st = s.settlements[eff.settlement_id];
+      if (!st || !s.world.factions[eff.faction_id]) break;
+      const before = st.presence.find((p) => p.faction_id === eff.faction_id)?.allegiance ?? null;
+      shiftPresence(st, eff.faction_id, {
+        ...(eff.allegiance ? { allegiance: eff.allegiance } : {}),
+        ...(eff.strength !== undefined ? { strength: eff.strength } : {}),
+        ...(eff.openness ? { openness: eff.openness } : {}),
+      });
+      const after = st.presence.find((p) => p.faction_id === eff.faction_id)!;
+      // A town changing hands is news, and news is an event. The timeline should show the
+      // day the flag over the gate changed.
+      if (eff.allegiance && before !== eff.allegiance) {
+        emitted.push(derived(s, ctx, {
+          type: "faction",
+          payload: {
+            settlement_id: st.id, faction_id: eff.faction_id,
+            from: before, to: after.allegiance, strength: after.strength,
+          },
+        }));
+      }
       break;
     }
 

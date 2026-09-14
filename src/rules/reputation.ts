@@ -2,6 +2,7 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import type { Entity } from "../schema/entity.js";
 import { standingToward } from "./backgrounds.js";
+import { localStanding } from "./factions.js";
 
 /**
  * WHAT THEY HEARD ABOUT YOU BEFORE YOU ARRIVED.
@@ -90,6 +91,18 @@ export function arrivalStanding(s: GameState, npc: Entity): Standing {
     fear += 5;
     reasons.push(`they have heard what happened: ${f.text}`);
   }
+
+  // 3b. Whose town this is.
+  //
+  //     Faction standing was global — you were equally hated in every town by people who
+  //     had never heard of you. This is the local half: the same reputation lands
+  //     differently depending on who runs the place, and where a faction is HUNTED, being
+  //     known as their friend is a liability rather than a credential.
+  const local = localStanding(s, npc);
+  affinity += local.affinity;
+  trust += local.trust;
+  fear += local.fear;
+  reasons.push(...local.reasons);
 
   // 4. And what you plainly ARE. Where you came from is the first thing anyone learns
   //    about you — before your name, usually — and it is read differently depending on

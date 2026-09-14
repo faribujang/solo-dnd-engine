@@ -1,12 +1,12 @@
 # Solo D&D Engine — Technical Build Specification
 
 **Audience:** an implementing agent (Claude Fable 5.1) building from scratch.
-**Status:** v10. Parts I–IV are the original design. Parts V–XII are the running changelog:
+**Status:** v11. Parts I–IV are the original design. Parts V–XIII are the running changelog:
 what the build taught us, what other games taught us, and what has been added since.
 Where they disagree, **the later part wins** — superseded sections are marked in place.
 Authoritative for architecture and data model. Deviate only with a stated reason.
 
-**Where the engine actually is:** 348 tests, 79 source files, replay byte-identical. Phases
+**Where the engine actually is:** 361 tests, 79 source files, replay byte-identical. Phases
 0–8 of §37 are done. What is left is the client, the world, and the four gaps in §46.1.
 
 ---
@@ -3291,3 +3291,136 @@ roadmap still unbuilt.
 Beyond it: phases 9 (co-op) and 10 (deploy), both outside the "through phase 8" scope, and
 the three small carried-forward items in §54 — Wild Shape, Pact Magic's short-rest slots, and
 the split-party loop.
+
+---
+
+# Part XIII — the faction matrix, and Cinderhold
+
+**Status: 361 tests, 93 source files. Replay byte-identical.**
+
+The setting arrived, and it named a gap the engine had been carrying since phase 0.
+
+---
+
+## 74. Factions and settlements had no join
+
+Faction reputation was **global** — you were equally hated in every town by people who had
+never heard of you. Settlement reputation was **local** but unattached to anyone's politics.
+Neither could express the thing that makes a contested world feel contested: **that walking
+through a gate means something different depending on whose gate it is this month.**
+
+The DM's trick this encodes is the one the design brief arrived with: for every faction and
+every settlement, ask *who is in power here, and who is trying to change that.* Side quests
+fall out of the answer rather than being authored one at a time.
+
+`Settlement.presence` is that matrix — one row per faction that matters here:
+
+| Allegiance | Means |
+|---|---|
+| `holds` | This place answers to them |
+| `contests` | They are pushing for it, and it is not settled |
+| `present` | They operate here without running it |
+| `hunted` | They are here, and being known for them is dangerous |
+
+Plus `strength` (0–100) and `openness` (`open` / `quiet` / `covert`) — because a faction that
+holds a town openly is the law, and one that holds it covertly is the reason the law does
+what it does.
+
+### 74.1 The rule that earns it: `hunted` inverts the sign
+
+Where a faction is hunted, a **good** reputation with them is a liability in public — it
+reads as a reason to be careful around you, not a reason to like you.
+
+That single inversion is what makes carrying two loyalties across a border feel like
+carrying something, and it is the piece a flat global number can never express. It reaches
+the player as an arrival reason in their own terms: *"the Radiant Accord is not safe to be
+friendly with here."*
+
+### 74.2 Nobody is monolithic
+
+`Faction.wings` — named positions inside a faction, each with what it wants. An NPC names
+theirs in `flags.faction_wing`, and the DM is told which one it is talking to, because **a
+DM told only the banner plays the banner.** Two people under the same flag can want opposite
+things, and in this setting they usually do.
+
+### 74.3 The front moves
+
+`set_presence` is an ordinary effect, and a town changing hands emits a `faction` event — so
+a campaign whose background engine is a war needs no machinery outside the journal, and a
+rewind puts the flag back over the gate.
+
+---
+
+## 75. The price of supply — one number, and its shape
+
+A faction may carry `controls_supply` (at most one per world, and a test enforces it). Where
+it does, `supplyPricePct` decides what things cost, and the *shape* is the interesting part:
+
+| Situation | Price |
+|---|---|
+| Uncontested monopoly | **up to 160%** — a monopoly prices like a monopoly |
+| No supply at all | **190%** — scarcity is its own tax |
+| **Contested** | **80%** — competition is the only thing that has ever lowered a price |
+
+So the cheapest towns are the dangerous ones, and a player can tell whose territory they are
+standing in by what a healing draught costs. The map develops a texture nobody authored, and
+the economy stops being bookkeeping.
+
+---
+
+## 76. Cinderhold
+
+The setting this was built for, recorded because the content now assumes it.
+
+**The Meridian Syndicate didn't fight the war. It supplied it.** Both empires bought their
+magic from the same people; when they bled each other out, the supplier was the only
+institution left standing. It governs by owning what everyone needs, without ever having
+taken a throne.
+
+| | Position | Their good | Their rot |
+|---|---|---|---|
+| **The Arcanate** | Magic is a discipline: learned, licensed, taught | **Democratised it.** Before them, magic was hereditary and feudal | Making it learnable made it *ownable* — they built the lock and handed over the key |
+| **The Radiant Accord** | Magic is a grace: given to who it is given to | **Never sold anyone.** The only power that did not treat people as supply | "Called" means somebody decides who is called, and that was a hereditary priesthood |
+| **The Meridian Syndicate** | Magic is supply | **It works.** A farmer buys a draught who would have died waiting for a priest | It is priced |
+
+The two remnants' grievances are **asymmetric**, which is why they cannot ally even against
+a common enemy: the Arcanate wants the Syndicate *taken over*, the Accord wants it *torn
+down*. Zero-sum, for reasons a player can feel rather than a number they are told.
+
+### 76.1 What it costs to be a caster
+
+The Syndicate does not care what you can do. It cares **where you got it.** A wizard trained
+outside the licensing is a criminal; a cleric is a rival institution and a political problem;
+a druid draws on land being strip-mined; and a **warlock is the nightmare** — an unauditable
+supply line to something that cannot be bought, regulated or cut off.
+
+Class choice becomes a political fact, read differently in every town. This is what the
+background and social-tag systems were built for and previously had almost nothing to chew
+on.
+
+### 76.2 The shape of campaign one
+
+Prologue solo in a Syndicate village on the edge of Accord country — the *shaped first
+scene* §34 asks for, and the best possible showcase for relationships, because everyone
+already knows you. Half the town is destroyed; the player's family is among the dead and
+**one of them is missing.** That is a sealed fact from turn one: it exists in the ledger,
+nobody reachable knows it, and it carries a named key. "Hint hint" becomes machinery rather
+than a secret the DM has to remember.
+
+The first companion is a childhood friend who turns out to be a **warlock** — which makes
+your first party member a liability with a number on it, since travelling with an
+unauditable caster through Syndicate territory is a risk the affordance bar can price.
+
+And the player character starts as **a regular person**. That needs no special-casing:
+fighter, rogue and barbarian never cast, and ranger and paladin get no spells until level 2 —
+so "magic comes later, if you go deeper" is already RAW.
+
+---
+
+## 77. Still open
+
+The five generator stages from §73 — items, relationships, facts, wiring, and a cast that
+includes a companion with an approval table. Those remain the gap between "the generator
+produces a world" and "the generator produces a world you can play."
+
+And the client, which is still the only substantial piece of the original roadmap unbuilt.

@@ -2,6 +2,7 @@ import type { GameState } from "../schema/state.js";
 import type { ItemDef } from "../schema/item.js";
 import { priceMultiplierPct } from "./social.js";
 import { skillModifier } from "./checks.js";
+import { supplyPricePct } from "./factions.js";
 
 /**
  * MONEY.
@@ -30,7 +31,15 @@ export function purseOf(s: GameState, entityId: string): number {
 /** What a merchant asks. Affinity moves it; a merchant who likes you charges less. */
 export function buyPrice(s: GameState, merchantId: string, def: ItemDef, qty = 1): number {
   const rel = s.relationships[`${merchantId}->${s.meta.pc_id}`];
-  return Math.max(1, Math.round((def.value_cp * priceMultiplierPct(rel)) / 100)) * qty;
+  const merchant = s.entities[merchantId];
+  // Two multipliers, and they answer different questions. How the merchant feels about YOU,
+  // and what the thing costs HERE — which in a supply-controlled setting is the more
+  // interesting number, because it tells you whose town you are standing in.
+  const supply = def.tags.includes("supplied") && merchant
+    ? supplyPricePct(s, merchant.location_id).pct
+    : 100;
+  const base = (def.value_cp * priceMultiplierPct(rel)) / 100;
+  return Math.max(1, Math.round((base * supply) / 100)) * qty;
 }
 
 /**

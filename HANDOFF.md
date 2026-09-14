@@ -4,7 +4,7 @@ Written for the next builder. Phases 0–8 have their **design-coherent half** d
 rules, engine, view models, content, and gates. What remains is the half that wants an
 iterate-until-green loop — rendering, tuning, and deployment.
 
-**State:** 348 tests, typecheck clean, both demos replaying byte-identically.
+**State:** 361 tests, typecheck clean, both demos replaying byte-identically.
 `SPEC.md` is the full specification; this is the map of what to pick up.
 
 ---
@@ -37,6 +37,7 @@ still be a complete, correct, playable world?**
 | `conditions` | The full SRD list, each with real mechanical flags |
 | `social` | Disposition, DC shifts, **`trustDcShift`** (±6 — trust decides where affinity only colours), prices |
 | `reputation` | What they heard about you before you arrived. Applies once, capped at ±35 |
+| `factions` | **The faction matrix.** Who holds a town, who contests it, who is hunted in it — and the price of supply. SPEC Part XIII |
 | `features` | **Class features as mechanics.** A closed union of shapes; each says where it is handled |
 | `backgrounds` | **Where you came from.** Standing (how each sort of person reads your past) and insights (lines only you can say). SPEC Part X |
 | `approval` | **Per-companion reaction tables.** `situationsIn` reads events; the table is authored |
@@ -204,6 +205,13 @@ is in written order; a save is key-sorted. `advance_time` finishing two clocks i
 fired them in different sequences on replay and renumbered every fact after them. Four
 hundred turns never found it; a twelve-year skip found it at once.
 
+**`hunted` inverts the sign.** Where a faction is hunted, a GOOD reputation with them is a
+liability in public. Do not "fix" this into a plain scale — it is the whole reason carrying
+two loyalties across a border costs something.
+
+**At most one faction may carry `controls_supply`.** Two makes the price of supply ambiguous
+and the setting illegible. A test enforces it.
+
 **The feed is not the journal.** `feed.jsonl` is the transcript and can be truncated or lost
 without harming the world. `journal.jsonl` is the world.
 
@@ -297,7 +305,7 @@ Worth fixing before anything else.
 ## Verify before and after
 
 ```bash
-npm test                     # 348
+npm test                     # 361
 npx tsc --noEmit
 npm run demo && npm run rebuild -- demo    # byte-identical
 npm run demo1                              # 20 free-text turns, replays exactly

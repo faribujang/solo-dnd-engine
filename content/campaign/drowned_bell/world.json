@@ -1,7 +1,14 @@
 {
   "world_minute": 1020,
-  "calendar": { "month": "Hammer", "year": 1492, "epoch_day": 86 },
-  "weather": { "current": "cold rain", "changes_at_minute": 2400 },
+  "calendar": {
+    "month": "Hammer",
+    "year": 1492,
+    "epoch_day": 86
+  },
+  "weather": {
+    "current": "cold rain",
+    "changes_at_minute": 2400
+  },
   "flags": {
     "crypt_lever_pulled": false,
     "ashen_hand_alerted": false,
@@ -12,24 +19,110 @@
       "id": "fac_ashen_hand",
       "name": "The Ashen Hand",
       "rep_with_pc": -10,
-      "member_ids": ["npc_thorne"],
-      "goals": ["control the river trade", "recover the silver bell before anyone else"]
+      "member_ids": [
+        "npc_thorne"
+      ],
+      "goals": [
+        "control the river trade",
+        "recover the silver bell before anyone else"
+      ]
+    },
+    "fac_meridian": {
+      "id": "fac_meridian",
+      "name": "The Meridian Syndicate",
+      "rep_with_pc": 0,
+      "member_ids": [],
+      "controls_supply": true,
+      "goals": [
+        "keep the lamps lit and the ledger balanced",
+        "buy what cannot be bought"
+      ],
+      "wings": [
+        {
+          "id": "charter",
+          "name": "Charter",
+          "wants": "legitimacy — a seat, a flag, a law they wrote themselves"
+        },
+        {
+          "id": "assay",
+          "name": "Assay",
+          "wants": "supply is legitimacy; anyone who says otherwise has never run a lamp"
+        }
+      ]
+    },
+    "fac_arcanate": {
+      "id": "fac_arcanate",
+      "name": "Arcanate Remnant",
+      "rep_with_pc": 0,
+      "member_ids": [],
+      "controls_supply": false,
+      "goals": [
+        "take the Syndicate back",
+        "recover what was licensed, not given away"
+      ],
+      "wings": [
+        {
+          "id": "restorers",
+          "name": "Restorers",
+          "wants": "the Arcanate restored, and the patents with it"
+        },
+        {
+          "id": "pensioners",
+          "name": "Pensioners",
+          "wants": "nothing grand — the pension they were promised, paid"
+        }
+      ]
+    },
+    "fac_accord": {
+      "id": "fac_accord",
+      "name": "The Radiant Accord",
+      "rep_with_pc": 0,
+      "member_ids": [],
+      "controls_supply": false,
+      "goals": [
+        "stop it — not reform it",
+        "shelter the called"
+      ],
+      "wings": [
+        {
+          "id": "shepherds",
+          "name": "Shepherds",
+          "wants": "to get the gifted out before the Syndicate contracts them"
+        },
+        {
+          "id": "kindlers",
+          "name": "Kindlers",
+          "wants": "the machines broken, whatever it costs the people running them"
+        }
+      ]
     }
   },
   "triggers": [
     {
       "id": "t_night_falls",
       "on": "time_pass",
-      "when": { "t": "world_time", "op": "after", "world_minute": 1320 },
+      "when": {
+        "t": "world_time",
+        "op": "after",
+        "world_minute": 1320
+      },
       "then": [
-        { "t": "set_flag", "key": "night_has_fallen", "value": true },
+        {
+          "t": "set_flag",
+          "key": "night_has_fallen",
+          "value": true
+        },
         {
           "t": "add_fact",
           "text": "After dark the water in the Drowned Gate rises to the knee and the bell can be heard faintly.",
-          "subjects": ["loc_bell_gate"],
+          "subjects": [
+            "loc_bell_gate"
+          ],
           "importance": 3,
           "secret": false,
-          "known_by": ["pc_main"]
+          "known_by": [
+            "pc_main"
+          ]
         }
       ],
       "once": true
@@ -37,17 +130,33 @@
     {
       "id": "t_crypt_search_reveals_lever",
       "on": "skill_check",
-      "match": { "location_id": "loc_bell_gate", "payload_key": "success_search" },
+      "match": {
+        "location_id": "loc_bell_gate",
+        "payload_key": "success_search"
+      },
       "then": [
-        { "t": "set_flag", "key": "crypt_lever_pulled", "value": true },
-        { "t": "reveal_exit", "location_id": "loc_bell_gate", "dir": "down" },
+        {
+          "t": "set_flag",
+          "key": "crypt_lever_pulled",
+          "value": true
+        },
+        {
+          "t": "reveal_exit",
+          "location_id": "loc_bell_gate",
+          "dir": "down"
+        },
         {
           "t": "add_fact",
           "text": "A corroded lever behind the Drowned Gate's altar opens the stair to the Bell Crypt.",
-          "subjects": ["loc_bell_gate", "loc_bell_crypt"],
+          "subjects": [
+            "loc_bell_gate",
+            "loc_bell_crypt"
+          ],
           "importance": 4,
           "secret": false,
-          "known_by": ["pc_main"]
+          "known_by": [
+            "pc_main"
+          ]
         }
       ],
       "once": true
@@ -55,17 +164,33 @@
     {
       "id": "t_key_taken",
       "on": "item_transfer",
-      "match": { "payload_key": "item_instance_id" },
-      "when": { "t": "has_item", "entity_id": "pc_main", "item_def_id": "item_def_rusted_key", "min": 1 },
+      "match": {
+        "payload_key": "item_instance_id"
+      },
+      "when": {
+        "t": "has_item",
+        "entity_id": "pc_main",
+        "item_def_id": "item_def_rusted_key",
+        "min": 1
+      },
       "then": [
-        { "t": "set_flag", "key": "has_crypt_key", "value": true },
+        {
+          "t": "set_flag",
+          "key": "has_crypt_key",
+          "value": true
+        },
         {
           "t": "add_fact",
           "text": "The rusted key from Mudwallow Lane fits the Bell Crypt's grate.",
-          "subjects": ["item_def_rusted_key", "loc_bell_crypt"],
+          "subjects": [
+            "item_def_rusted_key",
+            "loc_bell_crypt"
+          ],
           "importance": 4,
           "secret": false,
-          "known_by": ["pc_main"]
+          "known_by": [
+            "pc_main"
+          ]
         }
       ],
       "once": true

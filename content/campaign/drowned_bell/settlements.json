@@ -14,6 +14,26 @@
         "kind": "inn",
         "location_id": "loc_flagon"
       }
+    ],
+    "presence": [
+      {
+        "faction_id": "fac_meridian",
+        "allegiance": "holds",
+        "strength": 70,
+        "openness": "open"
+      },
+      {
+        "faction_id": "fac_accord",
+        "allegiance": "hunted",
+        "strength": 25,
+        "openness": "covert"
+      },
+      {
+        "faction_id": "fac_arcanate",
+        "allegiance": "present",
+        "strength": 15,
+        "openness": "quiet"
+      }
     ]
   }
 }

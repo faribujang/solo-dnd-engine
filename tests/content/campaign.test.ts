@@ -22,8 +22,32 @@ describe("The Drowned Bell", () => {
     expect(Object.values(s.entities).filter((e) => e.kind === "npc")).toHaveLength(3);
     expect(Object.values(s.entities).filter((e) => e.kind === "companion")).toHaveLength(1);
     expect(Object.keys(s.quests).length).toBeGreaterThanOrEqual(2);
-    expect(Object.keys(s.world.factions)).toHaveLength(1);
+    // Faction COUNT is not a property worth pinning — a world gains powers as it is written.
+    // What matters is that every one of them is real enough to be reacted to.
+    expect(Object.keys(s.world.factions).length).toBeGreaterThanOrEqual(1);
+    for (const f of Object.values(s.world.factions)) {
+      expect(f.name.length, `${f.id} has no name`).toBeGreaterThan(0);
+      expect(f.goals.length, `${f.id} wants nothing, so it can never act`).toBeGreaterThan(0);
+    }
     expect(Object.keys(s.relationships).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("gives every settlement a politics, and at most one supplier", async () => {
+    const s = await loadCampaign(CAMPAIGN);
+
+    // The faction matrix. A settlement nobody contests or holds is a place where none of
+    // the reputation systems have anything to say, which is a town in name only.
+    for (const st of Object.values(s.settlements)) {
+      expect(st.presence.length, `${st.id} has no faction presence`).toBeGreaterThan(0);
+      for (const p of st.presence) {
+        expect(s.world.factions[p.faction_id], `${st.id} names unknown faction ${p.faction_id}`).toBeDefined();
+      }
+    }
+
+    // Exactly one faction may set the price of supply. Two would make the number ambiguous
+    // and the setting illegible.
+    const suppliers = Object.values(s.world.factions).filter((f) => f.controls_supply);
+    expect(suppliers.length).toBeLessThanOrEqual(1);
   });
 
   it("carries at least five triggers across at least five distinct event types", async () => {

@@ -9,6 +9,7 @@ import { factsKnownBy, selectFacts, type ScoredFact } from "./selectFacts.js";
 import { topicsFor } from "../engine/conversation.js";
 import { crowdAt, interjectionsFor } from "../engine/bystanders.js";
 import { BACKGROUND_SOCIAL, backgroundOf, insightsFor, socialTagsOf } from "../rules/backgrounds.js";
+import { renderPolitics, wingOf } from "../rules/factions.js";
 
 /**
  * Deterministic, pure, token-budgeted prompt assembly.
@@ -77,6 +78,7 @@ const BUDGETS = {
   room: 260,
   companions: 220,
   background: 220,
+  politics: 220,
 } as const;
 
 export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltContext {
@@ -135,6 +137,15 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
           s.conversation.friction >= 4 ? "They are losing patience." : "",
         ].filter(Boolean).join("\n"));
     }
+  }
+
+  // 5a2 — whose town this is.
+  //
+  //     The DM cannot write a room that feels governed unless it knows who governs it. The
+  //     numbers stay here: what reaches the page is what people are willing to say out loud.
+  {
+    const politics = renderPolitics(s, loc.id);
+    if (politics) add("politics", 2, BUDGETS.politics, false, "WHO HOLDS THIS PLACE", politics);
   }
 
   // 5b2 — lines this character has standing to say, and why.
@@ -233,7 +244,7 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
 
 /** Display order, which is not the same as shed priority. */
 function order(s: Section): number {
-  const ORDER = ["canon", "scene", "pc", "npcs", "conversation", "background", "room", "companions", "party", "quests", "recent", "digests", "mechanics", "suggestions"];
+  const ORDER = ["canon", "scene", "pc", "npcs", "politics", "conversation", "background", "room", "companions", "party", "quests", "recent", "digests", "mechanics", "suggestions"];
   const i = ORDER.indexOf(s.id);
   return i === -1 ? 99 : i;
 }
@@ -357,6 +368,10 @@ function renderNpcs(s: GameState, npcIds: readonly string[], presentIds: readonl
     const lines = [`${e.name} — ${e.descriptor}`];
 
     if (e.personality.voice) lines.push(`  Voice: ${e.personality.voice}`);
+    // Which wing of their faction. Two people under the same banner can want opposite
+    // things, and a DM told only the banner plays the banner.
+    const wing = wingOf(s, e);
+    if (wing) lines.push(`  ${wing.faction}, ${wing.name} wing — wants: ${wing.wants}`);
     if (e.personality.traits.length) lines.push(`  Traits: ${e.personality.traits.join("; ")}`);
     if (e.personality.flaw) lines.push(`  Flaw: ${e.personality.flaw}`);
 

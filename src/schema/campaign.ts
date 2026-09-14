@@ -90,6 +90,39 @@ export const Group = z.object({
 });
 export type Group = z.infer<typeof Group>;
 
+/**
+ * How a faction stands in one settlement — the cell of the faction matrix.
+ *
+ * Factions and settlements both existed and nothing connected them, so a world was a list
+ * of towns with some global reputation numbers floating above it. There was no way to say
+ * "the Syndicate runs the docks here but the Accord is still quietly sheltering people in
+ * the temple district", which is the difference between a political map and a spreadsheet.
+ *
+ * The DM's trick this encodes: for every faction and every town, ask *who is in power here,
+ * and who is trying to change that*. Side quests fall out of the answer rather than being
+ * authored one at a time.
+ */
+export const Allegiance = z.enum([
+  "holds",     // this place answers to them
+  "contests",  // they are pushing for it, and it is not settled
+  "present",   // they operate here without running it
+  "hunted",    // they are here, and being known for them is dangerous
+]);
+export type Allegiance = z.infer<typeof Allegiance>;
+
+export const FactionPresence = z.object({
+  faction_id: Id,
+  allegiance: Allegiance,
+  /** 0–100. How much of the place actually answers to them. */
+  strength: z.number().int().min(0).max(100).default(50),
+  /**
+   * Whether you can SEE them operating. A faction that holds a town openly is the law; one
+   * that holds it covertly is the reason the law does what it does.
+   */
+  openness: z.enum(["open", "quiet", "covert"]).default("open"),
+});
+export type FactionPresence = z.infer<typeof FactionPresence>;
+
 export const Settlement = z.object({
   id: Id,
   name: z.string(),
@@ -98,6 +131,8 @@ export const Settlement = z.object({
   population: z.number().int().nonnegative().default(0),
   /** Town-level standing, separate from any individual's opinion and from faction rep. */
   reputation_with_pc: z.number().min(-100).max(100).default(0),
+  /** The faction matrix, one row per faction that matters here. */
+  presence: z.array(FactionPresence).default([]),
   services: z.array(z.object({
     kind: z.enum(["inn", "shop", "temple", "job_board", "smith"]),
     location_id: Id,

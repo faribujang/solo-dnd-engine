@@ -135,6 +135,19 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("set_campaign_status"), campaign_id: Id, status: z.enum(["available", "active", "complete"]) }),
   z.object({ t: z.literal("set_arc_status"), arc_id: Id, status: z.enum(["locked", "active", "complete", "abandoned"]) }),
   z.object({ t: z.literal("promote_seed"), arc_id: Id, seed_id: Id }),
+
+  /**
+   * The front moves. A town changing hands is an ordinary event, so a campaign whose
+   * background engine is a war does not need machinery outside the journal.
+   */
+  z.object({
+    t: z.literal("set_presence"),
+    settlement_id: Id,
+    faction_id: Id,
+    allegiance: z.enum(["holds", "contests", "present", "hunted"]).optional(),
+    strength: z.number().int().min(0).max(100).optional(),
+    openness: z.enum(["open", "quiet", "covert"]).optional(),
+  }),
   // Conversation. Talking is a state you enter and leave, not a single action.
   z.object({ t: z.literal("begin_conversation"), entity_id: Id, agenda: z.string().default("") }),
   z.object({ t: z.literal("end_conversation"), reason: z.string().default("") }),
@@ -159,7 +172,7 @@ export const EventType = z.enum([
   "move", "enter_location", "attack", "skill_check", "dialogue", "item_transfer",
   "cast", "rest", "trade", "observe", "quest_update", "death", "time_pass",
   "effect", "campaign_start", "level_up", "downed", "death_save", "combat_start", "combat_end", "round",
-  "clock", "vow", "inspiration", "conversation", "scene_break",
+  "clock", "vow", "inspiration", "conversation", "scene_break", "faction",
 ]);
 export type EventType = z.infer<typeof EventType>;
 
