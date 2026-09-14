@@ -20,6 +20,8 @@ export interface OpenAICompatOptions {
   model: string;
   /** Some gateways want extra headers (OpenRouter asks for attribution). */
   headers?: Record<string, string>;
+  /** Extra top-level request fields this provider needs. See ModelConfig.providers. */
+  extraBody?: Record<string, unknown>;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }
@@ -30,6 +32,9 @@ export class OpenAICompatClient implements LLMClient {
   constructor(private readonly opts: OpenAICompatOptions) {
     this.name = opts.name;
   }
+
+  /** The model the most recent call actually used, for the cost ledger. */
+  private lastModel = "";
 
   async complete<T>(req: LLMRequest<T>): Promise<LLMResponse<T>> {
     const started = Date.now();
@@ -96,6 +101,7 @@ export class OpenAICompatClient implements LLMClient {
 
   /** One fetch for both paths. The caller must `release()` to clear the timeout. */
   private async send<T>(req: LLMRequest<T>, stream: boolean): Promise<{ res: Response; release: () => void }> {
+    this.lastModel = req.model ?? this.opts.model;
     const f = this.opts.fetchImpl ?? fetch;
     const controller = new AbortController();
     // The timer covers the whole exchange, including a long streamed body.
@@ -113,7 +119,7 @@ export class OpenAICompatClient implements LLMClient {
           ...this.opts.headers,
         },
         body: JSON.stringify({
-          model: this.opts.model,
+          model: req.model ?? this.opts.model,
           temperature: req.temperature ?? 0.7,
           max_tokens: req.maxTokens ?? 1000,
           messages: [
@@ -128,6 +134,7 @@ export class OpenAICompatClient implements LLMClient {
               schema: zodToJsonSchema(req.schema),
             },
           },
+          ...this.opts.extraBody,
           ...(stream ? { stream: true, stream_options: { include_usage: true } } : {}),
         }),
       });
@@ -172,7 +179,7 @@ export class OpenAICompatClient implements LLMClient {
       value: parsed.data,
       raw,
       provider: this.name,
-      model: this.opts.model,
+      model: this.lastModel,
       usage: {
         input_tokens: usage?.prompt_tokens ?? estimateTokens(req.system + req.user),
         output_tokens: usage?.completion_tokens ?? estimateTokens(raw),
@@ -203,10 +210,17 @@ function narrationOf(raw: string): string {
 export function providersFromEnv(
   models: Record<string, { provider: string; model: string }>,
   env: NodeJS.ProcessEnv = process.env,
+  defaults: Record<string, { model: string; extra_body?: Record<string, unknown> }> = {},
 ): Map<string, LLMClient> {
   const out = new Map<string, LLMClient>();
+  const extraFor = (provider: string) => defaults[provider]?.extra_body ?? {};
+  // A provider's own default first — it is the only thing that is right when this provider
+  // is standing in for another. Then the first role that names it. Then nothing, and the
+  // router will skip it rather than send a request with no model.
   const modelFor = (provider: string) =>
-    Object.values(models).find((r) => r.provider === provider)?.model ?? "";
+    defaults[provider]?.model
+    ?? Object.values(models).find((r) => r.provider === provider)?.model
+    ?? "";
 
   if (env["GEMINI_API_KEY"]) {
     out.set("gemini", new OpenAICompatClient({
@@ -214,6 +228,7 @@ export function providersFromEnv(
       baseUrl: env["GEMINI_BASE_URL"] ?? "https://generativelanguage.googleapis.com/v1beta/openai",
       apiKey: env["GEMINI_API_KEY"],
       model: modelFor("gemini"),
+      extraBody: extraFor("gemini"),
     }));
   }
 
@@ -223,6 +238,7 @@ export function providersFromEnv(
       baseUrl: env["OPENROUTER_BASE_URL"] ?? "https://openrouter.ai/api/v1",
       apiKey: env["OPENROUTER_API_KEY"],
       model: modelFor("openrouter"),
+      extraBody: extraFor("openrouter"),
       headers: { "x-title": "Solo D&D Engine" },
     }));
   }

@@ -1,13 +1,66 @@
 {
   "roles": {
-    "intent":     { "provider": "gemini",     "model": "REPLACE_ME", "max_tokens": 500,  "temperature": 0 },
-    "narrate":    { "provider": "gemini",     "model": "REPLACE_ME", "max_tokens": 1200, "temperature": 0.8 },
-    "narrate_hi": { "provider": "openrouter", "model": "REPLACE_ME", "max_tokens": 1600, "temperature": 0.8 },
-    "companion":  { "provider": "gemini",     "model": "REPLACE_ME", "max_tokens": 200,  "temperature": 0.7 },
-    "digest":     { "provider": "gemini",     "model": "REPLACE_ME", "max_tokens": 300,  "temperature": 0.3 },
-    "ambient":    { "provider": "gemini",     "model": "REPLACE_ME", "max_tokens": 200,  "temperature": 0.9 }
+    "intent": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite",
+      "max_tokens": 500,
+      "temperature": 0
+    },
+    "narrate": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.8-flash",
+      "max_tokens": 1200,
+      "temperature": 0.8
+    },
+    "narrate_hi": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-pro-preview",
+      "max_tokens": 1600,
+      "temperature": 0.85
+    },
+    "companion": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite",
+      "max_tokens": 200,
+      "temperature": 0.7
+    },
+    "digest": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite",
+      "max_tokens": 300,
+      "temperature": 0.3
+    },
+    "ambient": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite",
+      "max_tokens": 200,
+      "temperature": 0.9
+    }
   },
-  "fallback_chain": ["gemini", "openrouter"],
-  "escalate_to_hi_when": { "importance_gte": 4, "scene_opening": true, "combat_round": false },
-  "retry": { "attempts": 3, "base_delay_ms": 400 }
+  "providers": {
+    "openrouter": {
+      "model": "google/gemini-3.1-flash-lite",
+      "extra_body": {
+        "reasoning": {
+          "effort": "low"
+        }
+      }
+    },
+    "gemini": {
+      "model": "models/gemini-3.1-flash-lite"
+    }
+  },
+  "fallback_chain": [
+    "openrouter",
+    "gemini"
+  ],
+  "escalate_to_hi_when": {
+    "importance_gte": 4,
+    "scene_opening": true,
+    "combat_round": false
+  },
+  "retry": {
+    "attempts": 3,
+    "base_delay_ms": 400
+  }
 }

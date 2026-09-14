@@ -16,6 +16,14 @@ export interface TurnOutcome {
   /** Mechanics summary on success, refusal reason on failure. */
   message: string;
   state: GameState;
+  /**
+   * The resolved root event — the one whose dice were kept. Null on a refusal.
+   *
+   * Callers need this because `resolve` ROLLS: calling it a second time to inspect what a
+   * turn did draws fresh entropy under `karmic` and `true` dice and answers about a turn
+   * that never happened. Handing the event back is what makes a second call unnecessary.
+   */
+  root: GameEvent | null;
   /** Root event plus every cascade, in application order. Empty on a refusal. */
   journal: GameEvent[];
   fired: string[];
@@ -35,7 +43,7 @@ export function takeTurn(state: GameState, action: Action, opts: { actorId?: str
   // A refused action costs no time and writes nothing. Impossible things do not get rolled
   // for, and they do not get journaled either.
   if (!r.ok) {
-    return { ok: false, message: r.reason, state, journal: [], fired: [], truncated: false };
+    return { ok: false, message: r.reason, state, root: null, journal: [], fired: [], truncated: false };
   }
 
   let red = reduce(state, r.event);
@@ -82,6 +90,7 @@ export function takeTurn(state: GameState, action: Action, opts: { actorId?: str
     ok: true,
     message: r.mechanics,
     state: red.state,
+    root: r.event,
     journal,
     fired,
     truncated: red.truncated,

@@ -2,6 +2,7 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
 import { ATTITUDE_CLAMP_PER_TURN } from "../schema/relationship.js";
+import { NarratorProposal } from "./contracts.js";
 import type { Narration } from "./contracts.js";
 
 /**
@@ -146,11 +147,21 @@ export function validateNarration(
   }
 
   // -------------------------------------------------------------- proposals
-  for (const p of n.proposals.slice(0, MAX_PROPOSALS_PER_TURN)) {
-    if (!(NARRATOR_ALLOWED_EFFECTS as readonly string[]).includes(p.t)) {
-      reject("proposal", `effect "${p.t}" is engine-only and may never come from the narrator`, p);
+  for (const raw of n.proposals.slice(0, MAX_PROPOSALS_PER_TURN)) {
+    if (!(NARRATOR_ALLOWED_EFFECTS as readonly string[]).includes(raw.t)) {
+      reject("proposal", `effect "${raw.t}" is engine-only and may never come from the narrator`, raw);
       continue;
     }
+
+    // Shape second: the tag is allowed, but the payload still has to be the one that tag
+    // promises. A malformed proposal is refused exactly like a forbidden one — recorded,
+    // and costing the turn nothing but itself.
+    const shaped = NarratorProposal.safeParse(raw);
+    if (!shaped.success) {
+      reject("proposal", `"${raw.t}" is malformed: ${shaped.error.issues.map((i: { path: (string|number)[]; message: string }) => `${i.path.join(".")} ${i.message}`).join("; ")}`, raw);
+      continue;
+    }
+    const p = shaped.data;
 
     switch (p.t) {
       case "set_flag":

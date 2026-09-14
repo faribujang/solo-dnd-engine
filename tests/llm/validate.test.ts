@@ -27,8 +27,8 @@ const state = async () => (base ??= await loadCampaign(CAMPAIGN));
 
 describe("the narrator whitelist", () => {
   it("refuses engine-only effects even if one somehow arrives", async () => {
-    // Under strict structured output the schema makes this unreachable. This is
-    // defence-in-depth for a degraded provider or a fallback returning loose JSON.
+    // Reachable in production, not merely defence-in-depth: the wire schema accepts any
+    // tagged proposal precisely so this check is the one that runs. See WireProposal.
     const n = narration({
       proposals: [{ t: "damage", entity_id: "pc_main", amount: 6, damage_type: "psychic" } as never],
     });
@@ -159,5 +159,56 @@ describe("narration prose", () => {
     const n = narration({ narration: "You slip past him while he is looking at the water." });
     const v = validateNarration(await state(), n, CTX);
     expect(v.rejects).toHaveLength(0);
+  });
+});
+
+/**
+ * A BAD PROPOSAL COSTS THE PROPOSAL, NOT THE PARAGRAPH.
+ *
+ * Parsing the whole narration strictly at the transport boundary meant one invented effect
+ * name discarded four good paragraphs, and the player was told the Dungeon Master could not
+ * be reached — over a field the validator was always going to throw away. Voice is what the
+ * model is qualified to produce; effects are checked. These two failures belong apart.
+ */
+describe("a malformed proposal", () => {
+  it("is rejected on its own while the narration survives", async () => {
+    const n = narration({
+      narration: "The smith does not look up from the anvil.",
+      // A tag nobody defined — what a model invents when it is reaching.
+      proposals: [{ t: "grant_boon", entity_id: "npc_thorne", boon: "luck" } as never],
+    });
+    const v = validateNarration(await state(), n, CTX);
+
+    expect(v.narration).toBe("The smith does not look up from the anvil.");
+    expect(v.effects).toHaveLength(0);
+    expect(v.rejects).toHaveLength(1);
+    expect(v.rejects[0]!.reason).toMatch(/engine-only/);
+  });
+
+  it("rejects a KNOWN tag whose payload is the wrong shape", async () => {
+    const n = narration({
+      narration: "Time passes.",
+      // `advance_time` is permitted; minutes as a phrase is not.
+      proposals: [{ t: "advance_time", minutes: "about ten" } as never],
+    });
+    const v = validateNarration(await state(), n, CTX);
+
+    expect(v.narration).toBe("Time passes.");
+    expect(v.effects).toHaveLength(0);
+    expect(v.rejects).toHaveLength(1);
+    expect(v.rejects[0]!.reason).toMatch(/malformed/);
+  });
+
+  it("still lets a well-formed proposal beside a bad one through", async () => {
+    const n = narration({
+      proposals: [
+        { t: "nonsense_effect", whatever: 1 } as never,
+        { t: "set_flag", key: "saw_the_door", value: true },
+      ],
+    });
+    const v = validateNarration(await state(), n, CTX);
+
+    expect(v.rejects).toHaveLength(1);
+    expect(v.effects).toEqual([{ t: "set_flag", key: "saw_the_door", value: true }]);
   });
 });

@@ -19,6 +19,27 @@ export type RoleConfig = z.infer<typeof RoleConfig>;
 
 export const ModelConfig = z.object({
   roles: z.record(z.string(), RoleConfig),
+  /**
+   * What each provider should use when it is standing in for another one.
+   *
+   * A fallback provider has no role of its own, so it has no model — and a request with no
+   * model is a 400, which turns a resilience feature into a second way to fail. Naming a
+   * default here is what makes the chain actually worth having. Model ids differ between
+   * providers for the same model, which is why this cannot be inferred.
+   */
+  providers: z.record(z.string(), z.object({
+    model: z.string(),
+    /**
+     * Extra top-level fields for every request to this provider.
+     *
+     * Gateways have quirks, and a quirk belongs to the gateway rather than to a role: it
+     * has to travel with the provider when a role falls through to it, and it must NOT
+     * travel to a different provider that would reject the field. `reasoning` is the
+     * live example — a thinking model spends its token budget deliberating and then
+     * truncates the JSON it was asked for, which arrives as "did not return JSON".
+     */
+    extra_body: z.record(z.string(), z.unknown()).default({}),
+  })).default({}),
   /** Providers to try, in order, when the role's own provider fails. */
   fallback_chain: z.array(z.string()).default([]),
   escalate_to_hi_when: z.object({
@@ -62,18 +83,33 @@ export class Router implements LLMClient {
    * cannot tell the difference except by the clock.
    */
   async stream<T>(req: LLMRequest<T>, on: StreamHandlers): Promise<LLMResponse<T>> {
-    return this.run(req, async (provider, r) => {
-      if (provider.stream) return provider.stream(r, on);
-      const res = await provider.complete(r);
-      const text = (res.value as { narration?: unknown } | null)?.narration;
-      if (typeof text === "string" && on.onText) on.onText(text);
-      return res;
-    });
+    // Whether the attempt currently running has already put words on someone's screen.
+    // If it has and it then fails, the next attempt must not simply append to them.
+    let emitted = false;
+    const tap: StreamHandlers = {
+      ...(on.onText ? { onText: (d: string) => { emitted = true; on.onText!(d); } } : {}),
+      ...(on.onReset ? { onReset: on.onReset } : {}),
+    };
+
+    return this.run(
+      req,
+      async (provider, r) => {
+        emitted = false;
+        if (provider.stream) return provider.stream(r, tap);
+        const res = await provider.complete(r);
+        const text = (res.value as { narration?: unknown } | null)?.narration;
+        if (typeof text === "string" && tap.onText) tap.onText(text);
+        return res;
+      },
+      () => { if (emitted) { emitted = false; on.onReset?.(); } },
+    );
   }
 
   private async run<T>(
     req: LLMRequest<T>,
     invoke: (provider: LLMClient, r: LLMRequest<T>) => Promise<LLMResponse<T>>,
+    /** Called after a failed attempt, before the next one begins. */
+    onAbandon?: () => void,
   ): Promise<LLMResponse<T>> {
     const roleCfg = this.config.roles[req.role];
     if (!roleCfg) throw new Error(`No model configured for role "${req.role}"`);
@@ -88,6 +124,14 @@ export class Router implements LLMClient {
       const provider = this.providers.get(providerName);
       if (!provider) continue;
 
+      // Which model THIS provider should use. Its own if it owns the role, otherwise the
+      // default it was given. A provider with neither is skipped rather than sent a request
+      // it cannot serve — a 400 in the middle of a fallback chain is worse than no fallback.
+      const model = providerName === roleCfg.provider
+        ? roleCfg.model
+        : this.config.providers[providerName]?.model;
+      if (!model) continue;
+
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
@@ -95,6 +139,7 @@ export class Router implements LLMClient {
             ...req,
             maxTokens: req.maxTokens ?? roleCfg.max_tokens,
             temperature: req.temperature ?? roleCfg.temperature,
+            model,
           });
           this.log.push({
             role: req.role, provider: providerName, model: res.model,
@@ -103,8 +148,9 @@ export class Router implements LLMClient {
           return res;
         } catch (err) {
           lastError = err;
+          onAbandon?.();
           this.log.push({
-            role: req.role, provider: providerName, model: roleCfg.model,
+            role: req.role, provider: providerName, model,
             ms: Date.now() - started, ok: false, attempt,
             error: err instanceof Error ? err.message : String(err),
           });

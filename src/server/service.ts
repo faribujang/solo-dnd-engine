@@ -284,6 +284,7 @@ export class GameService {
               emit({ t: "state", screen: this.view(m.state) });
             },
             onProse: (delta) => emit({ t: "prose", delta }),
+            onProseReset: () => emit({ t: "prose_reset" }),
           },
         }),
         this.budget.turn_timeout_ms,
@@ -353,6 +354,13 @@ export class GameService {
         if (tried.length > 12) tried = tried.slice(-12);
       }
       this.ctx.set(saveId, { ...c, state: out.state, version, tried, sceneId });
+
+      // The one line that makes a silent narrator diagnosable. It does not reach the
+      // player — they were already told the prose is missing — it reaches whoever is
+      // watching the server wondering why.
+      if (out.debug.narratorError) {
+        console.warn(`[narrator] ${saveId} turn ${out.state.meta.turn}: ${out.debug.narratorError}`);
+      }
 
       emit({ t: "state", screen: this.view(out.state) });
       emit({

@@ -341,6 +341,17 @@ function renderSystem(s: GameState): string {
     "",
     "Report anything you newly establish in `facts`, and any shift in how a present NPC",
     "regards the player in `attitude_deltas`. Keep both small and specific.",
+    "",
+    "`proposals` may contain ONLY these, spelled exactly, with exactly these fields:",
+    "  {t:\"set_flag\", key, value}                      — key is snake_case",
+    "  {t:\"add_lead\", quest_id, text, points_to_location_id}",
+    "  {t:\"reveal_location\", location_id}",
+    "  {t:\"reveal_exit\", location_id, dir}",
+    "  {t:\"teach_fact\", entity_id, fact_id}",
+    "  {t:\"move_entity\", entity_id, location_id}",
+    "  {t:\"advance_time\", minutes}",
+    "Anything else — damage, healing, items, gold, quest status, combat — is the engine's",
+    "and is discarded if you propose it. When in doubt, propose nothing and just narrate.",
   ].join("\n");
 }
 

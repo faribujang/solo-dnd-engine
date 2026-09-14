@@ -36,9 +36,9 @@ suite runs on it.
 npm install
 npm run demo1                # 20 turns of free text through the whole pipeline
 npm run play -- demo1 --mock # play it yourself
-npm run check                # typecheck + 363 tests
+npm run check                # typecheck + 377 tests
 npm run models -- --write    # point it at a real model, once you have a key
-npm run serve -- --mock      # or play it over HTTP on :8787
+npm run serve -- --mock      # or open http://localhost:8787 and play in a browser
 ```
 
 To use a real model, copy the env template and fill in
@@ -60,6 +60,23 @@ npm run demo                 # phase-0 script: structured commands, no LLM
 npm run rebuild -- demo      # replay a journal and prove the world is byte-identical
 npm run inspect -- demo1     # read a world without playing it
 ```
+
+### Playing in a browser, including from another device
+
+`npm run serve` serves both the API and the client — `web/dist/index.html`, one file, no
+build step, no deployment. Open `http://localhost:8787`, pick a save or make a character,
+and play. Prose streams in; the roll card lands before it.
+
+To play from a phone or hand a friend a link, tunnel the port rather than deploying
+anything:
+
+```bash
+GAME_SECRET=pick-something npm run serve
+cloudflared tunnel --url http://localhost:8787   # prints an https URL
+```
+
+The client asks for the secret once and remembers it. **Set `GAME_SECRET` before exposing
+the port** — it is the only thing between a public URL and every save on the machine.
 
 ## How a turn works
 

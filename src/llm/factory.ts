@@ -30,7 +30,7 @@ export async function makeLLM(opts: { configPath?: string; forceMock?: boolean }
     return { llm: new MockLLM({ seed: "cli" }), describe: "mock (no readable config/models.json)" };
   }
 
-  const providers = providersFromEnv(config.roles);
+  const providers = providersFromEnv(config.roles, process.env, config.providers);
 
   if (providers.size === 0) {
     return { llm: new MockLLM({ seed: "cli" }), describe: "mock (no API keys set)" };

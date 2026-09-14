@@ -24,6 +24,14 @@ export interface LLMRequest<T> {
   schemaName: string;
   maxTokens?: number;
   temperature?: number;
+  /**
+   * Which model to use, when the caller knows better than the provider's default.
+   *
+   * The whole point of role routing is that parsing and prose want different models, and a
+   * provider client constructed with one model id cannot deliver that. The router fills
+   * this in from the role's config; a client with nothing here falls back to its own.
+   */
+  model?: string;
 }
 
 export interface LLMResponse<T> {
@@ -45,6 +53,16 @@ export interface LLMResponse<T> {
  */
 export interface StreamHandlers {
   onText?: (delta: string) => void;
+  /**
+   * The text handed over so far is VOID — discard it and start again.
+   *
+   * A stream can fail after it has already emitted prose: a provider truncates mid-JSON,
+   * or the schema does not validate, and the router retries or falls through to another
+   * provider. The second attempt writes its own paragraph, and without this the reader
+   * gets both, one after the other, as if the DM said everything twice. There is no way
+   * to un-send bytes, so the only honest move is to say they were withdrawn.
+   */
+  onReset?: () => void;
 }
 
 export interface LLMClient {

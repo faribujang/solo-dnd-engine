@@ -13,7 +13,7 @@ import { JsonFileStore, stable } from "../state/jsonFileStore.js";
  * now rather than at turn 300.
  */
 const saveId = process.argv[2] ?? "drowned_bell";
-const campaignName = process.argv[3]?.startsWith("--") ? "drowned_bell" : process.argv[3] ?? "drowned_bell";
+const campaignArg = process.argv[3]?.startsWith("--") ? undefined : process.argv[3];
 const write = process.argv.includes("--write");
 
 const store = new JsonFileStore("saves");
@@ -23,12 +23,19 @@ if (!(await store.exists(saveId))) {
   process.exit(1);
 }
 
+const live = await store.load(saveId);
+
+// A save records the content it was cut from, and THAT — not an argument the operator has
+// to remember — is what it must be replayed against. Getting this wrong does not fail
+// safe: it rebuilds a different campaign and reports a difference that looks exactly like
+// a determinism bug, which is the noise that teaches you to stop trusting the gate.
+const campaignName = campaignArg ?? (live.meta.content_dir || "drowned_bell");
+
 // The world this save started from — authored content PLUS whatever session zero and
 // character creation did to it. A save made through the server has a character the
 // campaign never contained, and replaying from bare content would rebuild a different
 // world and report a difference that is not a bug. See content/createSave.ts.
 const initial = await initialStateFor(store, path.join("content", "campaign"), saveId, campaignName);
-const live = await store.load(saveId);
 
 // Session zero is chosen per SAVE, not authored into the campaign — difficulty, dice mode,
 // lines and veils are the table's agreement for this run. Replay has to start from the same
@@ -37,7 +44,7 @@ initial.meta.session_zero = live.meta.session_zero;
 const journal = await store.readJournal(saveId);
 const roots = journal.filter((e) => e.derived_from === null);
 
-console.log(`Replaying ${roots.length} root events (${journal.length} total with cascades)...`);
+console.log(`Replaying ${roots.length} root events of "${campaignName}" (${journal.length} total with cascades)...`);
 
 const replayed = reduceAll(initial, roots);
 

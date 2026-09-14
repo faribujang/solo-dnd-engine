@@ -93,12 +93,27 @@ export const NarratorProposal = z.discriminatedUnion("t", [
 ]);
 export type NarratorProposal = z.infer<typeof NarratorProposal>;
 
+/**
+ * How a proposal arrives on the wire: tagged, and otherwise unexamined.
+ *
+ * The strict union above is the LAW, and `validateNarration` enforces every clause of it.
+ * It is deliberately NOT the parser at the transport boundary, because those two jobs have
+ * opposite failure modes. A narrator that writes four perfect paragraphs and one invented
+ * effect name has made a mechanics mistake, and this codebase has a whole apparatus for
+ * mechanics mistakes: the effect is refused and recorded in `rejects.jsonl`. Parsing
+ * strictly here instead throws away the paragraphs — the one part of the answer the model
+ * was actually qualified to produce — over the one part code was always going to check.
+ *
+ * So: anything tagged gets through the door, and nothing untrue gets past the validator.
+ */
+export const WireProposal = z.object({ t: z.string() }).passthrough();
+
 export const Narration = z.object({
   narration: z.string().min(1),
   facts: z.array(ProposedFact).default([]),
   attitude_deltas: z.array(ProposedAttitude).default([]),
   opinion_updates: z.array(ProposedOpinion).default([]),
-  proposals: z.array(NarratorProposal).default([]),
+  proposals: z.array(WireProposal).default([]),
   suggested_actions: z.array(z.string()).default([]),
   scene_change: z.string().nullable().default(null),
 });

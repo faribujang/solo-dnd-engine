@@ -11,7 +11,7 @@ import { npcsPresent, pc } from "../state/selectors.js";
 import { answer } from "./questions.js";
 import { renderSuggestionsForPrompt, suggest } from "../rules/suggest.js";
 import { reduce } from "./reduce.js";
-import { resolve, type Action } from "./turn.js";
+import { type Action } from "./turn.js";
 import { takeTurn } from "./session.js";
 
 /**
@@ -50,6 +50,8 @@ export interface TurnHooks {
   }) => void | Promise<void>;
   /** Prose as it arrives. Only fires when the client can stream; otherwise never. */
   onProse?: (delta: string) => void;
+  /** The prose streamed so far was withdrawn — a retry is about to write its own. */
+  onProseReset?: () => void;
 }
 
 export interface LLMTurnOptions {
@@ -82,6 +84,16 @@ export interface LLMTurnOutcome {
     fired: string[];
     truncated: boolean;
     promptTokens: number;
+    /**
+     * Why the narrator was not used, when it was not.
+     *
+     * Swallowing this is how "the Dungeon Master could not be reached" becomes
+     * unfalsifiable: the player is told prose is missing and the operator is told
+     * nothing at all, with no provider, no status and no schema issue to chase. The turn
+     * still stands either way — this changes nothing about the game, only about whether
+     * the failure can be found.
+     */
+    narratorError: string | null;
   };
 }
 
@@ -93,8 +105,7 @@ export async function takeLLMTurn(
 ): Promise<LLMTurnOutcome> {
   const empty = {
     intent: null, action: null, mechanics: null, context: null,
-    fired: [], truncated: false, promptTokens: 0,
-  };
+    fired: [], truncated: false, promptTokens: 0, narratorError: null };
 
   // ---------------------------------------------------------- 1. intent
   const parsed = await parseIntent(llm, state, playerText);
@@ -118,27 +129,33 @@ export async function takeLLMTurn(
     };
   }
 
-  // ------------------------------------------------- 2. validate & resolve
-  const resolution = resolve(state, parsed.action);
+  opts.hooks?.onIntent?.({ intent: parsed.intent, action: parsed.action });
 
-  if (!resolution.ok) {
+  // ------------------------------------------------- 2. resolve and reduce
+  // ONE call. `resolve` is not a query — it rolls the dice — so asking it whether an
+  // action is legal and then playing the action resolves twice, and under `karmic` or
+  // `true` dice the two draw different entropy. The turn keeps the second roll and the
+  // player is shown the first: a roll card and a summary that disagree, and, when the
+  // narrator is down, a fallback line reporting a number no event contains.
+  //
+  // takeTurn also runs any CPU combat turns that follow, and ends the fight when a side
+  // is done, so the narrator sees the whole exchange rather than half of it.
+  const played = takeTurn(state, parsed.action);
+
+  if (!played.ok || !played.root) {
     // A refused action costs no time and writes nothing. Impossible things are refused in
     // the fiction, never rolled for.
     return {
       ok: false,
       kind: "refused",
-      text: resolution.reason,
+      text: played.message,
       state, journal: [], rejects: [], suggestedActions: [],
       debug: { ...empty, intent: parsed.intent, action: parsed.action },
     };
   }
 
-  opts.hooks?.onIntent?.({ intent: parsed.intent, action: parsed.action });
-
-  // ---------------------------------------------------------- 3. reduce
-  // takeTurn also runs any CPU combat turns that follow, and ends the fight when a side is
-  // done, so the narrator sees the whole exchange rather than half of it.
-  const played = takeTurn(state, parsed.action);
+  const root = played.root;
+  const mechanics = played.message;
   const reduced = { state: played.state, journal: played.journal, fired: played.fired, truncated: played.truncated };
   let working = reduced.state;
   const journal: GameEvent[] = [...reduced.journal];
@@ -150,7 +167,7 @@ export async function takeLLMTurn(
     await opts.hooks.onMechanics({
       state: working,
       journal: [...journal],
-      mechanics: resolution.mechanics,
+      mechanics: mechanics,
       rolls: journal.flatMap((e) => e.rolls),
     });
   }
@@ -164,12 +181,13 @@ export async function takeLLMTurn(
    * would discard `working` — and under `karmic` or `true` dice, retrying would roll a
    * DIFFERENT number for a check the player has already watched resolve.
    */
-  const mechanicsOnly = (kind: "narrated" | "mechanics_only"): LLMTurnOutcome => ({
-    ok: true, kind, text: resolution.mechanics,
+  const mechanicsOnly = (kind: "narrated" | "mechanics_only", why: string | null = null): LLMTurnOutcome => ({
+    ok: true, kind, text: mechanics,
     state: working, journal, rejects: [], suggestedActions: [],
     debug: {
-      intent: parsed.intent, action: parsed.action, mechanics: resolution.mechanics,
+      intent: parsed.intent, action: parsed.action, mechanics: mechanics,
       context: null, fired: reduced.fired, truncated: reduced.truncated, promptTokens: 0,
+      narratorError: why,
     },
   });
 
@@ -179,10 +197,10 @@ export async function takeLLMTurn(
   // Built from the world AFTER the mechanics resolved, so the narrator describes the
   // world as it now is rather than as it was when the player spoke.
   const present = npcsPresent(working, pc(working).location_id);
-  const ambientBeats = (resolution.event.payload["beats"] as string[] | undefined) ?? [];
+  const ambientBeats = (root.payload["beats"] as string[] | undefined) ?? [];
 
   const cpuLines = journal
-    .filter((e) => e.derived_from === null && e.id !== resolution.event.id && e.actor_id && e.actor_id !== pc(working).id && e.rolls.length)
+    .filter((e) => e.derived_from === null && e.id !== root.id && e.actor_id && e.actor_id !== pc(working).id && e.rolls.length)
     .map((e) => `${working.entities[e.actor_id!]?.name ?? e.actor_id}: ${(e.payload as { hit?: boolean; damage?: number }).hit === undefined ? e.type : (e.payload as { hit?: boolean }).hit ? `hit for ${(e.payload as { damage?: number }).damage}` : "missed"}`);
   // Code ranks what is worth doing; the narrator only phrases it (rules/suggest.ts).
   const shortlist = suggest(working, {
@@ -202,7 +220,7 @@ export async function takeLLMTurn(
 
   const context = buildContext(working, {
     suggestions: renderSuggestionsForPrompt(shortlist),
-    mechanics: [resolution.mechanics, ...cpuLines.map((l) => `Then: ${l}`), ...ambientBeats.map((b) => `Meanwhile: ${b}`)].join("\n"),
+    mechanics: [mechanics, ...cpuLines.map((l) => `Then: ${l}`), ...ambientBeats.map((b) => `Meanwhile: ${b}`)].join("\n"),
     ...(opts.recent ? { recent: opts.recent } : {}),
     ...(opts.digests ? { digests: opts.digests } : {}),
     ...(opts.maxPromptTokens ? { maxTokens: opts.maxPromptTokens } : {}),
@@ -227,11 +245,17 @@ export async function takeLLMTurn(
     // Streamed when someone is listening and the client can; the resolved value is the
     // same either way, which is what keeps the replay tests honest across both paths.
     const onProse = opts.hooks?.onProse;
+    const onProseReset = opts.hooks?.onProseReset;
     narration = llm.stream && onProse
-      ? await llm.stream(request, { onText: onProse })
+      ? await llm.stream(request, {
+          onText: onProse,
+          ...(onProseReset ? { onReset: onProseReset } : {}),
+        })
       : await llm.complete(request);
-  } catch {
-    return mechanicsOnly("mechanics_only");
+  } catch (err) {
+    // The failure is reported, not rethrown. Mechanics already landed; prose is
+    // decoration, and a dead provider must never cost a turn that has been played.
+    return mechanicsOnly("mechanics_only", err instanceof Error ? err.message : String(err));
   }
 
   // ------------------------------------------------ 6. commit proposals
@@ -244,8 +268,8 @@ export async function takeLLMTurn(
     // The narrator's accepted effects are journaled as their own root event. Replay then
     // reproduces this turn exactly without calling a model at all.
     const narratorEvent: GameEvent = {
-      ...resolution.event,
-      id: `evt_n${String(resolution.event.turn).padStart(4, "0")}`,
+      ...root,
+      id: `evt_n${String(root.turn).padStart(4, "0")}`,
       type: "effect",
       target_ids: [],
       payload: { source: "narrator" },
@@ -282,11 +306,12 @@ export async function takeLLMTurn(
     debug: {
       intent: parsed.intent,
       action: parsed.action,
-      mechanics: resolution.mechanics,
+      mechanics: mechanics,
       context,
       fired: reduced.fired,
       truncated: reduced.truncated,
       promptTokens: context.totalTokens,
+      narratorError: null,
     },
   };
 }

@@ -238,11 +238,27 @@ npm run seed -- drowned_bell my_save
 npm run play -- my_save --mock
 ```
 
-**Playable over HTTP**, with turns that stream:
+**Playable in a browser**, on a phone, with turns that stream:
 
 ```bash
-npm run serve -- --mock      # :8787
+npm run serve                # :8787 — open it and pick a save
+npm run serve -- --mock      # same, with no model and no cost
 ```
+
+One process, one port, no build step: `web/dist/index.html` is served by the same server
+that answers the API.
+
+**Playing from somewhere else** — a phone, a friend's laptop — needs no deployment, only a
+tunnel back to the machine running `npm run serve`:
+
+```bash
+GAME_SECRET=pick-something npm run serve
+cloudflared tunnel --url http://localhost:8787
+```
+
+The tunnel prints an `https://…trycloudflare.com` address. Open it anywhere, paste the
+secret once, and play. Set `GAME_SECRET` before exposing anything: without it the tunnel is
+an open door to every save on the machine.
 
 **Point it at a real Dungeon Master** (the mock is a structural stand-in and a dull writer):
 
@@ -273,8 +289,10 @@ you something nobody had to write down.
 **What is not there yet:**
 
 1. **Arc two onward.** Saveri refuses, and what happens after that refusal is unwritten.
-2. **There is no web client.** The whole API and every view model exist and are tested;
-   nothing renders them. This is phase 7 and the only substantial engine work left.
+2. **The web client is a first cut.** Scene header, streamed prose, roll cards, the action
+   palette, the character sheet, character creation, and recovery from a version conflict —
+   all working. Not yet: the map, the timeline, rewind, combat's zone view, and the
+   companion panel. Every one of those has a tested view model behind it already.
 3. **Five generator stages are missing** — items, relationships, facts, wiring, and a cast
    that includes a companion with an approval table. Until those exist, generated campaigns
    load and can be walked through but have no objects, no opinions and nothing developing.

@@ -78,6 +78,13 @@ export type TurnFrame =
   | { t: "state"; screen: unknown }
   /** Prose, as it is generated. Many of these. */
   | { t: "prose"; delta: string }
+  /**
+   * Throw away every `prose` frame received so far and start the paragraph again.
+   *
+   * The narrator's first attempt failed partway through and another is taking its place.
+   * Rare, and cheaper than the alternative, which is the reader being shown two endings.
+   */
+  | { t: "prose_reset" }
   /** After narration: chips, and anything the narrator's proposals changed. */
   | { t: "done"; suggestions: string[]; version: number; rejects: number }
   /** A question, which never becomes a turn. */

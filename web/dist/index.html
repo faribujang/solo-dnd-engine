@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<title>Cinderhold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ─────────────────────────────────────────────────── tokens
+   Ember on soot. The neutral is warm — a grey biased toward the forge accent, so
+   nothing on screen reads as default browser chrome. */
+:root {
+  --ground:#14110f; --surface:#1c1815; --raised:#241e1a; --line:#332b25;
+  --ink:#ece4d8; --muted:#9d8f83; --faint:#6d625a;
+  --ember:#d4703a; --brass:#c9a227; --blood:#b04434; --moss:#6f8f5f;
+  --prose:#e6dccd;
+  --r:10px; --pad:16px;
+  --ui:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --serif:"EB Garamond", Georgia, "Times New Roman", serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--ui); font-size:15px; line-height:1.5;
+  -webkit-text-size-adjust:100%; overscroll-behavior-y:none;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.hide{display:none !important}
+
+/* ─────────────────────────────────────────────────── shell */
+#app{display:flex;flex-direction:column;height:100dvh;max-width:720px;margin:0 auto;position:relative}
+
+/* ── scene header: where you are, when, who is here. Sticky because it is the
+      one thing you re-read constantly on a phone. */
+header{
+  flex:0 0 auto; background:var(--surface); border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) var(--pad) 10px;
+}
+.hrow{display:flex;align-items:baseline;gap:10px}
+.place{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:.01em;flex:1;min-width:0;
+  text-wrap:balance;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.when{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.hmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+.tag{
+  font-size:11.5px;padding:2.5px 8px;border-radius:999px;
+  border:1px solid var(--line);background:var(--raised);color:var(--muted);
+  white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+}
+.tag.person{border-color:#4a3a2c;color:#d8c3a8}
+.tag.hostile{border-color:#5a2f27;color:#e0a196}
+.tag.hp{border-color:#3a4a30;color:#bcd4ac;font-family:var(--mono)}
+.tag.hurt{border-color:#5a2f27;color:#e0a196}
+
+/* ── the feed */
+main{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:18px var(--pad) 8px;-webkit-overflow-scrolling:touch}
+.entry{margin:0 0 20px}
+.said{
+  font-size:14px;color:var(--ember);border-left:2px solid var(--ember);
+  padding-left:11px;margin-bottom:14px;
+}
+.said::before{content:"› ";opacity:.6}
+.narr{font-family:var(--serif);font-size:18.5px;line-height:1.62;color:var(--prose);white-space:pre-wrap}
+.narr em,.narr i{color:#f0e2cb}
+.sys{font-size:13px;color:var(--faint);font-style:italic}
+.err{font-size:13.5px;color:#e0a196;background:#2a1a16;border:1px solid #5a2f27;border-radius:var(--r);padding:10px 12px}
+
+/* ── the roll card. The mechanics land before the prose, so this is the thing you
+      actually look at first — it gets the tabular figures and the outcome stripe. */
+.roll{
+  border:1px solid var(--line);border-left:3px solid var(--faint);border-radius:var(--r);
+  background:var(--raised);padding:10px 12px;margin:0 0 12px;font-family:var(--mono);font-size:13px;
+}
+.roll.good{border-left-color:var(--moss)} .roll.bad{border-left-color:var(--blood)}
+.roll.crit{border-left-color:var(--brass)}
+.rtop{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.rpurpose{color:var(--muted);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;font-family:var(--ui)}
+.routcome{font-weight:500;letter-spacing:.05em;font-size:12px}
+.good .routcome{color:var(--moss)} .bad .routcome{color:var(--blood)} .crit .routcome{color:var(--brass)}
+.rmath{margin-top:5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.rmath .nat{color:var(--brass);font-weight:500}
+.rmath .dim{color:var(--faint)}
+.summary{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+
+/* ── composer */
+footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);padding:8px var(--pad) calc(env(safe-area-inset-bottom) + 8px)}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;font-size:13.5px;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--raised);color:var(--ink);
+  max-width:78vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.chip:active{background:var(--line)}
+.bar{display:flex;gap:8px;align-items:flex-end}
+.icon{
+  flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--raised);display:grid;place-items:center;font-size:17px;
+}
+textarea#say{
+  flex:1 1 auto;min-width:0;resize:none;background:var(--raised);border:1px solid var(--line);
+  border-radius:var(--r);padding:11px 12px;font-size:16px;line-height:1.35;max-height:120px;
+  font-family:var(--serif);
+}
+textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14px}
+#send{
+  flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);
+  background:var(--ember);color:#180f08;font-size:18px;display:grid;place-items:center;font-weight:600;
+}
+#send[disabled],.icon[disabled]{opacity:.4}
+.working{font-size:12px;color:var(--faint);padding:0 0 6px;letter-spacing:.04em}
+.working b{color:var(--ember);font-weight:500}
+
+/* ── drawers: sheet, palette, saves. Bottom sheets, because thumbs. */
+.scrim{position:fixed;inset:0;background:#000a;backdrop-filter:blur(2px);z-index:20}
+.sheetpane{
+  position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:82dvh;overflow-y:auto;
+  background:var(--surface);border-top:1px solid var(--line);
+  border-radius:14px 14px 0 0;padding:6px var(--pad) calc(env(safe-area-inset-bottom) + 18px);
+  max-width:720px;margin:0 auto;
+}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 14px}
+.sheetpane h2{font-family:var(--serif);font-size:20px;margin:0 0 2px;font-weight:600}
+.sheetpane h3{
+  font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
+  margin:20px 0 8px;font-weight:600;
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;background:var(--raised)}
+.stat .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.stat .v{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums;margin-top:1px}
+.abils{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.ab{text-align:center;border:1px solid var(--line);border-radius:var(--r);padding:7px 2px;background:var(--raised)}
+.ab .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.ab .m{font-family:var(--mono);font-size:16px;margin-top:1px}
+.ab .s{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.list{display:flex;flex-direction:column;gap:1px}
+.li{padding:9px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .t{font-size:14.5px}
+.li .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+.li .d.serif{font-family:var(--serif);font-size:14px;font-style:italic}
+.act{
+  width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--raised);padding:10px 12px;margin-bottom:7px;
+}
+.act[disabled]{opacity:.42}
+.act .t{font-size:14.5px}
+.act .d{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:3px}
+.savebtn{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--raised);padding:12px 13px;margin-bottom:8px}
+.savebtn .t{font-family:var(--serif);font-size:17px}
+.savebtn .d{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.field{width:100%;background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px;font-size:16px;margin-bottom:8px}
+.note{font-size:12.5px;color:var(--faint);line-height:1.5}
+.bar-hp{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar-hp i{display:block;height:100%;background:var(--moss)}
+.bar-hp i.low{background:var(--blood)}
+@media (prefers-reduced-motion:no-preference){
+  .sheetpane{animation:rise .18s ease-out}
+  @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="hrow">
+      <div class="place" id="place">Cinderhold</div>
+      <div class="when mono" id="when"></div>
+    </div>
+    <div class="hmeta" id="hmeta"></div>
+  </header>
+
+  <main id="feed"></main>
+
+  <footer>
+    <div class="working hide" id="working"></div>
+    <div class="chips" id="chips"></div>
+    <div class="bar">
+      <button class="icon" id="openPalette" title="Actions" aria-label="Actions">⚔</button>
+      <textarea id="say" rows="1" placeholder="What do you do?" enterkeyhint="send"></textarea>
+      <button class="icon" id="openSheet" title="Character" aria-label="Character">☰</button>
+      <button id="send" aria-label="Send">↑</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────────────────────── state
+// The client holds view models and a version number. It never holds game state, so it
+// can never disagree with the server about an outcome — same reason the narrator
+// doesn't hold state either.
+const S = {
+  saveId: localStorage.getItem("dnd.save") || "",
+  token: localStorage.getItem("dnd.token") || "",
+  version: 0,
+  screen: null,
+  busy: false,
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c]));
+
+function headers(extra) {
+  const h = Object.assign({ "content-type": "application/json" }, extra || {});
+  if (S.token) h.authorization = "Bearer " + S.token;
+  return h;
+}
+async function api(path, opts) {
+  const res = await fetch(path, Object.assign({ headers: headers() }, opts || {}));
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(body.error || res.status), { status: res.status, body });
+  return body;
+}
+
+// ─────────────────────────────────────────────────────────────── the feed
+const feed = $("feed");
+let atBottom = true;
+feed.addEventListener("scroll", () => {
+  atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+});
+function stick() { if (atBottom) feed.scrollTop = feed.scrollHeight; }
+
+function add(html) {
+  const d = document.createElement("div");
+  d.className = "entry";
+  d.innerHTML = html;
+  feed.appendChild(d);
+  stick();
+  return d;
+}
+function addSaid(text) { add('<div class="said">' + esc(text) + "</div>"); }
+function addSys(text) { add('<div class="sys">' + esc(text) + "</div>"); }
+function addErr(text) { add('<div class="err">' + esc(text) + "</div>"); }
+
+// A roll card. Shows the natural die, then the itemised modifiers, then the target —
+// the whole arithmetic, because a player who cannot check the maths cannot trust it.
+function rollHtml(r) {
+  const out = (r.outcome || "").toUpperCase();
+  let cls = "";
+  if (r.critical || r.fumble) cls = "crit";
+  else if (/HIT|SUCCESS|CRITICAL/.test(out) && !/MISS|FAIL/.test(out)) cls = "good";
+  else if (/MISS|FAIL/.test(out)) cls = "bad";
+
+  const parts = (r.parts || []).map((p) =>
+    (p.value >= 0 ? " + " : " − ") + '<span title="' + esc(p.label) + '">' + Math.abs(p.value) + "</span>"
+  ).join("");
+  const second = r.other != null ? ' <span class="dim">(' + r.other + " " + esc(r.advantage || "") + ")</span>" : "";
+  const target = r.target != null ? ' <span class="dim">vs ' + r.target + "</span>" : "";
+
+  return '<div class="roll ' + cls + '">'
+    + '<div class="rtop"><span class="rpurpose">' + esc(r.purpose || "roll") + "</span>"
+    + '<span class="routcome">' + esc(out) + "</span></div>"
+    + '<div class="rmath"><span class="nat">' + r.natural + "</span>" + second + parts
+    + ' <span class="dim">=</span> ' + r.total + target + "</div></div>";
+}
+
+// ─────────────────────────────────────────────────────────────── header
+function paintHeader() {
+  const sc = S.screen && S.screen.scene;
+  if (!sc) return;
+  $("place").textContent = sc.location.name;
+  const t = sc.time || {};
+  $("when").textContent = [t.label, t.hour != null ? String(t.hour).padStart(2, "0") + ":00" : "", "day " + (t.day ?? "?")]
+    .filter(Boolean).join(" · ");
+
+  const tags = [];
+  const sh = S.screen.sheet;
+  if (sh && sh.hp) {
+    const low = sh.hp.current <= sh.hp.max / 3;
+    tags.push('<span class="tag hp' + (low ? " hurt" : "") + '">' + sh.hp.current + "/" + sh.hp.max + " hp</span>");
+  }
+  for (const p of sc.present || []) {
+    const hostile = p.disposition === "hostile" || p.disposition === "afraid";
+    tags.push('<span class="tag person' + (hostile ? " hostile" : "") + '" title="' + esc(p.descriptor || "") + '">'
+      + esc(p.name) + (p.down ? " ✝" : "") + "</span>");
+  }
+  for (const e of sc.exits || []) {
+    tags.push('<span class="tag">' + esc(e.dir) + " → " + esc(e.name) + (e.locked ? " 🔒" : "") + "</span>");
+  }
+  if (t.weather) tags.push('<span class="tag">' + esc(t.weather) + "</span>");
+  $("hmeta").innerHTML = tags.join("");
+}
+
+function paintChips(list) {
+  $("chips").innerHTML = (list || []).map((s) =>
+    '<button class="chip" data-say="' + esc(s) + '">' + esc(s) + "</button>"
+  ).join("");
+}
+$("chips").addEventListener("click", (e) => {
+  const b = e.target.closest(".chip");
+  if (b) submit(b.dataset.say);
+});
+
+// ─────────────────────────────────────────────────────────────── a turn
+// One POST that answers with a stream of frames, in order: intent, mechanics, state,
+// many prose deltas, done. The mechanics land before the narrator has written a word —
+// that is the whole reason this is a stream and not a JSON response.
+async function submit(text, actionHint) {
+  text = (text || "").trim();
+  if (!text || S.busy) return;
+  S.busy = true;
+  setBusy("thinking");
+  addSaid(text);
+  $("say").value = "";
+  $("say").style.height = "auto";
+  paintChips([]);
+
+  let res;
+  try {
+    res = await fetch("/api/saves/" + encodeURIComponent(S.saveId) + "/turn", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        save_id: S.saveId, text, expect_version: S.version,
+        ...(actionHint ? { action_hint: actionHint } : {}),
+      }),
+    });
+  } catch (err) {
+    done(); addErr("Could not reach the server. " + err.message); return;
+  }
+
+  if (res.status === 409) {
+    // Somebody else moved the world — another tab, a friend on another device. Re-read
+    // it and say so, rather than applying a turn against a world that no longer exists.
+    const b = await res.json().catch(() => ({}));
+    done(); addSys(b.message || "The world moved. Reloading.");
+    await load(S.saveId);
+    return;
+  }
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}));
+    done(); addErr(b.error || ("Server said " + res.status)); return;
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  let proseEl = null;
+
+  for (;;) {
+    const { value, done: fin } = await reader.read();
+    if (fin) break;
+    buf += dec.decode(value, { stream: true });
+
+    // SSE: records separated by a blank line, `data:` lines carry the JSON.
+    let i;
+    while ((i = buf.indexOf("\n\n")) >= 0) {
+      const record = buf.slice(0, i);
+      buf = buf.slice(i + 2);
+      const line = record.split("\n").find((l) => l.startsWith("data:"));
+      if (!line) continue;
+      let f;
+      try { f = JSON.parse(line.slice(5).trim()); } catch { continue; }
+      proseEl = handleFrame(f, proseEl);
+    }
+  }
+  done();
+}
+
+function handleFrame(f, proseEl) {
+  switch (f.t) {
+    case "intent":
+      setBusy("resolving");
+      break;
+
+    case "mechanics": {
+      S.version = f.version;
+      const html = (f.rolls || []).map(rollHtml).join("")
+        + (f.summary ? '<div class="summary">' + esc(f.summary) + "</div>" : "");
+      if (html) add(html);
+      setBusy("writing");
+      break;
+    }
+
+    case "state":
+      S.screen = f.screen;
+      paintHeader();
+      break;
+
+    case "prose":
+      if (!proseEl) proseEl = add('<div class="narr"></div>').querySelector(".narr");
+      proseEl.textContent += f.delta;
+      stick();
+      break;
+
+    // The narrator's first attempt died partway through and another is replacing it.
+    // Wipe what was shown rather than letting two paragraphs run together.
+    case "prose_reset":
+      if (proseEl) proseEl.textContent = "";
+      break;
+
+    case "answer":
+      add('<div class="narr">' + (f.lines || []).map(esc).join("\n") + "</div>");
+      break;
+
+    case "refused":
+      addSys(f.reason);
+      break;
+
+    // The parser could not tell what was meant. Not a turn, not an error — a question,
+    // and the answer to it is just the next thing you type.
+    case "clarify":
+      add('<div class="sys">' + esc(f.question) + "</div>");
+      break;
+
+    // Optimistic concurrency lost, mid-stream this time. The frame arrives instead of a
+    // 409 when the other turn landed between the pre-check and the lock.
+    case "conflict":
+      addSys(f.message);
+      S.version = f.actual_version;
+      load(S.saveId);
+      break;
+
+    case "done":
+      S.version = f.version;
+      paintChips(f.suggestions);
+      // A turn without prose still happened — the dice landed and the world moved. Say
+      // so plainly rather than letting the silence read as a failure.
+      if (f.note) addSys(f.note);
+      if (f.rejects) addSys(f.rejects + " narrator proposal(s) rejected by the rules.");
+      break;
+
+    case "error":
+      addErr(f.message + (f.retryable ? " (worth trying again)" : ""));
+      break;
+  }
+  return proseEl;
+}
+
+function setBusy(what) {
+  const el = $("working");
+  el.classList.remove("hide");
+  el.innerHTML = { thinking: "the table is <b>listening</b>…", resolving: "rolling the <b>dice</b>…", writing: "the DM is <b>writing</b>…" }[what] || what;
+  $("send").disabled = true;
+  $("openPalette").disabled = true;
+}
+function done() {
+  S.busy = false;
+  $("working").classList.add("hide");
+  $("send").disabled = false;
+  $("openPalette").disabled = false;
+}
+
+// ─────────────────────────────────────────────────────────────── drawers
+function openPane(html) {
+  closePane();
+  const scrim = document.createElement("div");
+  scrim.className = "scrim";
+  const pane = document.createElement("div");
+  pane.className = "sheetpane";
+  pane.innerHTML = '<div class="grab"></div>' + html;
+  document.body.append(scrim, pane);
+  scrim.addEventListener("click", closePane);
+  return pane;
+}
+function closePane() {
+  document.querySelectorAll(".scrim,.sheetpane").forEach((n) => n.remove());
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePane(); });
+
+// The character sheet. Everything the server already computed — this view never does
+// arithmetic of its own, it just lays out what it was handed.
+$("openSheet").addEventListener("click", () => {
+  const s = S.screen;
+  if (!s) return;
+  const sh = s.sheet, xp = sh.xp || {};
+  const pct = Math.round(100 * (sh.hp.current / Math.max(1, sh.hp.max)));
+
+  let h = "<h2>" + esc(sh.name) + "</h2>"
+    + '<div class="note">' + esc(sh.pronouns || "") + " · level " + sh.level
+    + (xp.next ? " · " + xp.current + "/" + xp.next + " xp" : "") + "</div>"
+    + '<div class="bar-hp"><i class="' + (pct <= 34 ? "low" : "") + '" style="width:' + pct + '%"></i></div>'
+    + '<h3>Vitals</h3><div class="stats">'
+    + stat("HP", sh.hp.current + " / " + sh.hp.max + (sh.hp.temp ? " +" + sh.hp.temp : ""))
+    + stat("AC", sh.ac.total)
+    + stat("Purse", fmtPurse(sh.purse))
+    + "</div>"
+    + '<h3>Abilities</h3><div class="abils">'
+    + (sh.abilities || []).map((a) =>
+        '<div class="ab"><div class="k">' + esc(a.key) + '</div><div class="m">'
+        + (a.mod >= 0 ? "+" : "−") + Math.abs(a.mod) + '</div><div class="s">' + a.score + "</div></div>").join("")
+    + "</div>";
+
+  const prof = (sh.skills || []).filter((k) => k.proficient);
+  if (prof.length) {
+    h += "<h3>Proficient</h3><div class=\"note\">"
+      + prof.map((k) => esc(k.key) + " " + (k.mod >= 0 ? "+" : "−") + Math.abs(k.mod)).join(" · ") + "</div>";
+  }
+  if ((sh.conditions || []).length) {
+    h += "<h3>Conditions</h3><div class=\"note\">" + sh.conditions.map(esc).join(" · ") + "</div>";
+  }
+  if ((sh.slots || []).length) {
+    h += "<h3>Spell slots</h3><div class=\"note\">"
+      + sh.slots.map((s) => "lvl " + s.level + ": " + s.current + "/" + s.max).join(" · ") + "</div>";
+  }
+  if ((sh.inventory || []).length) {
+    h += "<h3>Carried</h3><div class=\"list\">" + sh.inventory.map((it) =>
+      '<div class="li"><div class="t">' + esc(it.name) + (it.qty > 1 ? " ×" + it.qty : "")
+      + (it.equipped ? " <span class=\"tag\">worn</span>" : "") + "</div>"
+      + (it.nickname ? '<div class="d serif">' + esc(it.nickname) + "</div>" : "") + "</div>").join("") + "</div>";
+  }
+  const active = (s.quests || []).filter((q) => q.status === "active");
+  if (active.length) {
+    h += "<h3>In hand</h3><div class=\"list\">" + active.map((q) =>
+      '<div class="li"><div class="t">' + esc(q.title) + "</div>"
+      + '<div class="d">' + esc(q.objective || q.summary || "") + "</div>"
+      + (q.leads || []).map((l) => '<div class="d serif">“' + esc(l.text) + "”</div>").join("")
+      + "</div>").join("") + "</div>";
+  }
+  if ((s.party || []).length) {
+    h += "<h3>With you</h3><div class=\"list\">" + s.party.map((p) =>
+      '<div class="li"><div class="t">' + esc(p.name) + "</div>"
+      + '<div class="d">' + esc(p.descriptor || p.role || "") + "</div></div>").join("") + "</div>";
+  }
+  h += '<h3>This save</h3><div class="note">' + esc(S.saveId) + " · turn "
+    + ((s.scene && s.scene.scene_id) || "?") + " · version " + S.version
+    + '</div><button class="act" id="switchSave" style="margin-top:10px"><div class="t">Switch save</div>'
+    + '<div class="d">pick another game, or start one</div></button>';
+
+  const pane = openPane(h);
+  pane.querySelector("#switchSave").addEventListener("click", pickSave);
+});
+
+function stat(k, v) { return '<div class="stat"><div class="k">' + k + '</div><div class="v">' + esc(v) + "</div></div>"; }
+function fmtPurse(p) {
+  if (p == null) return "—";
+  if (typeof p === "number") return p + " gp";
+  return ["pp","gp","ep","sp","cp"].filter((c) => p[c]).map((c) => p[c] + c).join(" ") || "0";
+}
+
+// The action palette. Every entry is an Action the server itself offered, with the
+// cost and the maths it will use — tapping one sends it as `action_hint`, so the
+// intent parser is told rather than asked.
+$("openPalette").addEventListener("click", () => {
+  const p = S.screen && S.screen.palette;
+  if (!p) return;
+  let h = "<h2>What you can do</h2>";
+  for (const g of p.groups || []) {
+    if (!g.items.length) continue;
+    h += "<h3>" + esc(g.label) + "</h3>";
+    for (const it of g.items) {
+      h += '<button class="act" ' + (it.available ? "" : "disabled")
+        + ' data-act="' + esc(JSON.stringify(it.action)) + '" data-label="' + esc(it.label) + '">'
+        + '<div class="t">' + esc(it.label) + "</div>"
+        + '<div class="d">' + esc([it.cost, it.detail].filter(Boolean).join(" · ")) + "</div></button>";
+    }
+  }
+  const pane = openPane(h);
+  pane.addEventListener("click", (e) => {
+    const b = e.target.closest(".act[data-act]");
+    if (!b || b.disabled) return;
+    closePane();
+    submit(b.dataset.label, JSON.parse(b.dataset.act));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────── saves
+let CAT = null;
+async function catalogue() { return (CAT = CAT || await api("/api/catalogue")); }
+
+async function pickSave() {
+  let saves = [];
+  try { saves = await api("/api/saves"); }
+  catch (err) {
+    if (err.status === 401) return askToken();
+    return void openPane('<h2>Cannot reach the game</h2><div class="note">' + esc(err.message) + "</div>");
+  }
+  const cat = await catalogue().catch(() => ({ campaigns: [] }));
+
+  let h = "<h2>Your games</h2>";
+  h += saves.length
+    ? saves.map((s) => '<button class="savebtn" data-id="' + esc(s.id) + '">'
+        + '<div class="t">' + esc(s.title) + "</div>"
+        + '<div class="d">' + esc(s.id) + " · turn " + s.turn + "</div></button>").join("")
+    : '<div class="note">No saves yet. Start one below.</div>';
+  h += "<h3>Begin a new one</h3>";
+  h += (cat.campaigns || []).map((c) => '<button class="act" data-new="' + esc(c.id) + '">'
+      + '<div class="t">' + esc(c.title) + "</div>"
+      + '<div class="d" style="font-family:var(--serif);font-size:13.5px;line-height:1.5">' + esc(c.premise) + "</div></button>").join("");
+
+  const pane = openPane(h);
+  pane.addEventListener("click", (e) => {
+    const open = e.target.closest("[data-id]");
+    if (open) { closePane(); return load(open.dataset.id); }
+    const mk = e.target.closest("[data-new]");
+    if (mk) return newGame(mk.dataset.new, cat.campaigns.find((c) => c.id === mk.dataset.new));
+  });
+}
+
+// Character creation. Every option here came from /api/catalogue — the SRD data lives
+// on the server and this screen only arranges it, so a rules change never needs a
+// client change. Leaving it alone plays the character the campaign authored, which for
+// a prologue built around one specific apprentice is often the better game.
+const STD = [15, 14, 13, 12, 10, 8];
+const ABILS = ["str", "dex", "con", "int", "wis", "cha"];
+
+async function newGame(campaignId, meta) {
+  const cat = await catalogue();
+  const cls0 = cat.classes[0];
+
+  let h = "<h2>" + esc((meta && meta.title) || campaignId) + "</h2>"
+    + '<div class="note" style="font-family:var(--serif);font-size:15px;line-height:1.55">' + esc((meta && meta.premise) || "") + "</div>"
+    + '<h3>Who are you</h3>'
+    + '<input class="field" id="cName" placeholder="Name" autocomplete="off">'
+    + '<input class="field" id="cPro" placeholder="Pronouns (they/them)" autocomplete="off">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +   sel("cRace", cat.races) + sel("cClass", cat.classes)
+    + "</div>"
+    + sel("cBack", cat.backgrounds)
+    + '<div class="note" id="cBackBlurb" style="margin:-2px 0 4px"></div>'
+    + '<h3>Skills <span id="cSkillN" style="color:var(--ember)"></span></h3>'
+    + '<div id="cSkills" class="chips" style="flex-wrap:wrap;overflow:visible;gap:6px"></div>'
+    + '<h3>Abilities <span class="note">— 15 14 13 12 10 8, each once</span></h3>'
+    + '<div class="abils" id="cAbils">'
+    +   ABILS.map((a, i) => '<div class="ab"><div class="k">' + a + "</div>"
+        + '<select class="field" data-ab="' + a + '" style="margin:4px 0 0;padding:5px 2px;text-align:center;font-family:var(--mono)">'
+        + STD.map((v) => '<option ' + (v === STD[i] ? "selected" : "") + ">" + v + "</option>").join("")
+        + "</select></div>").join("")
+    + "</div>"
+    + '<div class="note" id="cAbilWarn" style="color:var(--blood);margin-top:6px"></div>'
+    + '<button class="act" id="cGo" style="margin-top:16px;border-color:var(--ember)"><div class="t">Begin</div>'
+    +   '<div class="d">rolls your sheet and opens the first scene</div></button>'
+    + '<button class="act" id="cAuthored"><div class="t">Play the character as written</div>'
+    +   '<div class="d">skip creation — use the campaign’s own lead</div></button>'
+    + '<button class="act" id="cBack2"><div class="t">← back</div></button>';
+
+  const pane = openPane(h);
+  const q = (x) => pane.querySelector(x);
+
+  function classOf() { return cat.classes.find((c) => c.id === q("#cClass").value) || cls0; }
+  function backOf() { return cat.backgrounds.find((b) => b.id === q("#cBack").value) || cat.backgrounds[0]; }
+
+  // Class decides which skills are on offer and how many; background grants its own for
+  // free, and those are shown as taken rather than offered twice.
+  function paintSkills() {
+    const c = classOf(), b = backOf();
+    const free = new Set(b.skills || []);
+    q("#cSkillN").textContent = "choose " + c.skill_count;
+    q("#cBackBlurb").textContent = b.blurb || "";
+    q("#cSkills").innerHTML = (c.skill_choices || []).map((k) =>
+      free.has(k)
+        ? '<span class="chip" style="opacity:.45">' + esc(k) + " ✓</span>"
+        : '<button class="chip" data-skill="' + esc(k) + '">' + esc(k) + "</button>"
+    ).join("");
+  }
+  const chosen = new Set();
+  q("#cSkills").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-skill]");
+    if (!b) return;
+    const k = b.dataset.skill;
+    if (chosen.has(k)) { chosen.delete(k); b.style.borderColor = ""; b.style.color = ""; }
+    else if (chosen.size < classOf().skill_count) { chosen.add(k); b.style.borderColor = "var(--ember)"; b.style.color = "var(--ember)"; }
+  });
+  q("#cClass").addEventListener("change", () => { chosen.clear(); paintSkills(); });
+  q("#cBack").addEventListener("change", () => { chosen.clear(); paintSkills(); });
+  paintSkills();
+
+  function assignment() {
+    const a = {};
+    for (const el of pane.querySelectorAll("[data-ab]")) a[el.dataset.ab] = Number(el.value);
+    return a;
+  }
+  function abilProblem() {
+    const used = Object.values(assignment()).sort((x, y) => y - x);
+    return used.join() === STD.join() ? "" : "each of 15, 14, 13, 12, 10, 8 exactly once";
+  }
+  pane.querySelectorAll("[data-ab]").forEach((el) =>
+    el.addEventListener("change", () => { q("#cAbilWarn").textContent = abilProblem(); }));
+
+  q("#cBack2").addEventListener("click", pickSave);
+  q("#cAuthored").addEventListener("click", () => begin(null));
+  q("#cGo").addEventListener("click", () => {
+    const name = q("#cName").value.trim();
+    if (!name) { q("#cName").focus(); return; }
+    const bad = abilProblem();
+    if (bad) { q("#cAbilWarn").textContent = bad; return; }
+    const need = classOf().skill_count;
+    if (chosen.size !== need) { q("#cSkillN").textContent = "choose " + need + " — you have " + chosen.size; return; }
+    begin({
+      name,
+      pronouns: q("#cPro").value.trim() || "they/them",
+      race_id: q("#cRace").value,
+      class_id: q("#cClass").value,
+      background_id: q("#cBack").value,
+      skills: [...chosen],
+      scores: { method: "standard", assignment: assignment() },
+    });
+  });
+
+  async function begin(character) {
+    q("#cGo").disabled = true;
+    q("#cAuthored").disabled = true;
+    const who = character ? character.name : "hero";
+    const body = {
+      campaign: campaignId,
+      save_id: saveIdFor(campaignId, who),
+      ...(character ? { character } : {}),
+    };
+    try {
+      const made = await api("/api/saves", { method: "POST", body: JSON.stringify(body) });
+      closePane();
+      await load(made.save_id);
+    } catch (err) {
+      q("#cGo").disabled = false;
+      q("#cAuthored").disabled = false;
+      q("#cAbilWarn").textContent = err.message
+        + (err.body && err.body.issues ? " — " + err.body.issues.join("; ") : "");
+    }
+  }
+}
+
+function sel(id, opts) {
+  return '<select class="field" id="' + id + '">'
+    + opts.map((o) => '<option value="' + esc(o.id) + '">' + esc(o.name) + "</option>").join("")
+    + "</select>";
+}
+
+// `prefix_name`, lower case, at least one underscore — the server enforces the shape and
+// a collision is a 409, so a short random tail keeps a second Bren from being refused.
+function saveIdFor(campaignId, name) {
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12) || "x";
+  return slug(campaignId) + "_" + slug(name) + "_" + Math.random().toString(36).slice(2, 5);
+}
+
+function askToken() {
+  const pane = openPane("<h2>This game is locked</h2>"
+    + '<div class="note">The server was started with a secret. Paste it to play.</div>'
+    + '<input class="field" id="tok" type="password" placeholder="secret" style="margin-top:12px">'
+    + '<button class="act" id="tokgo"><div class="t">Unlock</div></button>');
+  pane.querySelector("#tokgo").addEventListener("click", () => {
+    S.token = pane.querySelector("#tok").value.trim();
+    localStorage.setItem("dnd.token", S.token);
+    closePane();
+    boot();
+  });
+}
+
+async function load(id) {
+  const snap = await api("/api/saves/" + encodeURIComponent(id));
+  S.saveId = id;
+  S.version = snap.version;
+  S.screen = snap.screen;
+  localStorage.setItem("dnd.save", id);
+
+  feed.innerHTML = "";
+  for (const row of snap.recent || []) {
+    if (row.kind === "player") addSaid(row.text);
+    else if (row.kind === "narration") add('<div class="narr">' + esc(row.text) + "</div>");
+    else if (row.kind === "mechanics") add((row.rolls || []).map(rollHtml).join("") + '<div class="summary">' + esc(row.text) + "</div>");
+    else addSys(row.text);
+  }
+  if (!(snap.recent || []).length && S.screen.scene) {
+    add('<div class="narr">' + esc(S.screen.scene.location.description) + "</div>");
+  }
+  paintHeader();
+  paintChips((S.screen.quests || []).slice(0, 1).flatMap((q) => (q.leads || []).map((l) => l.text)).slice(0, 3));
+  feed.scrollTop = feed.scrollHeight;
+  document.title = (S.screen.scene ? S.screen.scene.location.name + " · " : "") + "Cinderhold";
+}
+
+// ─────────────────────────────────────────────────────────────── input
+const say = $("say");
+say.addEventListener("input", () => {
+  say.style.height = "auto";
+  say.style.height = Math.min(120, say.scrollHeight) + "px";
+});
+say.addEventListener("keydown", (e) => {
+  // Enter sends on a keyboard; on a phone the send button is the target you can hit.
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(say.value); }
+});
+$("send").addEventListener("click", () => submit(say.value));
+
+// ─────────────────────────────────────────────────────────────── boot
+async function boot() {
+  try {
+    await api("/api/health");
+  } catch (err) {
+    if (err.status === 401) return askToken();
+    addErr("The game server is not answering. Is `npm run serve` running?");
+    return;
+  }
+  if (S.saveId) {
+    try { return await load(S.saveId); } catch { /* it is gone; fall through */ }
+  }
+  pickSave();
+}
+boot();
+</script>
+</body>
+</html>
