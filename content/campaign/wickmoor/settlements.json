@@ -1,0 +1,43 @@
+{
+  "set_wickmoor": {
+    "id": "set_wickmoor",
+    "name": "Wickmoor",
+    "region_id": null,
+    "location_ids": [
+      "loc_forge",
+      "loc_green",
+      "loc_bakehouse",
+      "loc_moot_hall"
+    ],
+    "population": 210,
+    "reputation_with_pc": 35,
+    "presence": [
+      {
+        "faction_id": "fac_meridian",
+        "allegiance": "holds",
+        "strength": 55,
+        "openness": "open"
+      },
+      {
+        "faction_id": "fac_accord",
+        "allegiance": "present",
+        "strength": 25,
+        "openness": "covert"
+      }
+    ],
+    "services": [
+      {
+        "kind": "smith",
+        "location_id": "loc_forge"
+      },
+      {
+        "kind": "shop",
+        "location_id": "loc_bakehouse"
+      },
+      {
+        "kind": "job_board",
+        "location_id": "loc_moot_hall"
+      }
+    ]
+  }
+}

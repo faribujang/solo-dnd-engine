@@ -1,0 +1,309 @@
+{
+  "q_before": {
+    "id": "q_before",
+    "title": "The Days Before",
+    "giver_entity_id": null,
+    "status": "active",
+    "visibility": "known",
+    "summary": "Three years an apprentice and lately old enough to be asked what happens next. There is work, and there are people, and there is a stranger on the green.",
+    "dm_notes": "THE PROLOGUE IS THE POINT. Do not hurry the player toward a plot. Let them be eighteen in a village that likes them: Cotter in the forge, Nell in the bakehouse, Jory everywhere, Bryn underfoot. Vosk is on the green asking polite questions in a particular order — about the hall, about the smith, about who came to Wickmoor when. He is never threatening. He is always slightly too interested. The burning comes when the player leaves for the river; until then, give them the life they are about to lose, and make it worth losing.",
+    "current_step_id": "step_days",
+    "steps": [
+      {
+        "id": "step_days",
+        "desc": "Spend the days: the forge, the green, whoever you want to see",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_went_fishing",
+            "on": "enter_location",
+            "then": [],
+            "once": true,
+            "match": {
+              "actor_id": "pc_main"
+            },
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_riverbend"
+            }
+          }
+        ],
+        "on_complete": []
+      }
+    ],
+    "leads": [
+      {
+        "text": "Cotter has been short with you all week, and he is never short with you.",
+        "learned_turn": 0,
+        "source_entity_id": null,
+        "points_to_location_id": "loc_forge"
+      },
+      {
+        "text": "The traveller on the green keeps asking about the moot hall.",
+        "learned_turn": 0,
+        "source_entity_id": null,
+        "points_to_location_id": "loc_green"
+      },
+      {
+        "text": "Jory wants to fish the bend before the weather turns. He has asked four times.",
+        "learned_turn": 0,
+        "source_entity_id": "cmp_jory",
+        "points_to_location_id": "loc_riverbend"
+      }
+    ],
+    "rewards": {
+      "xp": 100,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [],
+    "blocks": []
+  },
+  "q_the_burning": {
+    "id": "q_the_burning",
+    "title": "The Smoke Over Wickmoor",
+    "giver_entity_id": null,
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Smoke over the valley, and four of you an hour's run away.",
+    "dm_notes": "They are at the river when Sibby sees it — she always sees it first. Do not describe the raiders; they are gone before the party arrives. Describe the walk back and what is in it. Half the village. The forge still standing, which is worse. Halla and Dunn are dead. BRYN IS NOT AMONG THE DEAD AND IS NOT ANYWHERE. Ilsa Rooke is alive for as long as the scene needs her and no longer. The raiders wore no colours and their boots were new and matched.",
+    "current_step_id": "step_run_back",
+    "steps": [
+      {
+        "id": "step_run_back",
+        "desc": "Get back to Wickmoor",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_home_again",
+            "on": "enter_location",
+            "then": [],
+            "once": true,
+            "match": {
+              "actor_id": "pc_main"
+            },
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_green"
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "wickmoor_burned",
+            "value": true
+          },
+          {
+            "t": "add_fact",
+            "text": "Half of Wickmoor burned while four of us were at the river.",
+            "subjects": [
+              "set_wickmoor"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main",
+              "cmp_jory"
+            ]
+          },
+          {
+            "t": "add_fact",
+            "text": "The raiders wore no colours, and their boots were new and all the same.",
+            "subjects": [
+              "set_wickmoor"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main",
+              "cmp_jory"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "step_the_dead",
+        "desc": "Find out who is gone",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "flag",
+            "key": "wickmoor_burned",
+            "eq": true
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_counted",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "counted_the_dead",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_asked_after",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_ilsa"
+              ]
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "bryn_taken",
+            "value": true
+          },
+          {
+            "t": "add_fact",
+            "text": "Bryn is not among the dead, and she is not anywhere.",
+            "subjects": [
+              "npc_bryn"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Sibby says the smoke is coming off the green, not the fields. That means houses.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_sibby",
+        "points_to_location_id": "loc_green"
+      },
+      {
+        "text": "Tam went straight up the bank without waiting. He is already half a mile ahead.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_tam",
+        "points_to_location_id": "loc_green"
+      },
+      {
+        "text": "The high wood looks down on the whole valley. From up there you would see what is left.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_sibby",
+        "points_to_location_id": "loc_high_wood"
+      }
+    ],
+    "rewards": {
+      "xp": 200,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [
+      "q_before"
+    ],
+    "blocks": []
+  },
+  "q_the_road": {
+    "id": "q_the_road",
+    "title": "What Ilsa Rooke Said",
+    "giver_entity_id": "npc_ilsa",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Go to Harrowmoot. Not for help — for the other thing.",
+    "dm_notes": "Ilsa dies giving this. She is not gentle about it and she does not explain, because she has spent eleven years deciding people were not ready and she knows, now, that she was wrong and there is no time to be right. WHAT SHE ACTUALLY SAYS: go to Harrowmoot, find the one who took the other half of the keeping, and tell them Wickmoor is finished. She will name no name — she gets as far as 'ask at the' and stops. If pressed for what was kept, she looks at JORY, not at the player, and that is all. Her last instruction is a warning: once you ask, none of you go back to being who you were this morning. Let the player hear it as grief. It is not grief.",
+    "current_step_id": "step_charge",
+    "steps": [
+      {
+        "id": "step_charge",
+        "desc": "Take the north road to Harrowmoot",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "flag",
+            "key": "ilsa_spoke",
+            "eq": true
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_took_road",
+            "on": "enter_location",
+            "then": [],
+            "once": true,
+            "match": {
+              "actor_id": "pc_main"
+            },
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_north_road"
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "prologue_over",
+            "value": true
+          },
+          {
+            "t": "grant_xp",
+            "entity_ids": [
+              "pc_main",
+              "cmp_jory"
+            ],
+            "amount": 300,
+            "reason": "the road out of Wickmoor"
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Harrowmoot is two days north at a walk, and it is the only place near enough to matter.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_ilsa",
+        "points_to_location_id": "loc_north_road"
+      },
+      {
+        "text": "Cotter will not come with you. He will not say why, and he has already packed your bag.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_cotter",
+        "points_to_location_id": "loc_forge"
+      },
+      {
+        "text": "Hob says the tithe-collector's gig went north an hour before the smoke.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_hob",
+        "points_to_location_id": "loc_north_road"
+      }
+    ],
+    "rewards": {
+      "xp": 0,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [
+      "q_the_burning"
+    ],
+    "blocks": []
+  }
+}

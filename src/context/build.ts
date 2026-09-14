@@ -263,10 +263,7 @@ function applyBudget(
   for (const sec of out) {
     if (sec.fixed) continue;
     while (estimateTokens(sec.body) > sec.budget) {
-      const lines = sec.body.split("\n");
-      if (lines.length <= 1) break;
-      lines.shift();
-      sec.body = lines.join("\n");
+      if (!dropOldestItem(sec)) break;
       if (!shed.includes(sec.id)) shed.push(sec.id);
     }
   }
@@ -275,16 +272,39 @@ function applyBudget(
   const order = [...out].filter((s) => !s.fixed).sort((a, b) => b.priority - a.priority);
   for (const sec of order) {
     while (total() > maxTokens) {
-      const lines = sec.body.split("\n");
-      if (lines.length <= 1) break;
-      lines.shift();
-      sec.body = lines.join("\n");
+      if (!dropOldestItem(sec)) break;
       if (!shed.includes(sec.id)) shed.push(sec.id);
     }
     if (total() <= maxTokens) break;
   }
 
   return out.filter((s) => s.body.trim() !== "");
+}
+
+/**
+ * Drop the OLDEST WHOLE ITEM from a section, never part of one.
+ *
+ * An item is a top-level line plus the indented lines beneath it — an NPC and everything
+ * known about them, a quest and its steps. This used to shift off a single LINE at a time,
+ * which sliced an NPC in half and left a fragment whose first line, once the block was
+ * trimmed, read as a complete entry. Playing a crowded village surfaced it immediately: the
+ * DM narrated one of the smith's private facts as though it were a person standing there.
+ *
+ * The comment at the top of this file has always promised whole items. Now it is true.
+ *
+ * Returns false when there is nothing further to drop.
+ */
+function dropOldestItem(sec: Section): boolean {
+  const lines = sec.body.split("\n");
+  if (lines.length <= 1) return false;
+
+  // Consume the head, then everything belonging to it: indented continuation lines, and the
+  // blank line that separates this entry from the next.
+  let end = 1;
+  while (end < lines.length && (lines[end]!.startsWith("  ") || lines[end]!.trim() === "")) end++;
+
+  sec.body = lines.slice(end).join("\n").replace(/^\n+/, "");
+  return sec.body.trim() !== "";
 }
 
 // ------------------------------------------------------------------ render

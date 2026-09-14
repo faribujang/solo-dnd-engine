@@ -1,0 +1,124 @@
+{
+  "clocks": {
+    "clk_trail": {
+      "id": "clk_trail",
+      "name": "The raiders' trail goes cold",
+      "visible": true,
+      "segments": 6,
+      "filled": 0,
+      "per_day": 2,
+      "done": false,
+      "quest_id": "q_the_burning",
+      "arc_id": "arc_wickmoor",
+      "on_complete": [
+        {
+          "t": "set_flag",
+          "key": "trail_cold",
+          "value": true
+        },
+        {
+          "t": "add_fact",
+          "text": "Whatever direction they took Bryn, the rain and the days have taken it back.",
+          "subjects": [
+            "npc_bryn"
+          ],
+          "importance": 4,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        }
+      ]
+    },
+    "clk_tithe": {
+      "id": "clk_tithe",
+      "name": "The lamp-tithe falls due",
+      "visible": true,
+      "segments": 8,
+      "filled": 3,
+      "per_day": 1,
+      "done": false,
+      "quest_id": null,
+      "arc_id": "arc_wickmoor",
+      "on_complete": [
+        {
+          "t": "set_flag",
+          "key": "tithe_due",
+          "value": true
+        },
+        {
+          "t": "faction_rep",
+          "faction_id": "fac_meridian",
+          "delta": -5
+        }
+      ]
+    }
+  },
+  "vows": {},
+  "encounter_tables": {
+    "enc_north_road": {
+      "id": "enc_north_road",
+      "name": "The north road",
+      "entries": [
+        {
+          "id": "enc_road_men",
+          "kind": "combat",
+          "weight": 2,
+          "min_danger": 1,
+          "brief": "Two men on the road who are not travelling, and who look at the pair of you the way you price a thing.",
+          "then": [
+            {
+              "t": "start_combat",
+              "enemy_ids": [
+                "mon_raider"
+              ]
+            }
+          ],
+          "hours": [],
+          "once": false
+        },
+        {
+          "id": "enc_road_cart",
+          "kind": "discovery",
+          "weight": 3,
+          "min_danger": 0,
+          "brief": "A cart turned over and stripped to the axles. Days old. Nobody came back for it.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "A stripped cart on the north road, days old and nobody came back for it.",
+              "subjects": [],
+              "importance": 2,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "once": true
+        },
+        {
+          "id": "enc_road_gig",
+          "kind": "social",
+          "weight": 3,
+          "min_danger": 0,
+          "brief": "A tithe-collector's gig going the other way, fast, and the man driving it does not slow to look at you.",
+          "then": [],
+          "hours": [],
+          "once": false
+        },
+        {
+          "id": "enc_road_quiet",
+          "kind": "quiet",
+          "weight": 5,
+          "min_danger": 0,
+          "brief": "Nothing. Miles of nothing, and the first time all day there is room to think about it.",
+          "then": [],
+          "hours": [],
+          "once": false
+        }
+      ]
+    }
+  }
+}

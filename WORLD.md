@@ -243,12 +243,17 @@ npm run play -- my_save --mock
 npm run serve -- --mock      # :8787
 ```
 
+**Play the prologue:**
+
+```bash
+npm run seed -- wickmoor wick
+npm run play -- wick --mock
+```
+
 **What is not there yet:**
 
-1. **Cinderhold is not content.** The three powers and their wings are wired into the
-   engine and into the existing test campaign, but the *world* — the village, the city, the
-   people, the quests — has not been written. What you play today is `drowned_bell`, the
-   phase-0 test campaign.
+1. **Only the prologue is written.** Wickmoor exists — eight places, thirteen people, three
+   quests, the burning and the road out. Harrowmoot and everything past it do not.
 2. **There is no web client.** The whole API and every view model exist and are tested;
    nothing renders them. This is phase 7 and the only substantial engine work left.
 3. **Five generator stages are missing** — items, relationships, facts, wiring, and a cast

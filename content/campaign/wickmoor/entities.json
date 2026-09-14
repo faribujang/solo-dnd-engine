@@ -1,0 +1,1393 @@
+{
+  "pc_main": {
+    "id": "pc_main",
+    "kind": "pc",
+    "name": "Vane's Apprentice",
+    "pronouns": "they/them",
+    "aliases": [],
+    "descriptor": "a smith's apprentice, three years in and just old enough to be asked what happens next",
+    "controller": "human",
+    "location_id": "loc_forge",
+    "zone_id": "z_anvil",
+    "faction_ids": [],
+    "abilities": {
+      "str": 12,
+      "dex": 13,
+      "con": 13,
+      "int": 11,
+      "wis": 12,
+      "cha": 11
+    },
+    "level": 1,
+    "class_id": "cls_fighter",
+    "race_id": "race_human",
+    "hp": {
+      "current": 10,
+      "max": 10,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "athletics",
+        "perception"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "counts things without meaning to"
+      ],
+      "ideal": "A thing made badly is a lie you have to keep telling.",
+      "bond": "Cotter Vane took you in and has never said why.",
+      "flaw": "Cannot leave a argument alone once it has started.",
+      "voice": ""
+    },
+    "goals": [],
+    "schedule": [],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "background_id": "bg_folk_hero"
+    }
+  },
+  "cmp_jory": {
+    "id": "cmp_jory",
+    "kind": "companion",
+    "name": "Jory Finch",
+    "pronouns": "he/him",
+    "aliases": [
+      "jory",
+      "finch"
+    ],
+    "descriptor": "your oldest friend, all elbows and enthusiasm, chronically unable to whisper",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_well",
+    "faction_ids": [],
+    "abilities": {
+      "str": 10,
+      "dex": 14,
+      "con": 11,
+      "int": 12,
+      "wis": 10,
+      "cha": 14
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "cannot sit with his back to a door and has never noticed",
+        "gives things away and then wants them back"
+      ],
+      "ideal": "Nobody gets left on the bank.",
+      "bond": "You. Loudly, and to anyone who asks.",
+      "flaw": "Says the true thing at the worst possible moment.",
+      "voice": "fast, warm, jokes a half-second before the room is ready"
+    },
+    "goals": [
+      {
+        "text": "Get out of Wickmoor before the levy makes it impossible",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [
+      {
+        "on": "spared_enemy",
+        "dims": {
+          "affinity": 8,
+          "respect": 4
+        },
+        "line": "\"Right. Good. I didn't want to watch that.\""
+      },
+      {
+        "on": "killed_surrendered",
+        "dims": {
+          "affinity": -14,
+          "trust": -8
+        },
+        "line": "\"They'd stopped. You know they'd stopped.\""
+      },
+      {
+        "on": "protected_ally",
+        "dims": {
+          "affinity": 10,
+          "trust": 8
+        },
+        "line": "\"I saw that. I'm not going to forget I saw that.\""
+      },
+      {
+        "on": "let_ally_fall",
+        "dims": {
+          "affinity": -12,
+          "trust": -10
+        },
+        "line": "\"They were RIGHT THERE.\""
+      },
+      {
+        "on": "took_reward",
+        "dims": {
+          "affinity": -5
+        },
+        "line": "\"That's their money. That's literally their money.\""
+      },
+      {
+        "on": "helped_stranger",
+        "dims": {
+          "affinity": 6
+        },
+        "line": "\"Cost us nothing. Worth doing.\""
+      },
+      {
+        "on": "gave_charity",
+        "dims": {
+          "affinity": 7,
+          "respect": 3
+        },
+        "line": "\"You didn't have to do that. I noticed you did it anyway.\""
+      },
+      {
+        "on": "lied",
+        "dims": {
+          "trust": -8,
+          "affinity": -4
+        },
+        "line": "\"You're doing the voice. You do a voice when you're lying.\""
+      },
+      {
+        "on": "stole",
+        "dims": {
+          "affinity": -4,
+          "trust": -3
+        },
+        "line": "\"Put it back. Put it back now.\""
+      },
+      {
+        "on": "kept_promise",
+        "dims": {
+          "trust": 8,
+          "respect": 5
+        },
+        "line": "\"You said you would. You did.\""
+      },
+      {
+        "on": "broke_promise",
+        "dims": {
+          "trust": -12,
+          "affinity": -6
+        },
+        "line": "\"To me? You did that to me?\""
+      },
+      {
+        "on": "desecrated",
+        "dims": {
+          "affinity": -10,
+          "respect": -8
+        },
+        "line": "\"They're somebody's. Every one of them is somebody's.\""
+      },
+      {
+        "on": "fled_combat",
+        "dims": {
+          "affinity": 2
+        },
+        "line": "\"No — good. Good call. Running is a call.\""
+      },
+      {
+        "on": "investigated",
+        "dims": {
+          "respect": 6,
+          "trust": 4
+        },
+        "line": "\"See, this is why it's you and not Tam.\""
+      },
+      {
+        "on": "intimidated",
+        "dims": {
+          "affinity": -3,
+          "fear": 3
+        },
+        "line": "\"...that worked. I didn't like it, but it worked.\""
+      }
+    ],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "pact_dormant": true,
+      "social_tags": [
+        "commoner"
+      ]
+    }
+  },
+  "npc_cotter": {
+    "id": "npc_cotter",
+    "kind": "npc",
+    "name": "Cotter Vane",
+    "pronouns": "he/him",
+    "aliases": [
+      "cotter",
+      "vane",
+      "the smith"
+    ],
+    "descriptor": "the village smith, grey and unhurried, with burn scars that stop at the elbow and start again at the collar",
+    "controller": "cpu",
+    "location_id": "loc_forge",
+    "zone_id": "z_anvil",
+    "faction_ids": [
+      "fac_accord"
+    ],
+    "abilities": {
+      "str": 15,
+      "dex": 10,
+      "con": 14,
+      "int": 12,
+      "wis": 14,
+      "cha": 10
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 16,
+      "max": 16,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "perception",
+        "athletics"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "finishes a piece before he answers a question",
+        "keeps the good hammer where only two people can reach it"
+      ],
+      "ideal": "You make a thing properly or you do not make it.",
+      "bond": "The apprentice, though he would not put it that way.",
+      "flaw": "Has let a silence run for eleven years rather than start a difficult conversation.",
+      "voice": "slow, dry, says about a third of what he is thinking"
+    },
+    "goals": [
+      {
+        "text": "Get the apprentice out of Wickmoor before anybody comes asking",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 5,
+        "to_hour": 20,
+        "location_id": "loc_forge"
+      },
+      {
+        "from_hour": 20,
+        "to_hour": 5,
+        "location_id": "loc_forge"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ],
+      "faction_wing": "shepherds"
+    }
+  },
+  "npc_nell": {
+    "id": "npc_nell",
+    "kind": "npc",
+    "name": "Nell Gower",
+    "pronouns": "she/her",
+    "aliases": [
+      "nell",
+      "gower"
+    ],
+    "descriptor": "the baker's daughter, flour to the elbow, entirely aware of the effect she has",
+    "controller": "cpu",
+    "location_id": "loc_bakehouse",
+    "zone_id": "z_ovens",
+    "faction_ids": [],
+    "abilities": {
+      "str": 11,
+      "dex": 12,
+      "con": 12,
+      "int": 13,
+      "wis": 13,
+      "cha": 15
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "remembers what everyone orders and what it means",
+        "is kinder than she lets on and finds this embarrassing"
+      ],
+      "ideal": "People tell a bakehouse everything. Somebody should be listening.",
+      "bond": "Her father's hands are going. She has not told him she has noticed.",
+      "flaw": "Would rather be wry than honest.",
+      "voice": "amused, unhurried, lands a question and waits"
+    },
+    "goals": [
+      {
+        "text": "Work out whether there is anything in Wickmoor worth staying for",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 4,
+        "to_hour": 13,
+        "location_id": "loc_bakehouse"
+      },
+      {
+        "from_hour": 13,
+        "to_hour": 19,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 19,
+        "to_hour": 4,
+        "location_id": "loc_bakehouse"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner",
+        "merchant"
+      ]
+    }
+  },
+  "npc_tam": {
+    "id": "npc_tam",
+    "kind": "npc",
+    "name": "Tam Ruddock",
+    "pronouns": "he/him",
+    "aliases": [
+      "tam",
+      "ruddock"
+    ],
+    "descriptor": "broad, loud, and the first to volunteer for anything that sounds like a bad idea",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_stone",
+    "faction_ids": [],
+    "abilities": {
+      "str": 15,
+      "dex": 11,
+      "con": 14,
+      "int": 9,
+      "wis": 10,
+      "cha": 12
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 12,
+      "max": 12,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "athletics",
+        "intimidation"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "tells the same three stories",
+        "would fight anyone for any of you"
+      ],
+      "ideal": "You stand with your own.",
+      "bond": "His mother, who he is scared of.",
+      "flaw": "Cannot tell the difference between brave and stupid.",
+      "voice": "booming, generous, wrong about most things with total confidence"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 6,
+        "to_hour": 20,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 20,
+        "to_hour": 6,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    }
+  },
+  "npc_sibby": {
+    "id": "npc_sibby",
+    "kind": "npc",
+    "name": "Sibby Aylward",
+    "pronouns": "she/her",
+    "aliases": [
+      "sibby",
+      "aylward"
+    ],
+    "descriptor": "small, watchful, and always the one who notices first",
+    "controller": "cpu",
+    "location_id": "loc_riverbend",
+    "zone_id": "z_bank",
+    "faction_ids": [],
+    "abilities": {
+      "str": 10,
+      "dex": 15,
+      "con": 11,
+      "int": 13,
+      "wis": 15,
+      "cha": 10
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "perception",
+        "survival",
+        "stealth"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "sees it before you do and waits to be asked",
+        "counts exits"
+      ],
+      "ideal": "Knowing is better than hoping.",
+      "bond": "Her grandmother's snare-lines on the high wood.",
+      "flaw": "Will not say a thing until she is certain, which is sometimes far too late.",
+      "voice": "quiet, flat, says one sentence where anyone else uses six"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 5,
+        "to_hour": 21,
+        "location_id": "loc_riverbend"
+      },
+      {
+        "from_hour": 21,
+        "to_hour": 5,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner",
+        "wild"
+      ]
+    }
+  },
+  "npc_ilsa": {
+    "id": "npc_ilsa",
+    "kind": "npc",
+    "name": "Ilsa Rooke",
+    "pronouns": "she/her",
+    "aliases": [
+      "ilsa",
+      "rooke",
+      "elder rooke",
+      "mother rooke"
+    ],
+    "descriptor": "eldest of Wickmoor's three, straight-backed, with a voice that stops a room",
+    "controller": "cpu",
+    "location_id": "loc_moot_hall",
+    "zone_id": "z_dais",
+    "faction_ids": [
+      "fac_accord"
+    ],
+    "abilities": {
+      "str": 9,
+      "dex": 10,
+      "con": 11,
+      "int": 15,
+      "wis": 16,
+      "cha": 14
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 11,
+      "max": 11,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "history",
+        "religion",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "will not be hurried",
+        "blesses people without appearing to notice she has"
+      ],
+      "ideal": "What was given us to keep, we keep.",
+      "bond": "A promise made in a bad year to people who are all dead now.",
+      "flaw": "Has decided who is ready for the truth, and she is wrong.",
+      "voice": "measured, carrying, chooses every word like it costs her something"
+    },
+    "goals": [
+      {
+        "text": "Keep Wickmoor's business Wickmoor's for one more year",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 7,
+        "to_hour": 20,
+        "location_id": "loc_moot_hall"
+      },
+      {
+        "from_hour": 20,
+        "to_hour": 7,
+        "location_id": "loc_moot_hall"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "clergy",
+        "commoner"
+      ],
+      "faction_wing": "shepherds"
+    }
+  },
+  "npc_hob": {
+    "id": "npc_hob",
+    "kind": "npc",
+    "name": "Hob Tanner",
+    "pronouns": "he/him",
+    "aliases": [
+      "hob",
+      "tanner"
+    ],
+    "descriptor": "an elder by outliving the others, mostly interested in the levy and his knees",
+    "controller": "cpu",
+    "location_id": "loc_moot_hall",
+    "zone_id": "z_floor",
+    "faction_ids": [],
+    "abilities": {
+      "str": 10,
+      "dex": 9,
+      "con": 12,
+      "int": 11,
+      "wis": 12,
+      "cha": 11
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "brings every subject back to money"
+      ],
+      "ideal": "Somebody has to count.",
+      "bond": "Wickmoor's ledger, which he keeps better than anyone knows.",
+      "flaw": "Would sell a great deal to be left alone.",
+      "voice": "grumbling, practical, complains as a form of conversation"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 8,
+        "to_hour": 18,
+        "location_id": "loc_moot_hall"
+      },
+      {
+        "from_hour": 18,
+        "to_hour": 8,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner",
+        "merchant"
+      ]
+    }
+  },
+  "npc_halla": {
+    "id": "npc_halla",
+    "kind": "npc",
+    "name": "Halla Wick",
+    "pronouns": "she/her",
+    "aliases": [
+      "halla",
+      "mother",
+      "mum",
+      "ma"
+    ],
+    "descriptor": "your mother, who took in laundry and opinions in roughly equal quantity",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_well",
+    "faction_ids": [],
+    "abilities": {
+      "str": 11,
+      "dex": 11,
+      "con": 13,
+      "int": 12,
+      "wis": 13,
+      "cha": 13
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "feeds people instead of talking about feelings"
+      ],
+      "ideal": "You look after what is yours.",
+      "bond": "Her two children, unequally and she knows it.",
+      "flaw": "Thinks affection is something you demonstrate rather than say.",
+      "voice": "brisk, fond, never once said the sentimental thing out loud"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 6,
+        "to_hour": 20,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 20,
+        "to_hour": 6,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    }
+  },
+  "npc_dunn": {
+    "id": "npc_dunn",
+    "kind": "npc",
+    "name": "Dunn Wick",
+    "pronouns": "he/him",
+    "aliases": [
+      "dunn",
+      "father",
+      "da",
+      "dad"
+    ],
+    "descriptor": "your father, a hedger and ditcher, hands like bark, asleep by dark",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_well",
+    "faction_ids": [],
+    "abilities": {
+      "str": 14,
+      "dex": 10,
+      "con": 14,
+      "int": 9,
+      "wis": 11,
+      "cha": 10
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 11,
+      "max": 11,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "athletics",
+        "survival"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "mends things nobody asked him to mend"
+      ],
+      "ideal": "A day's work is its own argument.",
+      "bond": "The hedge line he has kept for twenty years.",
+      "flaw": "Does not know how to talk to his own children.",
+      "voice": "few words, most of them about weather or work"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 5,
+        "to_hour": 19,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 19,
+        "to_hour": 5,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    }
+  },
+  "npc_bryn": {
+    "id": "npc_bryn",
+    "kind": "npc",
+    "name": "Bryn Wick",
+    "pronouns": "she/her",
+    "aliases": [
+      "bryn",
+      "sister"
+    ],
+    "descriptor": "your younger sister, eleven, furious about it, and faster than you",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_stone",
+    "faction_ids": [],
+    "abilities": {
+      "str": 9,
+      "dex": 15,
+      "con": 10,
+      "int": 13,
+      "wis": 12,
+      "cha": 13
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 6,
+      "max": 6,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth",
+        "acrobatics"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "repeats things she has overheard at exactly the wrong moment",
+        "follows you and denies following you"
+      ],
+      "ideal": "Being small is not the same as being stupid.",
+      "bond": "You, though she would sooner bite through her own hand than say so.",
+      "flaw": "Cannot be told not to do a thing.",
+      "voice": "rapid, sharp, argues for sport"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 6,
+        "to_hour": 21,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 21,
+        "to_hour": 6,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    }
+  },
+  "npc_vosk": {
+    "id": "npc_vosk",
+    "kind": "npc",
+    "name": "Amery Vosk",
+    "pronouns": "he/him",
+    "aliases": [
+      "vosk",
+      "the visitor",
+      "the traveller"
+    ],
+    "descriptor": "a traveller in a very good coat, who arrived without a cart and does not seem to be selling anything",
+    "controller": "cpu",
+    "location_id": "loc_green",
+    "zone_id": "z_stone",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 10,
+      "dex": 13,
+      "con": 11,
+      "int": 16,
+      "wis": 15,
+      "cha": 15
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 14,
+      "max": 14,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "investigation",
+        "deception",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "writes nothing down and forgets nothing",
+        "pays for things at slightly above the asking price"
+      ],
+      "ideal": "Everything is for sale. The work is finding the price.",
+      "bond": "A contract he has not been able to close in four years.",
+      "flaw": "Genuinely cannot conceive that someone would refuse enough money.",
+      "voice": "courteous, unhurried, asks small questions in a particular order"
+    },
+    "goals": [
+      {
+        "text": "Confirm what Wickmoor has been sitting on, and price it",
+        "priority": 1,
+        "quest_id": "q_before"
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 9,
+        "to_hour": 22,
+        "location_id": "loc_green"
+      },
+      {
+        "from_hour": 22,
+        "to_hour": 9,
+        "location_id": "loc_green"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "merchant",
+        "lawful"
+      ],
+      "faction_wing": "assay"
+    }
+  },
+  "mon_raider": {
+    "id": "mon_raider",
+    "kind": "monster",
+    "name": "a raider",
+    "pronouns": "they/them",
+    "aliases": [
+      "raider"
+    ],
+    "descriptor": "no banner, no colours, and boots better than any of it",
+    "controller": "cpu",
+    "location_id": "loc_north_road",
+    "zone_id": "z_road",
+    "faction_ids": [],
+    "abilities": {
+      "str": 14,
+      "dex": 13,
+      "con": 13,
+      "int": 9,
+      "wis": 10,
+      "cha": 8
+    },
+    "level": 1,
+    "class_id": null,
+    "race_id": "race_human",
+    "hp": {
+      "current": 11,
+      "max": 11,
+      "temp": 0
+    },
+    "ac": 14,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [],
+      "ideal": "",
+      "bond": "",
+      "flaw": "",
+      "voice": ""
+    },
+    "goals": [],
+    "schedule": [],
+    "known_fact_ids": [],
+    "ai_policy": "aggressive",
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "is_template": true
+    }
+  }
+}

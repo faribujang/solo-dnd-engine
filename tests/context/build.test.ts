@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadCampaign } from "../../src/content/loadCampaign.js";
 import { buildContext } from "../../src/context/build.js";
+import { pc } from "../../src/state/selectors.js";
 import { scoreFacts, selectFacts } from "../../src/context/selectFacts.js";
 import type { GameState } from "../../src/schema/state.js";
 
@@ -177,5 +178,48 @@ describe("fact retrieval", () => {
     });
     const turns = picked.map((p) => p.fact.turn);
     expect([...turns].sort((a, b) => a - b)).toEqual(turns);
+  });
+});
+
+describe("shedding drops whole items, never half of one", () => {
+  it("never leaves a fragment whose first line reads as a whole entry", async () => {
+    const s = await fresh();
+    // Crowd the room. A village green with a family in it overruns the NPC budget, which is
+    // the ordinary case rather than a pathological one.
+    const here = pc(s).location_id;
+    for (const e of Object.values(s.entities)) {
+      if (e.id !== s.meta.pc_id) e.location_id = here;
+    }
+    for (let i = 0; i < 12; i++) {
+      const clone = structuredClone(s.entities["npc_thorne"]!);
+      clone.id = `npc_filler_${String(i).padStart(2, "0")}`;
+      clone.name = `Filler ${i}`;
+      clone.location_id = here;
+      s.entities[clone.id] = clone;
+    }
+
+    const ctx = buildContext(s, { maxTokens: 1800 });
+    const npcs = ctx.sections.find((x) => x.id === "npcs");
+    if (!npcs) return;                       // shed entirely is a legal outcome
+
+    // Every line that is not indented must be an entry head. A stray continuation line at
+    // the front gets trimmed by whoever reads the block and then reads as a person — which
+    // is exactly how the DM once narrated a private fact as somebody standing in the room.
+    for (const line of npcs.body.split("\n")) {
+      if (line === "" || line.startsWith("  ")) continue;
+      expect(line, `"${line.slice(0, 60)}" is a fragment, not an entry`).toMatch(/ — /);
+    }
+    expect(npcs.body.split("\n")[0]).not.toMatch(/^(Knows|Voice|Traits|Flaw|Feels|Their view)/);
+  });
+
+  it("keeps whole entries rather than trimming every one of them", async () => {
+    const s = await fresh();
+    const full = buildContext(s).sections.find((x) => x.id === "npcs");
+    const tight = buildContext(s, { maxTokens: 1500 }).sections.find((x) => x.id === "npcs");
+    if (!full || !tight) return;
+    // Whatever survives should be as complete as it was before the budget bit.
+    const heads = (b: string) => b.split("\n").filter((l) => l !== "" && !l.startsWith("  ")).length;
+    expect(heads(tight.body)).toBeLessThanOrEqual(heads(full.body));
+    expect(tight.body.split("\n")[0]).toMatch(/ — /);
   });
 });

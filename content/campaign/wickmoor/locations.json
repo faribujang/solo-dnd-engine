@@ -1,0 +1,637 @@
+{
+  "loc_forge": {
+    "id": "loc_forge",
+    "name": "Vane's Forge",
+    "region_id": null,
+    "coords": {
+      "x": 10,
+      "y": 10
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_wickmoor",
+    "short_desc": "Cotter Vane's forge, and the only home you remember clearly.",
+    "long_desc": "The fire is banked but never out. Three years of your own work hangs on the far wall — the early pieces crooked, the later ones not — and Cotter has never once taken them down or mentioned that he has not. The good hammer lives on the third peg, and only you and he are allowed to touch it.",
+    "exits": [
+      {
+        "dir": "out",
+        "to": "loc_green",
+        "desc": "onto the green",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_anvil",
+        "name": "by the anvil",
+        "adjacent": [
+          "z_door"
+        ]
+      },
+      {
+        "id": "z_door",
+        "name": "the doorway",
+        "adjacent": [
+          "z_anvil"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "the fire ticking",
+      "smell": "coal and hot iron"
+    },
+    "on_enter_triggers": [],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {
+      "forge": true
+    }
+  },
+  "loc_green": {
+    "id": "loc_green",
+    "name": "The Green",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 12
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_wickmoor",
+    "short_desc": "The green, the well, and the moot stone nobody remembers the carving on.",
+    "long_desc": "Wickmoor is arranged around this the way a hand closes around a coin. The well at the centre, the moot stone beside it worn smooth enough that the carving is a rumour, and a Syndicate lamp on a new iron post that the village paid for twice — once in the levy and once in the arguing.",
+    "exits": [
+      {
+        "dir": "forge",
+        "to": "loc_forge",
+        "desc": "",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "bakehouse",
+        "to": "loc_bakehouse",
+        "desc": "",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "hall",
+        "to": "loc_moot_hall",
+        "desc": "",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "river",
+        "to": "loc_riverbend",
+        "desc": "down the cart track",
+        "travel_minutes": 25,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "north",
+        "to": "loc_north_road",
+        "desc": "the road out",
+        "travel_minutes": 15,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_well",
+        "name": "by the well",
+        "adjacent": [
+          "z_stone"
+        ]
+      },
+      {
+        "id": "z_stone",
+        "name": "the moot stone",
+        "adjacent": [
+          "z_well"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "somebody arguing about the levy",
+      "smell": ""
+    },
+    "on_enter_triggers": [
+      {
+        "id": "t_the_ruin",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "when": {
+          "t": "flag",
+          "key": "smoke_seen",
+          "eq": true
+        },
+        "then": [
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_halla",
+            "key": "killed_in_raid",
+            "value": true
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_dunn",
+            "key": "killed_in_raid",
+            "value": true
+          },
+          {
+            "t": "move_entity",
+            "entity_id": "npc_bryn",
+            "location_id": "loc_north_road"
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_bryn",
+            "key": "taken",
+            "value": true
+          },
+          {
+            "t": "move_entity",
+            "entity_id": "npc_ilsa",
+            "location_id": "loc_green"
+          },
+          {
+            "t": "damage",
+            "entity_id": "npc_ilsa",
+            "amount": 8,
+            "damage_type": "slashing"
+          },
+          {
+            "t": "move_entity",
+            "entity_id": "npc_cotter",
+            "location_id": "loc_green"
+          },
+          {
+            "t": "adjust_attitude",
+            "subject": "cmp_jory",
+            "object": "pc_main",
+            "dims": {
+              "trust": 10
+            },
+            "reason": "we ran back together"
+          },
+          {
+            "t": "add_fact",
+            "text": "Halla and Dunn Wick died in the burning of Wickmoor.",
+            "subjects": [
+              "npc_halla",
+              "npc_dunn"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main",
+              "cmp_jory",
+              "npc_cotter",
+              "npc_ilsa"
+            ]
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_north_road"
+          }
+        ],
+        "once": true
+      }
+    ],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_bakehouse": {
+    "id": "loc_bakehouse",
+    "name": "The Bakehouse",
+    "region_id": null,
+    "coords": {
+      "x": 14,
+      "y": 11
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_wickmoor",
+    "short_desc": "Gower's bakehouse, warm at hours when nothing else in Wickmoor is.",
+    "long_desc": "Old Gower bakes at four and is asleep by seven, which means the bakehouse between those hours belongs to his daughter and whoever she has not yet thrown out of it. The ovens hold their heat until midday. Half the village comes through and none of them are hurrying.",
+    "exits": [
+      {
+        "dir": "out",
+        "to": "loc_green",
+        "desc": "",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_ovens",
+        "name": "by the ovens",
+        "adjacent": [
+          "z_counter"
+        ]
+      },
+      {
+        "id": "z_counter",
+        "name": "the counter",
+        "adjacent": [
+          "z_ovens"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "wood settling in the oven",
+      "smell": "bread, and yesterday's bread"
+    },
+    "on_enter_triggers": [],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_moot_hall": {
+    "id": "loc_moot_hall",
+    "name": "The Moot Hall",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 15
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_wickmoor",
+    "short_desc": "A long low hall with a good roof, which in Wickmoor counts as grandeur.",
+    "long_desc": "Older than anything else standing here, and better built, which is the sort of thing you stop noticing about a place you grew up in. The elders sit at the north end under a beam somebody carved a long time ago and somebody else, later, planed most of the way flat.",
+    "exits": [
+      {
+        "dir": "out",
+        "to": "loc_green",
+        "desc": "",
+        "travel_minutes": 1,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "down",
+        "to": "loc_undercroft",
+        "desc": "behind the elders' dais, behind a nailed board",
+        "travel_minutes": 2,
+        "locked_by": null,
+        "hidden_until_flag": "wickmoor_burned",
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_floor",
+        "name": "the hall floor",
+        "adjacent": [
+          "z_dais"
+        ]
+      },
+      {
+        "id": "z_dais",
+        "name": "the elders' end",
+        "adjacent": [
+          "z_floor"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "",
+      "smell": "old timber"
+    },
+    "on_enter_triggers": [
+      {
+        "id": "t_ilsa_speaks",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "when": {
+          "t": "flag",
+          "key": "wickmoor_burned",
+          "eq": true
+        },
+        "then": [
+          {
+            "t": "reveal_exit",
+            "location_id": "loc_moot_hall",
+            "dir": "down"
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_undercroft"
+          }
+        ],
+        "once": true
+      }
+    ],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_riverbend": {
+    "id": "loc_riverbend",
+    "name": "The Riverbend",
+    "region_id": null,
+    "coords": {
+      "x": 18,
+      "y": 20
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": null,
+    "short_desc": "Where the Wick turns and slows, and the fish are stupid enough to be catchable.",
+    "long_desc": "The bank shelves gently here and the water goes quiet and brown-green under the alders. Four of you have been coming to this bend since you were small enough to be carried to it.",
+    "exits": [
+      {
+        "dir": "village",
+        "to": "loc_green",
+        "desc": "",
+        "travel_minutes": 25,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "up",
+        "to": "loc_high_wood",
+        "desc": "up through the alders",
+        "travel_minutes": 12,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_bank",
+        "name": "the bank",
+        "adjacent": [
+          "z_shallows"
+        ]
+      },
+      {
+        "id": "z_shallows",
+        "name": "the shallows",
+        "adjacent": [
+          "z_bank"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "water, and not much else",
+      "smell": "river weed"
+    },
+    "on_enter_triggers": [
+      {
+        "id": "t_the_smoke",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "then": [
+          {
+            "t": "set_quest_status",
+            "quest_id": "q_the_burning",
+            "status": "active"
+          },
+          {
+            "t": "advance_quest",
+            "quest_id": "q_the_burning",
+            "step_id": "step_run_back"
+          },
+          {
+            "t": "set_flag",
+            "key": "smoke_seen",
+            "value": true
+          },
+          {
+            "t": "move_entity",
+            "entity_id": "cmp_jory",
+            "location_id": "loc_riverbend"
+          },
+          {
+            "t": "move_entity",
+            "entity_id": "npc_tam",
+            "location_id": "loc_riverbend"
+          },
+          {
+            "t": "add_fact",
+            "text": "Sibby saw the smoke first. She always sees it first.",
+            "subjects": [
+              "npc_sibby",
+              "set_wickmoor"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main",
+              "cmp_jory",
+              "npc_tam",
+              "npc_sibby"
+            ]
+          },
+          {
+            "t": "add_lead",
+            "quest_id": "q_the_burning",
+            "text": "Smoke over the valley, and an hour of running between you and it.",
+            "points_to_location_id": "loc_green",
+            "source_entity_id": "npc_sibby"
+          }
+        ],
+        "once": true
+      }
+    ],
+    "discovered": true,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_high_wood": {
+    "id": "loc_high_wood",
+    "name": "The High Wood",
+    "region_id": null,
+    "coords": {
+      "x": 21,
+      "y": 24
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": null,
+    "short_desc": "The rise above the river, where you can see the whole valley and everyone in it.",
+    "long_desc": "Beech and old ash, and a gap in them at the top where three generations of Wickmoor children have climbed to look down at their own roofs and feel briefly enormous.",
+    "exits": [
+      {
+        "dir": "down",
+        "to": "loc_riverbend",
+        "desc": "",
+        "travel_minutes": 12,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_rise",
+        "name": "the rise",
+        "adjacent": []
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "wood pigeons",
+      "smell": ""
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 1,
+    "encounter_table_id": "enc_north_road",
+    "flags": {}
+  },
+  "loc_north_road": {
+    "id": "loc_north_road",
+    "name": "The North Road",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 4
+    },
+    "map_visibility": "landmark",
+    "settlement_id": null,
+    "short_desc": "The cart road to Harrowmoot, two days at a walk and rutted the whole way.",
+    "long_desc": "The Syndicate resurfaced the first mile of it eight years ago and then stopped, which everyone in Wickmoor can show you the exact spot of.",
+    "exits": [
+      {
+        "dir": "south",
+        "to": "loc_green",
+        "desc": "",
+        "travel_minutes": 15,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_road",
+        "name": "the road",
+        "adjacent": []
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 1,
+    "encounter_table_id": "enc_north_road",
+    "flags": {}
+  },
+  "loc_undercroft": {
+    "id": "loc_undercroft",
+    "name": "The Undercroft",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 16
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": null,
+    "short_desc": "A dry stone room beneath the moot hall that should not be as old as it is.",
+    "long_desc": "The stair down is behind the elders' dais and has been behind a nailed board for as long as anyone alive has been looking at it. The room below is dressed stone, cut better than anything above ground, and it is dry. It has always been dry.",
+    "exits": [
+      {
+        "dir": "up",
+        "to": "loc_moot_hall",
+        "desc": "",
+        "travel_minutes": 2,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_under",
+        "name": "the undercroft",
+        "adjacent": []
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dark",
+      "sound": "",
+      "smell": "cold stone, and no damp at all"
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 1,
+    "encounter_table_id": null,
+    "flags": {}
+  }
+}

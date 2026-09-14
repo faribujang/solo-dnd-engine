@@ -1,0 +1,75 @@
+{
+  "groups": {
+    "grp_main": {
+      "id": "grp_main",
+      "member_ids": [
+        "pc_main"
+      ],
+      "lead_id": "pc_main"
+    }
+  },
+  "arcs": {
+    "arc_wickmoor": {
+      "id": "arc_wickmoor",
+      "title": "Wickmoor",
+      "status": "active",
+      "summary": "A village on the edge of Accord country, a stranger asking the wrong questions politely, and one morning that ends all of it.",
+      "themes": [
+        "what a place is worth",
+        "what was kept, and who agreed to keep it"
+      ],
+      "quest_ids": [
+        "q_before",
+        "q_the_burning",
+        "q_the_road"
+      ],
+      "climax_quest_id": "q_the_road",
+      "seeds": [
+        {
+          "id": "seed_bryn",
+          "text": "Bryn Wick was taken alive, by people who had the wrong child.",
+          "kind": "npc",
+          "subject_ids": [
+            "npc_bryn",
+            "npc_vosk"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "seed_the_keeping",
+          "text": "Somebody in Harrowmoot took the other half of the keeping.",
+          "kind": "npc",
+          "subject_ids": [
+            "fac_accord"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "seed_cotter_before",
+          "text": "Cotter Vane did something in the last year of the war that he has never named.",
+          "kind": "npc",
+          "subject_ids": [
+            "npc_cotter"
+          ],
+          "promoted": false
+        }
+      ],
+      "requires_arc_ids": []
+    }
+  },
+  "campaigns": {
+    "cmp_cinderhold": {
+      "id": "cmp_cinderhold",
+      "title": "Cinderhold",
+      "status": "active",
+      "premise": "The Meridian Syndicate did not fight the war — it supplied both sides, and when the empires bled out the supplier was the only thing left standing. It governs by owning what everyone needs. Somewhere under all of that is the reason a village burned.",
+      "arc_ids": [
+        "arc_wickmoor"
+      ],
+      "world_mutation": []
+    }
+  },
+  "legacy": [],
+  "combat": null,
+  "conversation": null
+}

@@ -1,0 +1,30 @@
+{
+  "id": "cmp_wickmoor",
+  "title": "The Smoke Over Wickmoor",
+  "pc_id": "pc_main",
+  "party_ids": [
+    "pc_main"
+  ],
+  "player_controlled": [
+    "pc_main"
+  ],
+  "campaign_id": "cmp_cinderhold",
+  "content_dir": "wickmoor",
+  "seed": "wickmoor-0001",
+  "turn": 0,
+  "next_ids": {},
+  "created_at": "1187-07-31T00:00:00Z",
+  "schema_version": 1,
+  "session_zero": {
+    "tone": "grim",
+    "lines": [],
+    "veils": [
+      "sexual violence",
+      "harm to children on screen"
+    ],
+    "difficulty": "normal",
+    "levelling": "xp",
+    "dice": "karmic"
+  },
+  "taught": []
+}

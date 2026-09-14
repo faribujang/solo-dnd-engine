@@ -1,0 +1,443 @@
+{
+  "defs": {
+    "item_def_shortsword": {
+      "id": "item_def_shortsword",
+      "name": "Shortsword",
+      "kind": "weapon",
+      "desc": "A plain soldier's blade, well kept.",
+      "weight": 2,
+      "value_cp": 1000,
+      "damage": {
+        "dice": "1d6",
+        "type": "piercing",
+        "versatile": null
+      },
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "finesse",
+        "light"
+      ],
+      "tags": [
+        "martial",
+        "metal"
+      ],
+      "stackable": false
+    },
+    "item_def_leather_armor": {
+      "id": "item_def_leather_armor",
+      "name": "Leather Armor",
+      "kind": "armor",
+      "desc": "Boiled and oiled against the rain.",
+      "weight": 10,
+      "value_cp": 1000,
+      "damage": null,
+      "ac_base": 11,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "light_armor"
+      ],
+      "stackable": false
+    },
+    "item_def_lantern": {
+      "id": "item_def_lantern",
+      "name": "Hooded Lantern",
+      "kind": "tool",
+      "desc": "Throws bright light for thirty feet and dim light for thirty more.",
+      "weight": 2,
+      "value_cp": 500,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "light_source"
+      ],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false
+    },
+    "item_def_healing_draught": {
+      "id": "item_def_healing_draught",
+      "name": "Healing Draught",
+      "kind": "consumable",
+      "desc": "Tastes of iron filings and mint. Restores 2d4+2 hit points.",
+      "weight": 0.5,
+      "value_cp": 5000,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "consumable"
+      ],
+      "tags": [
+        "potion",
+        "supplied"
+      ],
+      "stackable": true
+    },
+    "item_def_crowbar": {
+      "id": "item_def_crowbar",
+      "name": "Crowbar",
+      "kind": "tool",
+      "desc": "Two feet of cold iron with a bad attitude.",
+      "weight": 5,
+      "value_cp": 200,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Pry it open",
+          "skill": "athletics",
+          "band": "medium",
+          "tag": "pry",
+          "requires": {
+            "t": "feature",
+            "interaction": "search"
+          },
+          "advantage": true
+        }
+      ]
+    },
+    "item_def_rope": {
+      "id": "item_def_rope",
+      "name": "Hempen Rope",
+      "kind": "tool",
+      "desc": "Fifty feet, and it has held so far.",
+      "weight": 10,
+      "value_cp": 100,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Climb down",
+          "skill": "athletics",
+          "band": "easy",
+          "tag": "climb",
+          "requires": {
+            "t": "location_flag",
+            "key": "climbable"
+          },
+          "advantage": true
+        }
+      ]
+    },
+    "item_def_thieves_tools": {
+      "id": "item_def_thieves_tools",
+      "name": "Thieves' Tools",
+      "kind": "tool",
+      "desc": "Picks, a tension wrench, and a small mirror on a wire.",
+      "weight": 1,
+      "value_cp": 2500,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Pick the lock",
+          "skill": "sleight_of_hand",
+          "band": "medium",
+          "tag": "pick_lock",
+          "requires": {
+            "t": "locked_exit"
+          },
+          "advantage": false
+        }
+      ]
+    },
+    "item_def_good_hammer": {
+      "id": "item_def_good_hammer",
+      "name": "The Good Hammer",
+      "kind": "weapon",
+      "desc": "Cotter's, and the third peg is its place. Ash haft, worn to the shape of two hands.",
+      "weight": 3,
+      "value_cp": 500,
+      "damage": {
+        "dice": "1d6",
+        "type": "bludgeoning",
+        "versatile": null
+      },
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "light"
+      ],
+      "tags": [
+        "tool",
+        "smithing"
+      ],
+      "stackable": false,
+      "grants": [
+        {
+          "verb": "Work the metal",
+          "skill": "athletics",
+          "band": "medium",
+          "tag": "smith",
+          "requires": {
+            "t": "location_flag",
+            "key": "forge"
+          },
+          "advantage": true
+        }
+      ]
+    },
+    "item_def_hunting_bow": {
+      "id": "item_def_hunting_bow",
+      "name": "Hunting Bow",
+      "kind": "weapon",
+      "desc": "Short, unremarkable, and it has fed four people more than once.",
+      "weight": 2,
+      "value_cp": 2500,
+      "damage": {
+        "dice": "1d6",
+        "type": "piercing",
+        "versatile": null
+      },
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "ammunition",
+        "two_handed"
+      ],
+      "tags": [
+        "weapon"
+      ],
+      "stackable": false,
+      "grants": []
+    },
+    "item_def_lamp_oil": {
+      "id": "item_def_lamp_oil",
+      "name": "Syndicate Lamp Oil",
+      "kind": "tool",
+      "desc": "A sealed tin with an assay mark. It is the only kind that works in the new lamps, which is the entire point of the new lamps.",
+      "weight": 2,
+      "value_cp": 300,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "supplied",
+        "adventuring_gear"
+      ],
+      "stackable": true,
+      "grants": []
+    },
+    "item_def_bread": {
+      "id": "item_def_bread",
+      "name": "Gower's Bread",
+      "kind": "consumable",
+      "desc": "Yesterday's, which Nell will tell you is better and is right.",
+      "weight": 1,
+      "value_cp": 4,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "food"
+      ],
+      "stackable": true,
+      "grants": []
+    },
+    "item_def_fishing_line": {
+      "id": "item_def_fishing_line",
+      "name": "Line and Hooks",
+      "kind": "tool",
+      "desc": "Wound on a stick your father cut when you were seven.",
+      "weight": 1,
+      "value_cp": 20,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "adventuring_gear"
+      ],
+      "stackable": false,
+      "grants": []
+    },
+    "item_def_apprentice_piece": {
+      "id": "item_def_apprentice_piece",
+      "name": "Your Apprentice Piece",
+      "kind": "treasure",
+      "desc": "The first thing you made that Cotter did not correct. It is a hinge. It is a very good hinge.",
+      "weight": 1,
+      "value_cp": 60,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "keepsake",
+        "quest"
+      ],
+      "stackable": false,
+      "grants": []
+    },
+    "item_def_vosk_letter": {
+      "id": "item_def_vosk_letter",
+      "name": "A Sealed Letter",
+      "kind": "key",
+      "desc": "Heavy paper, a Meridian assay seal, and a name on the outside that is not Vosk's.",
+      "weight": 1,
+      "value_cp": 0,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "tags": [
+        "quest",
+        "document"
+      ],
+      "stackable": false,
+      "grants": []
+    }
+  },
+  "instances": {
+    "item_inst_hammer": {
+      "id": "item_inst_hammer",
+      "def_id": "item_def_good_hammer",
+      "owner": {
+        "t": "entity",
+        "id": "npc_cotter"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "third peg, and only two people touch it",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_piece": {
+      "id": "item_inst_piece",
+      "def_id": "item_def_apprentice_piece",
+      "owner": {
+        "t": "entity",
+        "id": "pc_main"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "he never said it was good; he just stopped correcting",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_line": {
+      "id": "item_inst_line",
+      "def_id": "item_def_fishing_line",
+      "owner": {
+        "t": "entity",
+        "id": "cmp_jory"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "worn",
+      "flags": {}
+    },
+    "item_inst_bow": {
+      "id": "item_inst_bow",
+      "def_id": "item_def_hunting_bow",
+      "owner": {
+        "t": "entity",
+        "id": "npc_sibby"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": "her grandmother's",
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_oil_1": {
+      "id": "item_inst_oil_1",
+      "def_id": "item_def_lamp_oil",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_hob"
+      },
+      "qty": 3,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_draught_1": {
+      "id": "item_inst_draught_1",
+      "def_id": "item_def_healing_draught",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_hob"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_bread_1": {
+      "id": "item_inst_bread_1",
+      "def_id": "item_def_bread",
+      "owner": {
+        "t": "container",
+        "id": "cont_npc_nell"
+      },
+      "qty": 6,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    },
+    "item_inst_letter": {
+      "id": "item_inst_letter",
+      "def_id": "item_def_vosk_letter",
+      "owner": {
+        "t": "entity",
+        "id": "npc_vosk"
+      },
+      "qty": 1,
+      "charges": null,
+      "attunement": null,
+      "nickname": null,
+      "condition": "fine",
+      "flags": {}
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "world_minute": 440,
+  "calendar": {
+    "month": "Sickle",
+    "year": 1187,
+    "epoch_day": 212
+  },
+  "weather": {
+    "current": "high cloud, warm",
+    "changes_at_minute": null
+  },
+  "flags": {},
+  "factions": {
+    "fac_meridian": {
+      "id": "fac_meridian",
+      "name": "The Meridian Syndicate",
+      "rep_with_pc": 0,
+      "member_ids": [
+        "npc_vosk"
+      ],
+      "controls_supply": true,
+      "goals": [
+        "keep the lamps lit and the ledger balanced",
+        "buy what cannot be bought, and audit what cannot be bought"
+      ],
+      "wings": [
+        {
+          "id": "charter",
+          "name": "Charter",
+          "wants": "legitimacy — a seat, a flag, a law they wrote themselves"
+        },
+        {
+          "id": "assay",
+          "name": "Assay",
+          "wants": "supply is legitimacy; anyone who says otherwise has never run a lamp"
+        }
+      ]
+    },
+    "fac_accord": {
+      "id": "fac_accord",
+      "name": "The Radiant Accord",
+      "rep_with_pc": 0,
+      "member_ids": [
+        "npc_ilsa",
+        "npc_cotter"
+      ],
+      "controls_supply": false,
+      "goals": [
+        "stop it — not reform it",
+        "shelter the called, whatever it costs them"
+      ],
+      "wings": [
+        {
+          "id": "shepherds",
+          "name": "Shepherds",
+          "wants": "get the gifted out before the Syndicate contracts them"
+        },
+        {
+          "id": "kindlers",
+          "name": "Kindlers",
+          "wants": "the machines broken, whatever it costs the people running them"
+        }
+      ]
+    },
+    "fac_arcanate": {
+      "id": "fac_arcanate",
+      "name": "Arcanate Remnant",
+      "rep_with_pc": 0,
+      "member_ids": [],
+      "controls_supply": false,
+      "goals": [
+        "take the Syndicate back",
+        "recover what was licensed, not given away"
+      ],
+      "wings": [
+        {
+          "id": "restorers",
+          "name": "Restorers",
+          "wants": "the Arcanate restored, and the patents with it"
+        },
+        {
+          "id": "pensioners",
+          "name": "Pensioners",
+          "wants": "nothing grand — the pension they were promised, paid"
+        }
+      ]
+    }
+  },
+  "triggers": [
+    {
+      "id": "t_ilsa_charge",
+      "on": "dialogue",
+      "match": {
+        "target_ids": [
+          "npc_ilsa"
+        ]
+      },
+      "when": {
+        "t": "flag",
+        "key": "wickmoor_burned",
+        "eq": true
+      },
+      "then": [
+        {
+          "t": "set_flag",
+          "key": "ilsa_spoke",
+          "value": true
+        },
+        {
+          "t": "set_quest_status",
+          "quest_id": "q_the_road",
+          "status": "active"
+        },
+        {
+          "t": "advance_quest",
+          "quest_id": "q_the_road",
+          "step_id": "step_charge"
+        },
+        {
+          "t": "add_fact",
+          "text": "Ilsa Rooke said to go to Harrowmoot and find the one who took the other half of the keeping.",
+          "subjects": [
+            "npc_ilsa",
+            "fac_accord"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        },
+        {
+          "t": "add_fact",
+          "text": "She said that once we ask, none of us go back to being who we were this morning.",
+          "subjects": [
+            "npc_ilsa"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        },
+        {
+          "t": "add_lead",
+          "quest_id": "q_the_road",
+          "text": "Harrowmoot, two days north. Ask — she did not finish saying where.",
+          "points_to_location_id": "loc_north_road",
+          "source_entity_id": "npc_ilsa"
+        }
+      ],
+      "once": true
+    },
+    {
+      "id": "t_vosk_gone",
+      "on": "enter_location",
+      "when": {
+        "t": "flag",
+        "key": "wickmoor_burned",
+        "eq": true
+      },
+      "then": [
+        {
+          "t": "move_entity",
+          "entity_id": "npc_vosk",
+          "location_id": "loc_north_road"
+        },
+        {
+          "t": "add_fact",
+          "text": "Amery Vosk was not among the dead, and nobody saw him leave.",
+          "subjects": [
+            "npc_vosk"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main",
+            "cmp_jory"
+          ]
+        }
+      ],
+      "once": true
+    },
+    {
+      "id": "t_jory_joins",
+      "on": "enter_location",
+      "when": {
+        "t": "flag",
+        "key": "smoke_seen",
+        "eq": true
+      },
+      "then": [
+        {
+          "t": "join_party",
+          "entity_id": "cmp_jory"
+        }
+      ],
+      "once": true
+    }
+  ],
+  "fired_trigger_ids": [],
+  "scene_id": "scene_0001",
+  "scene_started_turn": 0
+}

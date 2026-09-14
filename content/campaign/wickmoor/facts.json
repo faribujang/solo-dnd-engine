@@ -1,0 +1,266 @@
+[
+  {
+    "id": "fact_seed_0001",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The war ended eleven years ago. Wickmoor sent nine men and got four back.",
+    "kind": "world",
+    "subjects": [],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "pc_main",
+      "cmp_jory",
+      "npc_cotter",
+      "npc_ilsa",
+      "npc_hob",
+      "npc_halla",
+      "npc_dunn"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0002",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Wickmoor pays the Meridian Syndicate a lamp-tithe, and paid for the post the lamp stands on as well.",
+    "kind": "world",
+    "subjects": [
+      "fac_meridian",
+      "set_wickmoor"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "pc_main",
+      "cmp_jory",
+      "npc_hob",
+      "npc_nell",
+      "npc_halla"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0003",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Cotter Vane came to Wickmoor the year the war ended and has never said where from.",
+    "kind": "world",
+    "subjects": [
+      "npc_cotter"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "pc_main",
+      "cmp_jory",
+      "npc_ilsa",
+      "npc_halla",
+      "npc_hob"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0004",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The moot hall is older and better built than anything else in the valley.",
+    "kind": "world",
+    "subjects": [
+      "loc_moot_hall"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "pc_main",
+      "npc_ilsa",
+      "npc_hob",
+      "npc_cotter"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0005",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Jory Finch has no parents anyone can name. Ilsa Rooke brought him to the village as an infant.",
+    "kind": "world",
+    "subjects": [
+      "cmp_jory",
+      "npc_ilsa"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "pc_main",
+      "cmp_jory",
+      "npc_ilsa",
+      "npc_cotter",
+      "npc_halla"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0006",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "A traveller called Amery Vosk has been in Wickmoor four days, buying nothing and asking about the hall.",
+    "kind": "npc",
+    "subjects": [
+      "npc_vosk",
+      "loc_moot_hall"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_cotter",
+      "npc_ilsa",
+      "npc_hob",
+      "npc_nell"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0007",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Hob Tanner has already taken money from Vosk. He is telling himself it was for the lamp oil.",
+    "kind": "world",
+    "subjects": [
+      "npc_hob",
+      "npc_vosk"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": true,
+    "known_by": [
+      "npc_hob"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0008",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "There is a stair behind the elders' dais, boarded over before anyone living was born.",
+    "kind": "world",
+    "subjects": [
+      "loc_moot_hall",
+      "loc_undercroft"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": true,
+    "known_by": [
+      "npc_ilsa",
+      "npc_cotter"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Ilsa Rooke will not discuss the hall's foundations with anyone",
+      "opens_when": "Wickmoor is past saving, or Cotter Vane tells her to",
+      "lifted_by_flag": "wickmoor_burned"
+    }
+  },
+  {
+    "id": "fact_seed_0009",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "In the last year of the war the Radiant Accord hid something in Wickmoor that the Arcanate had built and the Syndicate has been looking for ever since.",
+    "kind": "world",
+    "subjects": [
+      "fac_accord",
+      "fac_meridian",
+      "set_wickmoor"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "the people who agreed to keep this agreed never to say it aloud",
+      "opens_when": "Ilsa Rooke decides the keeping is over, or Cotter Vane is asked directly by someone he raised",
+      "lifted_by_flag": "wickmoor_burned"
+    }
+  },
+  {
+    "id": "fact_seed_0010",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "What the Accord hid in Wickmoor was not an object.",
+    "kind": "world",
+    "subjects": [
+      "fac_accord",
+      "cmp_jory"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "only two people alive know this and both of them chose not to",
+      "opens_when": "Jory Finch's pact wakes, and it will wake on the road",
+      "lifted_by_flag": "jory_pact_woken"
+    }
+  },
+  {
+    "id": "fact_seed_0011",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Amery Vosk believes the child the Accord hid is a girl of about eleven.",
+    "kind": "world",
+    "subjects": [
+      "npc_vosk",
+      "npc_bryn"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_vosk"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Vosk does not discuss a contract before it closes",
+      "opens_when": "somebody finds his letter, or Bryn Wick is already gone",
+      "lifted_by_flag": "bryn_taken"
+    }
+  }
+]
