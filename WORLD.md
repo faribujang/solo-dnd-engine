@@ -215,16 +215,17 @@ Two threads planted now, paid off later:
 
 ### Open — good places to contribute
 
-- **Names.** The prologue village. The first city. The missing family member. The friend.
-  The tertiary groups.
-- **Who caused the tragedy.** Syndicate directly, or bandits with ties to it? The second is
-  more interesting for a while and worse for the ending.
-- **The concrete grievance.** "The Syndicate is bad" is not a hook. What *specifically* was
-  taken — a claim, a licence, a person, a body?
-- **Which family member is missing**, and what role they come back in.
-- **What is under the extraction.**
-- **The first city's faction matrix** — who holds it, who contests it, who is hunted there.
-- **A second settlement**, so the contrast between two politics can be felt.
+Most of the earlier open questions are now answered in content — read
+`content/campaign/wickmoor/` rather than this list. What remains genuinely open:
+
+- **What is under the extraction.** Seeded, unwritten.
+- **Arc two.** Saveri refuses; three things can move her, and all three are written into her
+  `dm_notes`. Which one the story takes is unwritten.
+- **Bryn.** Taken alive by people who had the wrong child. Where she surfaces, and as what.
+- **The Cut, and Kettle's four streets.** A whole ungoverned quarter with one person holding
+  it together and no quests in it yet.
+- **Whether Bel is right.** She wants the assay ledger burned. It lists every unlicensed
+  caster reported in forty miles. She is not wrong about what it is.
 
 ---
 
@@ -250,10 +251,20 @@ npm run seed -- wickmoor wick
 npm run play -- wick --mock
 ```
 
+**What exists to play**
+
+| | |
+|---|---|
+| **Prologue — Wickmoor** | The forge, the green, the bakehouse, the moot hall, the river. The day turns when you go fishing. |
+| **Arc one — Assay Row** | Harrowmoot: the tollgate, the Row, the Fetterlock, the Pensioners' Hall, the Cut. A search that ends in a refusal. |
+
+Thirteen places, twenty people, four quests, two settlements with their own politics — and
+the lamp oil is cheaper in Harrowmoot than in Wickmoor, which is the faction matrix telling
+you something nobody had to write down.
+
 **What is not there yet:**
 
-1. **Only the prologue is written.** Wickmoor exists — eight places, thirteen people, three
-   quests, the burning and the road out. Harrowmoot and everything past it do not.
+1. **Arc two onward.** Saveri refuses, and what happens after that refusal is unwritten.
 2. **There is no web client.** The whole API and every view model exist and are tested;
    nothing renders them. This is phase 7 and the only substantial engine work left.
 3. **Five generator stages are missing** — items, relationships, facts, wiring, and a cast

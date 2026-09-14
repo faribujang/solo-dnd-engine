@@ -52,6 +52,37 @@
           "delta": -5
         }
       ]
+    },
+    "clk_vosk": {
+      "id": "clk_vosk",
+      "name": "Vosk closes his contract",
+      "visible": true,
+      "segments": 8,
+      "filled": 0,
+      "per_day": 1,
+      "done": false,
+      "quest_id": "q_the_keeping",
+      "arc_id": "arc_harrowmoot",
+      "on_complete": [
+        {
+          "t": "set_flag",
+          "key": "vosk_found_her",
+          "value": true
+        },
+        {
+          "t": "add_fact",
+          "text": "Amery Vosk has stopped asking questions on the Row, which means he has an answer.",
+          "subjects": [
+            "npc_vosk",
+            "npc_saveri"
+          ],
+          "importance": 5,
+          "secret": false,
+          "known_by": [
+            "pc_main"
+          ]
+        }
+      ]
     }
   },
   "vows": {},
@@ -114,6 +145,73 @@
           "weight": 5,
           "min_danger": 0,
           "brief": "Nothing. Miles of nothing, and the first time all day there is room to think about it.",
+          "then": [],
+          "hours": [],
+          "once": false
+        }
+      ]
+    },
+    "enc_the_cut": {
+      "id": "enc_the_cut",
+      "name": "The Cut after dark",
+      "entries": [
+        {
+          "id": "enc_cut_toll",
+          "kind": "social",
+          "weight": 4,
+          "min_danger": 1,
+          "brief": "Somebody steps out of a doorway to explain, pleasantly, that there is a toll for the lane.",
+          "then": [],
+          "hours": [],
+          "once": false
+        },
+        {
+          "id": "enc_cut_cutters",
+          "kind": "combat",
+          "weight": 2,
+          "min_danger": 2,
+          "brief": "Two of them, one at each end, and neither is hurrying.",
+          "then": [
+            {
+              "t": "start_combat",
+              "enemy_ids": [
+                "mon_cutter"
+              ]
+            }
+          ],
+          "hours": [],
+          "once": false
+        },
+        {
+          "id": "enc_cut_lamp",
+          "kind": "discovery",
+          "weight": 3,
+          "min_danger": 0,
+          "brief": "A Syndicate lamp post, sawn off at the base and carried away. The stump is old.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "Somebody in the Cut took a Syndicate lamp post down at the base and nobody replaced it.",
+              "subjects": [
+                "loc_the_cut",
+                "fac_meridian"
+              ],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "once": true
+        },
+        {
+          "id": "enc_cut_quiet",
+          "kind": "quiet",
+          "weight": 4,
+          "min_danger": 0,
+          "brief": "Nobody stops you, which in the Cut is a decision somebody made about you.",
           "then": [],
           "hours": [],
           "once": false

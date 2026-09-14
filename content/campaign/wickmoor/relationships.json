@@ -206,5 +206,83 @@
     "opinion": "I have met his sort before. They always pay, and it is never the price.",
     "tags": [],
     "history": []
+  },
+  "npc_saveri->npc_emeric": {
+    "subject": "npc_saveri",
+    "object": "npc_emeric",
+    "dims": {
+      "affinity": 10,
+      "trust": -20,
+      "fear": 30,
+      "respect": 25
+    },
+    "opinion": "He was on the examining board. If anyone in this town is going to say my name, it is him.",
+    "tags": [],
+    "history": []
+  },
+  "npc_bel->npc_saveri": {
+    "subject": "npc_bel",
+    "object": "npc_saveri",
+    "dims": {
+      "affinity": -70,
+      "trust": -40,
+      "fear": 0,
+      "respect": -30
+    },
+    "opinion": "She works for them. Whatever she tells herself about why, she works for them.",
+    "tags": [],
+    "history": []
+  },
+  "npc_kettle->npc_bel": {
+    "subject": "npc_kettle",
+    "object": "npc_bel",
+    "dims": {
+      "affinity": 20,
+      "trust": 15,
+      "fear": 25,
+      "respect": 30
+    },
+    "opinion": "She is trouble living in my four streets, and she has never once brought it home.",
+    "tags": [],
+    "history": []
+  },
+  "npc_rue->npc_kettle": {
+    "subject": "npc_rue",
+    "object": "npc_kettle",
+    "dims": {
+      "affinity": 40,
+      "trust": 50,
+      "fear": 5,
+      "respect": 35
+    },
+    "opinion": "Pays cash, breaks nothing, and I have never asked.",
+    "tags": [],
+    "history": []
+  },
+  "npc_barthel->npc_saveri": {
+    "subject": "npc_barthel",
+    "object": "npc_saveri",
+    "dims": {
+      "affinity": 30,
+      "trust": 55,
+      "fear": 0,
+      "respect": 60
+    },
+    "opinion": "Best assayer on the Row. Never late, never wrong, never once asked me for anything.",
+    "tags": [],
+    "history": []
+  },
+  "npc_emeric->npc_barthel": {
+    "subject": "npc_emeric",
+    "object": "npc_barthel",
+    "dims": {
+      "affinity": -40,
+      "trust": -20,
+      "fear": 10,
+      "respect": -10
+    },
+    "opinion": "He is very sorry. He says so most weeks.",
+    "tags": [],
+    "history": []
   }
 }

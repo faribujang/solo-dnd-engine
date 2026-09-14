@@ -55,6 +55,55 @@
         }
       ],
       "requires_arc_ids": []
+    },
+    "arc_harrowmoot": {
+      "id": "arc_harrowmoot",
+      "title": "Assay Row",
+      "status": "locked",
+      "summary": "A tithe-town where the oil is cheap because two powers are fighting over it, and the woman you were sent to find has spent eleven years making certain nobody does.",
+      "themes": [
+        "what hiding costs the person doing it",
+        "being decent inside a machine"
+      ],
+      "quest_ids": [
+        "q_the_keeping"
+      ],
+      "climax_quest_id": "q_the_keeping",
+      "seeds": [
+        {
+          "id": "seed_the_ledger",
+          "text": "The Row's assay ledger lists every unlicensed caster reported in forty miles.",
+          "kind": "artefact",
+          "subject_ids": [
+            "loc_assay_row",
+            "fac_meridian"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "seed_the_nine",
+          "text": "Nine Shepherds died getting one child out. Bel will not say which child.",
+          "kind": "npc",
+          "subject_ids": [
+            "npc_bel",
+            "fac_accord"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "seed_emerics_number",
+          "text": "Emeric Sallow's pension was four marks a month, and somebody is still collecting it.",
+          "kind": "fact",
+          "subject_ids": [
+            "npc_emeric",
+            "fac_arcanate"
+          ],
+          "promoted": false
+        }
+      ],
+      "requires_arc_ids": [
+        "arc_wickmoor"
+      ]
     }
   },
   "campaigns": {
@@ -64,7 +113,8 @@
       "status": "active",
       "premise": "The Meridian Syndicate did not fight the war — it supplied both sides, and when the empires bled out the supplier was the only thing left standing. It governs by owning what everyone needs. Somewhere under all of that is the reason a village burned.",
       "arc_ids": [
-        "arc_wickmoor"
+        "arc_wickmoor",
+        "arc_harrowmoot"
       ],
       "world_mutation": []
     }

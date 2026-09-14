@@ -262,5 +262,152 @@
       "opens_when": "somebody finds his letter, or Bryn Wick is already gone",
       "lifted_by_flag": "bryn_taken"
     }
+  },
+  {
+    "id": "fact_seed_0012",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Harrowmoot's lamp oil is cheaper than Wickmoor's, and everyone there has a different theory about why.",
+    "kind": "world",
+    "subjects": [
+      "set_harrowmoot",
+      "fac_meridian"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_barthel",
+      "npc_rue",
+      "npc_kettle"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0013",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Arcanate pensions stopped in the spring the war ended, and the Pensioners' Hall still has everyone who was waiting for one.",
+    "kind": "world",
+    "subjects": [
+      "fac_arcanate",
+      "loc_pensioners_hall"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_emeric",
+      "npc_rue",
+      "npc_barthel",
+      "npc_saveri"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0014",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Syndicate surveyed the Cut once, priced it, and has not been back.",
+    "kind": "world",
+    "subjects": [
+      "loc_the_cut",
+      "fac_meridian"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_kettle",
+      "npc_rue",
+      "npc_bel",
+      "npc_barthel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0015",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "One certified practitioner stopped collecting her pension the same month the Accord lost, and did not die: Saveri Crole, licence 4411.",
+    "kind": "world",
+    "subjects": [
+      "npc_saveri",
+      "npc_emeric"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_emeric"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Emeric Sallow does not give things away; he trades them",
+      "opens_when": "somebody owes him something, and he gets to name what",
+      "lifted_by_flag": "emeric_paid"
+    }
+  },
+  {
+    "id": "fact_seed_0016",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Saveri Crole took the Syndicate's shilling because behind them is the one place nobody looks for an Accord Shepherd.",
+    "kind": "world",
+    "subjects": [
+      "npc_saveri",
+      "fac_meridian",
+      "fac_accord"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_saveri"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "eleven years of being nobody is not a habit she can put down to explain herself",
+      "opens_when": "hiding stops working — Vosk gets close, or the boy's pact wakes where she can see it",
+      "lifted_by_flag": "jory_pact_woken"
+    }
+  },
+  {
+    "id": "fact_seed_0017",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Bel was a Shepherd until nine of them died getting one child out, and she has not been able to hear the word since.",
+    "kind": "world",
+    "subjects": [
+      "npc_bel",
+      "fac_accord"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": true,
+    "known_by": [
+      "npc_bel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "she does not discuss the nine",
+      "opens_when": "you stand with her on something that costs you",
+      "lifted_by_flag": "bel_trusts_you"
+    }
   }
 ]

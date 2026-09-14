@@ -17,7 +17,8 @@
     "serve": "node --env-file-if-exists=.env --import tsx src/cli/serve.ts",
     "check": "npm run typecheck && npm test",
     "succeed": "node --env-file-if-exists=.env --import tsx src/cli/succeed.ts",
-    "generate": "node --env-file-if-exists=.env --import tsx src/cli/generate.ts"
+    "generate": "node --env-file-if-exists=.env --import tsx src/cli/generate.ts",
+    "models": "node --env-file-if-exists=.env --import tsx src/cli/models.ts"
   },
   "dependencies": {
     "zod": "^3.23.8",

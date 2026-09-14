@@ -39,5 +39,53 @@
         "location_id": "loc_moot_hall"
       }
     ]
+  },
+  "set_harrowmoot": {
+    "id": "set_harrowmoot",
+    "name": "Harrowmoot",
+    "region_id": null,
+    "location_ids": [
+      "loc_tollgate",
+      "loc_assay_row",
+      "loc_fetterlock",
+      "loc_pensioners_hall",
+      "loc_the_cut"
+    ],
+    "population": 4100,
+    "reputation_with_pc": 0,
+    "presence": [
+      {
+        "faction_id": "fac_meridian",
+        "allegiance": "holds",
+        "strength": 60,
+        "openness": "open"
+      },
+      {
+        "faction_id": "fac_arcanate",
+        "allegiance": "contests",
+        "strength": 35,
+        "openness": "quiet"
+      },
+      {
+        "faction_id": "fac_accord",
+        "allegiance": "hunted",
+        "strength": 15,
+        "openness": "covert"
+      }
+    ],
+    "services": [
+      {
+        "kind": "inn",
+        "location_id": "loc_fetterlock"
+      },
+      {
+        "kind": "shop",
+        "location_id": "loc_assay_row"
+      },
+      {
+        "kind": "job_board",
+        "location_id": "loc_fetterlock"
+      }
+    ]
   }
 }

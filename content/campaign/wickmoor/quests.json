@@ -269,6 +269,20 @@
             ],
             "amount": 300,
             "reason": "the road out of Wickmoor"
+          },
+          {
+            "t": "set_quest_status",
+            "quest_id": "q_the_keeping",
+            "status": "active"
+          },
+          {
+            "t": "advance_quest",
+            "quest_id": "q_the_keeping",
+            "step_id": "step_find"
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_tollgate"
           }
         ]
       }
@@ -303,6 +317,192 @@
     "failure_triggers": [],
     "requires": [
       "q_the_burning"
+    ],
+    "blocks": []
+  },
+  "q_the_keeping": {
+    "id": "q_the_keeping",
+    "title": "The Other Half of the Keeping",
+    "giver_entity_id": "npc_ilsa",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Ilsa Rooke said to find the one who took the other half. She did not finish saying where, and she is not going to.",
+    "dm_notes": "THE ANSWER IS SAVERI CROLE, and she assays lamp-oil contracts on Assay Row. She was Accord. She hid the other half of what Wickmoor kept, and then she took a job with the people looking for it, because the safest place to stand is behind them. She has been nobody for eleven years and it has cost her every single day.\n\nTHREE WAYS TO HER, and the players will find at most two:\n  1. EMERIC SALLOW in the Pensioners' Hall remembers every certificate the Arcanate      ever issued, including one to a woman who stopped collecting her pension the same      month the Accord lost the war. He will trade the name — not for money, which he      refuses, but for being owed something by somebody. Let him name the terms.\n  2. BEL in the Cut knows there is a Shepherd in the Row and hates her for it. She will      give the name gladly and for the wrong reasons, and what she wants in exchange is      help burning the assay ledger.\n  3. RUE TAMSIN will not tell anyone anything. But Saveri drinks at the Fetterlock every      eighth day, alone, and Rue seats her where the door is visible. A player who watches      the room rather than asking questions can simply see it.\n\nWHEN THEY REACH HER SHE SAYS NO. Not evasively — she tells them the truth and then refuses. What she kept was never an object and it was never hers to give back. She believes, with reason, that the moment she says the rest of it out loud the boy is finished. She is not protecting a secret. She is protecting Jory, and she is wrong, and she has been wrong in exactly this way for eleven years.\n\nDO NOT LET HER BE PERSUADED BY A GOOD ROLL. This is the sealed kind. What moves her is one of: Vosk getting close enough that hiding stops working, Jory's pact waking where she can see it, or somebody telling her what happened to Bryn Wick.",
+    "current_step_id": "step_find",
+    "steps": [
+      {
+        "id": "step_find",
+        "desc": "Find the one Ilsa meant",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "flag",
+            "key": "prologue_over",
+            "eq": true
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_emeric_named",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_emeric"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "emeric_paid",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_bel_named",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_bel"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "bel_talked",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_saw_her",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "watched_the_room",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "knows_saveri",
+            "value": true
+          },
+          {
+            "t": "add_fact",
+            "text": "Saveri Crole assays contracts on the Row, and she was Accord before that.",
+            "subjects": [
+              "npc_saveri",
+              "fac_accord"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          },
+          {
+            "t": "add_lead",
+            "quest_id": "q_the_keeping",
+            "text": "Saveri Crole. Assay Row, and she does not leave it.",
+            "points_to_location_id": "loc_assay_row",
+            "source_entity_id": null
+          }
+        ]
+      },
+      {
+        "id": "step_ask",
+        "desc": "Ask her for the other half",
+        "status": "locked",
+        "preconditions": [
+          {
+            "t": "flag",
+            "key": "knows_saveri",
+            "eq": true
+          }
+        ],
+        "completion_triggers": [
+          {
+            "id": "t_she_refused",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_saveri"
+              ]
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "saveri_refused",
+            "value": true
+          },
+          {
+            "t": "add_fact",
+            "text": "Saveri Crole says what Wickmoor kept was never an object, and refuses to say more.",
+            "subjects": [
+              "npc_saveri",
+              "cmp_jory"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          },
+          {
+            "t": "add_lead",
+            "quest_id": "q_the_keeping",
+            "text": "She is not hiding it from you. She is hiding it from Jory.",
+            "points_to_location_id": null,
+            "source_entity_id": "npc_saveri"
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Ilsa said 'ask at the' and did not finish. Harrowmoot has three places worth asking.",
+        "learned_turn": 0,
+        "source_entity_id": "npc_ilsa",
+        "points_to_location_id": "loc_assay_row"
+      },
+      {
+        "text": "The Pensioners' Hall keeps every Arcanate certificate ever issued, and a man who remembers them.",
+        "learned_turn": 0,
+        "source_entity_id": null,
+        "points_to_location_id": "loc_pensioners_hall"
+      },
+      {
+        "text": "There is somebody in the Cut who hates whoever it is you are looking for.",
+        "learned_turn": 0,
+        "source_entity_id": null,
+        "points_to_location_id": "loc_the_cut"
+      },
+      {
+        "text": "Rue Tamsin seats one particular customer where she can see the door.",
+        "learned_turn": 0,
+        "source_entity_id": null,
+        "points_to_location_id": "loc_fetterlock"
+      }
+    ],
+    "rewards": {
+      "xp": 400,
+      "gold": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    },
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "requires": [
+      "q_the_road"
     ],
     "blocks": []
   }

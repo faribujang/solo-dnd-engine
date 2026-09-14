@@ -1278,9 +1278,9 @@
     },
     "goals": [
       {
-        "text": "Confirm what Wickmoor has been sitting on, and price it",
+        "text": "Close the Wickmoor contract, whatever is left of it",
         "priority": 1,
-        "quest_id": "q_before"
+        "quest_id": "q_the_keeping"
       }
     ],
     "schedule": [
@@ -1378,6 +1378,710 @@
     "schedule": [],
     "known_fact_ids": [],
     "ai_policy": "aggressive",
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "is_template": true
+    }
+  },
+  "npc_saveri": {
+    "id": "npc_saveri",
+    "kind": "npc",
+    "name": "Saveri Crole",
+    "pronouns": "she/her",
+    "aliases": [
+      "saveri",
+      "crole",
+      "the assayer"
+    ],
+    "descriptor": "a Syndicate assayer with ink to the second knuckle and the stillness of someone who has been expecting bad news for eleven years",
+    "controller": "cpu",
+    "location_id": "loc_assay_row",
+    "zone_id": "z_hall",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 10,
+      "dex": 12,
+      "con": 11,
+      "int": 16,
+      "wis": 16,
+      "cha": 13
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 14,
+      "max": 14,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "investigation",
+        "insight",
+        "deception",
+        "arcana"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "squares the edges of a stack of paper before she answers anything",
+        "has never once been seen to hurry"
+      ],
+      "ideal": "A thing kept is a thing that stays kept. That is the whole of it.",
+      "bond": "Two children, and only one of them was hers to hide.",
+      "flaw": "Believes that because the cost was hers to pay, the choice was hers to make.",
+      "voice": "precise, quiet, leaves gaps where other people would reassure you"
+    },
+    "goals": [
+      {
+        "text": "Be nobody. Stay nobody. Eleven more years of it if that is what it takes",
+        "priority": 1,
+        "quest_id": "q_the_keeping"
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 7,
+        "to_hour": 19,
+        "location_id": "loc_assay_row"
+      },
+      {
+        "from_hour": 19,
+        "to_hour": 7,
+        "location_id": "loc_assay_row"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "was_accord": true,
+      "social_tags": [
+        "lawful",
+        "scholar",
+        "merchant"
+      ],
+      "faction_wing": "charter"
+    }
+  },
+  "npc_emeric": {
+    "id": "npc_emeric",
+    "kind": "npc",
+    "name": "Emeric Sallow",
+    "pronouns": "he/him",
+    "aliases": [
+      "emeric",
+      "sallow",
+      "the pensioner"
+    ],
+    "descriptor": "a certified practitioner of a discipline that no longer exists, on a bed he does not own",
+    "controller": "cpu",
+    "location_id": "loc_pensioners_hall",
+    "zone_id": "z_floor",
+    "faction_ids": [
+      "fac_arcanate"
+    ],
+    "abilities": {
+      "str": 8,
+      "dex": 9,
+      "con": 9,
+      "int": 15,
+      "wis": 12,
+      "cha": 11
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 7,
+      "max": 7,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "arcana",
+        "history",
+        "insight"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "gives you his licence number before his name",
+        "will not accept charity and will accept a trade"
+      ],
+      "ideal": "I passed. Whatever else is true, I passed.",
+      "bond": "A pension of four marks a month that stopped in the spring of the year it ended.",
+      "flaw": "Would sell almost anything to be told he still counts for something.",
+      "voice": "ruined, courteous, occasionally brilliant and knows when it happens"
+    },
+    "goals": [
+      {
+        "text": "Be owed something by somebody, one more time",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 0,
+        "to_hour": 0,
+        "location_id": "loc_pensioners_hall"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "scholar"
+      ],
+      "faction_wing": "pensioners"
+    }
+  },
+  "npc_rue": {
+    "id": "npc_rue",
+    "kind": "npc",
+    "name": "Rue Tamsin",
+    "pronouns": "she/her",
+    "aliases": [
+      "rue",
+      "tamsin",
+      "the innkeeper"
+    ],
+    "descriptor": "larger than the argument, and has never needed to say so twice",
+    "controller": "cpu",
+    "location_id": "loc_fetterlock",
+    "zone_id": "z_common",
+    "faction_ids": [],
+    "abilities": {
+      "str": 16,
+      "dex": 11,
+      "con": 15,
+      "int": 12,
+      "wis": 14,
+      "cha": 13
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 15,
+      "max": 15,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "insight",
+        "intimidation",
+        "perception"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "knows what everyone drinks and what everyone owes",
+        "throws people out by appearing beside them"
+      ],
+      "ideal": "My room, my rules, and the rules are short.",
+      "bond": "The Fetterlock. Forty years of it.",
+      "flaw": "Has decided that staying out of it is the same as being fair.",
+      "voice": "dry, unbothered, calls everyone love and means it about a third of the time"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 6,
+        "to_hour": 1,
+        "location_id": "loc_fetterlock"
+      },
+      {
+        "from_hour": 1,
+        "to_hour": 6,
+        "location_id": "loc_fetterlock"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "commoner",
+        "merchant"
+      ]
+    }
+  },
+  "npc_kettle": {
+    "id": "npc_kettle",
+    "kind": "npc",
+    "name": "Kettle",
+    "pronouns": "they/them",
+    "aliases": [
+      "kettle"
+    ],
+    "descriptor": "small, unhurried, and the reason the Syndicate surveyed the Cut once and never came back",
+    "controller": "cpu",
+    "location_id": "loc_the_cut",
+    "zone_id": "z_arch",
+    "faction_ids": [],
+    "abilities": {
+      "str": 9,
+      "dex": 16,
+      "con": 12,
+      "int": 14,
+      "wis": 15,
+      "cha": 14
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_halfling",
+    "hp": {
+      "current": 13,
+      "max": 13,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "deception",
+        "stealth",
+        "insight",
+        "sleight_of_hand"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "asks after your family before your business",
+        "has never been seen to carry anything"
+      ],
+      "ideal": "Four streets. That is all I want and all I have ever wanted.",
+      "bond": "Everyone who lives between the two lamps.",
+      "flaw": "Will trade anybody outside the Cut for anybody inside it, without hesitating.",
+      "voice": "friendly, incurious in a way that is obviously a choice"
+    },
+    "goals": [
+      {
+        "text": "Keep the Cut worth less trouble than it is worth taking",
+        "priority": 1,
+        "quest_id": null
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 12,
+        "to_hour": 4,
+        "location_id": "loc_the_cut"
+      },
+      {
+        "from_hour": 4,
+        "to_hour": 12,
+        "location_id": "loc_the_cut"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "criminal",
+        "commoner"
+      ]
+    }
+  },
+  "npc_bel": {
+    "id": "npc_bel",
+    "kind": "npc",
+    "name": "Bel",
+    "pronouns": "she/her",
+    "aliases": [
+      "bel"
+    ],
+    "descriptor": "a woman in a doorway who does not come out of it, with burns that are not from a forge",
+    "controller": "cpu",
+    "location_id": "loc_the_cut",
+    "zone_id": "z_lane",
+    "faction_ids": [
+      "fac_accord"
+    ],
+    "abilities": {
+      "str": 12,
+      "dex": 15,
+      "con": 13,
+      "int": 13,
+      "wis": 14,
+      "cha": 12
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 16,
+      "max": 16,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth",
+        "religion",
+        "survival",
+        "insight"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "watches the lamps rather than the people",
+        "will not sit with her back to the street"
+      ],
+      "ideal": "It was never theirs to sell. Not one hour of it.",
+      "bond": "Nine Shepherds who are not walking around any more.",
+      "flaw": "Has stopped being able to tell the difference between the machines and the people running them.",
+      "voice": "low, fast, entirely certain and very tired"
+    },
+    "goals": [
+      {
+        "text": "Put the Row's assay ledger beyond use",
+        "priority": 1,
+        "quest_id": "q_the_keeping"
+      }
+    ],
+    "schedule": [
+      {
+        "from_hour": 0,
+        "to_hour": 0,
+        "location_id": "loc_the_cut"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "bel_trusts_you",
+    "recruitable": true,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "criminal",
+        "clergy"
+      ],
+      "faction_wing": "kindlers"
+    }
+  },
+  "npc_barthel": {
+    "id": "npc_barthel",
+    "kind": "npc",
+    "name": "Barthel Onn",
+    "pronouns": "he/him",
+    "aliases": [
+      "barthel",
+      "onn",
+      "the factor"
+    ],
+    "descriptor": "the factor for the northern contracts, apologetic about everything and sorry for none of it",
+    "controller": "cpu",
+    "location_id": "loc_assay_row",
+    "zone_id": "z_steps",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 10,
+      "dex": 11,
+      "con": 11,
+      "int": 14,
+      "wis": 13,
+      "cha": 15
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 12,
+      "max": 12,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "persuasion",
+        "deception",
+        "insight",
+        "history"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "says 'I'm afraid' before bad news and enjoys it",
+        "remembers your name and uses it too often"
+      ],
+      "ideal": "Somebody has to keep the lamps lit. It may as well be somebody decent.",
+      "bond": "A quota, and a family in a good street.",
+      "flaw": "Has never once asked what happens to the people whose contracts he does not renew.",
+      "voice": "warm, regretful, agrees with you at length and then does not move"
+    },
+    "goals": [],
+    "schedule": [
+      {
+        "from_hour": 8,
+        "to_hour": 18,
+        "location_id": "loc_assay_row"
+      },
+      {
+        "from_hour": 18,
+        "to_hour": 8,
+        "location_id": "loc_fetterlock"
+      }
+    ],
+    "known_fact_ids": [],
+    "ai_policy": null,
+    "approval": [],
+    "flee_behavior": "run",
+    "personal_arc_quest_id": null,
+    "recruit_condition": "",
+    "recruitable": false,
+    "on_death": [],
+    "on_first_talk": [],
+    "alive": true,
+    "flags": {
+      "social_tags": [
+        "lawful",
+        "merchant"
+      ],
+      "faction_wing": "assay"
+    }
+  },
+  "mon_cutter": {
+    "id": "mon_cutter",
+    "kind": "monster",
+    "name": "a cutter",
+    "pronouns": "they/them",
+    "aliases": [
+      "cutter"
+    ],
+    "descriptor": "two of them, and neither is in a hurry, which is worse",
+    "controller": "cpu",
+    "location_id": "loc_the_cut",
+    "zone_id": "z_lane",
+    "faction_ids": [],
+    "abilities": {
+      "str": 12,
+      "dex": 15,
+      "con": 12,
+      "int": 10,
+      "wis": 11,
+      "cha": 9
+    },
+    "level": 1,
+    "class_id": null,
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [],
+      "ideal": "",
+      "bond": "",
+      "flaw": "",
+      "voice": ""
+    },
+    "goals": [],
+    "schedule": [],
+    "known_fact_ids": [],
+    "ai_policy": "skirmish",
     "approval": [],
     "flee_behavior": "run",
     "personal_arc_quest_id": null,

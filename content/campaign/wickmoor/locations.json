@@ -566,6 +566,16 @@
         "hidden_until_flag": null,
         "requires_check": null,
         "revealed": false
+      },
+      {
+        "dir": "north",
+        "to": "loc_tollgate",
+        "desc": "two days, and the ruts get worse",
+        "travel_minutes": 900,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
       }
     ],
     "features": [],
@@ -582,7 +592,57 @@
       "sound": "",
       "smell": ""
     },
-    "on_enter_triggers": [],
+    "on_enter_triggers": [
+      {
+        "id": "t_jory_wakes",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "when": {
+          "t": "flag",
+          "key": "ilsa_spoke",
+          "eq": true
+        },
+        "then": [
+          {
+            "t": "set_flag",
+            "key": "jory_pact_woken",
+            "value": true
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "cmp_jory",
+            "key": "pact_dormant",
+            "value": false
+          },
+          {
+            "t": "add_fact",
+            "text": "Something answered Jory on the north road, and it used his name.",
+            "subjects": [
+              "cmp_jory"
+            ],
+            "importance": 5,
+            "secret": false,
+            "known_by": [
+              "pc_main",
+              "cmp_jory"
+            ]
+          },
+          {
+            "t": "adjust_attitude",
+            "subject": "cmp_jory",
+            "object": "pc_main",
+            "dims": {
+              "trust": 8,
+              "fear": 5
+            },
+            "reason": "you saw it happen and did not leave"
+          }
+        ],
+        "once": true
+      }
+    ],
     "discovered": false,
     "visited_count": 0,
     "danger_level": 1,
@@ -632,6 +692,383 @@
     "visited_count": 0,
     "danger_level": 1,
     "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_tollgate": {
+    "id": "loc_tollgate",
+    "name": "The Harrowmoot Tollgate",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 2
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "A gate, a ledger, and a queue of people explaining themselves.",
+    "long_desc": "Harrowmoot grew up around a crossing and never stopped charging for it. The gate is Syndicate work — clean iron, a lamp on either post, and a clerk under an awning who has asked the same four questions so many times he no longer hears the answers. The queue moves. That is the thing people mean when they say the Syndicate runs it well.",
+    "exits": [
+      {
+        "dir": "south",
+        "to": "loc_north_road",
+        "desc": "",
+        "travel_minutes": 900,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "in",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 5,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_gate",
+        "name": "the gate",
+        "adjacent": [
+          "z_queue"
+        ]
+      },
+      {
+        "id": "z_queue",
+        "name": "the queue",
+        "adjacent": [
+          "z_gate"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "a clerk saying 'business in the town'",
+      "smell": "lamp oil and horses"
+    },
+    "on_enter_triggers": [
+      {
+        "id": "t_arrive_harrowmoot",
+        "on": "enter_location",
+        "match": {
+          "actor_id": "pc_main"
+        },
+        "then": [
+          {
+            "t": "reveal_location",
+            "location_id": "loc_assay_row"
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_fetterlock"
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_pensioners_hall"
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_the_cut"
+          },
+          {
+            "t": "set_arc_status",
+            "arc_id": "arc_harrowmoot",
+            "status": "active"
+          },
+          {
+            "t": "add_fact",
+            "text": "Lamp oil costs less at the Harrowmoot gate than it ever did in Wickmoor.",
+            "subjects": [
+              "set_harrowmoot",
+              "fac_meridian"
+            ],
+            "importance": 4,
+            "secret": false,
+            "known_by": [
+              "pc_main"
+            ]
+          }
+        ],
+        "once": true
+      }
+    ],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_assay_row": {
+    "id": "loc_assay_row",
+    "name": "Assay Row",
+    "region_id": null,
+    "coords": {
+      "x": 13,
+      "y": 3
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "Where contracts are weighed, stamped, and made true.",
+    "long_desc": "Three storeys of clean stone and small windows, and a smell of hot wax that gets into your clothes. Everything that burns in forty miles is priced in this street. The people going in and out are not rich; they work for people who are.",
+    "exits": [
+      {
+        "dir": "gate",
+        "to": "loc_tollgate",
+        "desc": "",
+        "travel_minutes": 5,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "lanes",
+        "to": "loc_the_cut",
+        "desc": "",
+        "travel_minutes": 6,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "hall",
+        "to": "loc_pensioners_hall",
+        "desc": "",
+        "travel_minutes": 8,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "inn",
+        "to": "loc_fetterlock",
+        "desc": "",
+        "travel_minutes": 4,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_steps",
+        "name": "the front steps",
+        "adjacent": [
+          "z_hall"
+        ]
+      },
+      {
+        "id": "z_hall",
+        "name": "the weighing hall",
+        "adjacent": [
+          "z_steps"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "bright",
+      "sound": "seals being pressed",
+      "smell": "hot wax"
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {
+      "syndicate_office": true
+    }
+  },
+  "loc_fetterlock": {
+    "id": "loc_fetterlock",
+    "name": "The Fetterlock",
+    "region_id": null,
+    "coords": {
+      "x": 15,
+      "y": 4
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "An inn named after the thing that holds a horse, which its owner thinks is funny.",
+    "long_desc": "Two rooms and a yard, and Rue Tamsin has run it long enough that the regulars have regular chairs. It is the only place in Harrowmoot where an Arcanate pensioner and a Syndicate clerk will drink in the same room, mostly because Rue does not permit otherwise and is larger than either of them.",
+    "exits": [
+      {
+        "dir": "out",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 4,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "lanes",
+        "to": "loc_the_cut",
+        "desc": "",
+        "travel_minutes": 5,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_common",
+        "name": "the common room",
+        "adjacent": [
+          "z_yard"
+        ]
+      },
+      {
+        "id": "z_yard",
+        "name": "the yard",
+        "adjacent": [
+          "z_common"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "somebody losing at cards",
+      "smell": "beer and wet wool"
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_pensioners_hall": {
+    "id": "loc_pensioners_hall",
+    "name": "The Pensioners' Hall",
+    "region_id": null,
+    "coords": {
+      "x": 10,
+      "y": 5
+    },
+    "map_visibility": "landmark",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "An Arcanate licensing hall that stopped licensing anything eleven years ago.",
+    "long_desc": "It was built to impress and it still does, from a distance. The examination floor is full of beds now. The men and women in them were certified practitioners of a discipline that no longer exists, and every one of them can tell you the number of the pension they were promised and the date it stopped.",
+    "exits": [
+      {
+        "dir": "row",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 8,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_floor",
+        "name": "the examination floor",
+        "adjacent": [
+          "z_gallery"
+        ]
+      },
+      {
+        "id": "z_gallery",
+        "name": "the gallery",
+        "adjacent": [
+          "z_floor"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "",
+      "smell": "dust and old paper"
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 0,
+    "encounter_table_id": null,
+    "flags": {}
+  },
+  "loc_the_cut": {
+    "id": "loc_the_cut",
+    "name": "The Cut",
+    "region_id": null,
+    "coords": {
+      "x": 16,
+      "y": 6
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "The lanes behind the Row, where the tithe is not collected because nobody has tried twice.",
+    "long_desc": "Four streets the Syndicate surveyed, priced, and quietly left alone. There is a lamp at each end of it and none in the middle, which everyone who lives here understands to be a sentence rather than an oversight.",
+    "exits": [
+      {
+        "dir": "row",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 6,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "inn",
+        "to": "loc_fetterlock",
+        "desc": "",
+        "travel_minutes": 5,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_lane",
+        "name": "the lane",
+        "adjacent": [
+          "z_arch"
+        ]
+      },
+      {
+        "id": "z_arch",
+        "name": "under the arch",
+        "adjacent": [
+          "z_lane"
+        ]
+      }
+    ],
+    "contains_item_ids": [],
+    "ambient": {
+      "light": "dim",
+      "sound": "a door closing somewhere ahead of you",
+      "smell": ""
+    },
+    "on_enter_triggers": [],
+    "discovered": false,
+    "visited_count": 0,
+    "danger_level": 2,
+    "encounter_table_id": "enc_the_cut",
     "flags": {}
   }
 }
