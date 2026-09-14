@@ -214,6 +214,12 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":
 function headers(extra) {
   const h = Object.assign({ "content-type": "application/json" }, extra || {});
   if (S.token) h.authorization = "Bearer " + S.token;
+  // Playing over an ngrok free tunnel, every request from a browser User-Agent is answered
+  // with ngrok's own interstitial page instead of the API — so `res.json()` gets HTML and
+  // the game looks unreachable for no visible reason. Clicking through the warning sets a
+  // cookie that fixes the page load; this fixes the fetches regardless. Harmless anywhere
+  // else: it is one unrecognised header.
+  h["ngrok-skip-browser-warning"] = "1";
   return h;
 }
 async function api(path, opts) {
