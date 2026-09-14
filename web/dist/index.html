@@ -297,9 +297,18 @@ function paintChips(list) {
     '<button class="chip" data-say="' + esc(s) + '">' + esc(s) + "</button>"
   ).join("");
 }
+// Tapping a chip FILLS the box; it does not send. That is the whole reason chips exist —
+// you read the phrasing, edit it, and learn what this game will understand. Submitting on
+// tap turns them into buttons and teaches nothing.
 $("chips").addEventListener("click", (e) => {
   const b = e.target.closest(".chip");
-  if (b) submit(b.dataset.say);
+  if (!b || S.busy) return;
+  const say = $("say");
+  say.value = b.dataset.say;
+  say.focus();
+  say.setSelectionRange(say.value.length, say.value.length);
+  say.style.height = "auto";
+  say.style.height = Math.min(120, say.scrollHeight) + "px";
 });
 
 // ─────────────────────────────────────────────────────────────── a turn

@@ -111,37 +111,37 @@ falls back to replaying the journal.
 
 ## What is yours
 
-### Phase 7 — the client — **the only substantial piece left**
+### Phase 7 — the client — **first cut built, six items left**
 
-Everything above is a data structure waiting for a component, and now there is an API in
-front of them: `GET /api/saves/:id` returns the whole screen plus a version, and
-`POST /api/saves/:id/turn` streams `intent → mechanics → state → prose… → done`. Build
-against that rather than importing the engine. `npm run serve` serves `web/dist` when it
-exists, so one process is the whole deployment.
+`web/dist/index.html` is the client: one file, no build step, no framework, served by the
+same process as the API. It talks to `GET /api/saves/:id` and `POST /api/saves/:id/turn`
+and imports nothing from the engine, which is the constraint worth keeping — the client
+holds view models and a version number, never `GameState`.
 
-1. **Narrative feed with streaming.** Put `narration` first in the schema and incrementally
-   parse, so prose appears as it arrives. One call, no extra cost. `linkText` gives you the
-   spans; render `ref` as tappable.
-2. **The roll card.** The most important component. Die, modifiers itemised by source, DC,
-   outcome. Respect `prefers-reduced-motion` by showing the final card instantly.
-3. **The action palette.** `palette()` is grouped and hotkey-ready. Show pips going out.
-   **Never hide an unavailable action** — the reason is the lesson.
-4. **The suggestion chips.** `out.suggestedActions`, 3–4 of them. **Tapping fills the text
-   box; it does not submit.** That is what teaches phrasing, and it is the whole reason the
-   feature exists.
-5. **The aggregate enemy phase.** Collect consecutive CPU turns and narrate them as one
-   beat with roll cards beneath. **Batch the narration, never the journal** — rewind
-   granularity is per turn and the cascade inspector needs it.
-6. **The map.** `mapModel` gives coordinates, edges and pins. Pan and zoom, tap to travel.
-7. **The history log + cascade inspector.** `timelineModel` already has the chain.
-8. **The conversation panel.** `screen().conversation`. Closed topics greyed *with the
-   reason* — same pattern as the action bar, same lesson: trust is earned, and it opens
-   doors no roll would.
-9. **Speaker portraits.** A sprite for whoever is talking, above the dialogue.
-   `sceneModel.present` and `conversationModel.with` already carry name, descriptor and
-   disposition — a portrait plus a disposition tint would do most of the work. **Decide
-   this early**: it changes how much vertical space the feed gets on a phone.
-10. **Mobile first.** One column, bottom tab bar, feed always one tap away.
+**Built:** streamed narrative feed, roll cards, the action palette, suggestion chips,
+the character sheet, character creation off `/api/catalogue`, save switching, the secret
+prompt, and recovery from a version conflict (both the 409 and the mid-stream frame).
+Also `prose_reset`, which is the client's half of a retried narration.
+
+**Left, in the order they are worth doing** — every one has a tested view model already:
+
+- The map (`mapModel`: coordinates, edges, pins; pan, zoom, tap to travel).
+- Combat: the zone view, the initiative order, and **enemy intent**, which `combatModel`
+  already computes.
+- The aggregate enemy phase — consecutive CPU turns as one beat with roll cards beneath.
+  **Batch the narration, never the journal.**
+- The conversation panel (`screen().conversation`), with closed topics greyed *and the
+  reason shown*.
+- The history log and cascade inspector (`timelineModel` has the chain).
+- Rewind (`POST /api/saves/:id/rewind` exists and is tested; nothing calls it).
+- Speaker portraits. **Decide early** — it changes how much vertical space the feed gets.
+
+Two rules the first cut already follows, and the next person should not undo:
+
+- **Tapping a chip fills the text box; it does not submit.** That is what teaches phrasing.
+- **Never hide an unavailable action.** Grey it and show why — the reason is the lesson.
+
+---
 
 ### Phase 8 — content — **DONE**
 
