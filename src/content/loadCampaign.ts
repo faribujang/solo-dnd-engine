@@ -74,6 +74,24 @@ export async function loadCampaign(dir: string): Promise<GameState> {
     if (e) { e.group_id ??= "grp_main"; if (state.meta.player_controlled.includes(id)) e.controller = "human"; }
   }
 
+  /**
+   * Wherever the lead begins, they have been there.
+   *
+   * `visited_count` only ever rose on ENTERING a room, so the one room nobody enters —
+   * the one they start in — read as never visited. The map drew the character's own home
+   * as a place they had merely heard of, and, worse, an authored trigger conditioned on
+   * `visited(that room)` could never fire, which is a content trap with no symptom.
+   *
+   * Done here rather than in the reducer so it is part of the world a save STARTS from:
+   * replay and live play both come through this function, so they cannot disagree.
+   */
+  const start = state.entities[state.meta.pc_id]?.location_id;
+  const startLoc = start ? state.locations[start] : undefined;
+  if (startLoc) {
+    startLoc.discovered = true;
+    if (startLoc.visited_count === 0) startLoc.visited_count = 1;
+  }
+
   validateReferences(state);
   return state;
 }

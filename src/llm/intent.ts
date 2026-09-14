@@ -3,6 +3,7 @@ import type { Action } from "../engine/turn.js";
 import { Intent, CONFIDENCE_FLOOR } from "./contracts.js";
 import type { LLMClient } from "./client.js";
 import { itemsAt, itemsOwnedBy, npcsPresent, pc, visibleExits } from "../state/selectors.js";
+import { canFastTravel, reachable } from "../engine/pathfind.js";
 import { SKILL_ABILITY } from "../rules/checks.js";
 import type { QuestionKind } from "../engine/questions.js";
 
@@ -131,21 +132,50 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
 
     case "move": {
       const exits = visibleExits(s, loc);
-      const dir = intent.direction?.toLowerCase().trim() ?? "";
-      const exact = exits.find((x) => x.dir.toLowerCase() === dir);
+
+      // People say where they are going, not which compass point it is on. The model puts
+      // that in `direction` sometimes and `target_name` other times, and which one it
+      // picked is not the player's problem — so try both.
+      const said = placeWord(intent.direction) || placeWord(intent.target_name);
+
+      const exact = exits.find((x) => x.dir.toLowerCase() === said);
       if (exact) return { ok: true, intent, action: { type: "move", dir: exact.dir } };
 
-      // The model may have named the destination rather than the direction.
-      const byName = exits.find((x) => {
-        const dest = s.locations[x.to];
-        return dest ? dest.name.toLowerCase().includes(dir) && dir.length > 2 : false;
-      });
+      // Named the destination rather than the way to it. Match either direction, so both
+      // "the green" and "green" find "The Green".
+      const byName = said.length > 2 ? exits.find((x) => nameMatches(s.locations[x.to]?.name, said)) : undefined;
       if (byName) return { ok: true, intent, action: { type: "move", dir: byName.dir } };
 
-      return {
-        ok: false, intent,
-        clarify: `Which way? From here you can go: ${exits.map((x) => x.dir).join(", ") || "nowhere"}.`,
-      };
+      /**
+       * Somewhere they have BEEN, but not through a door in this room.
+       *
+       * `travel` already existed, with a cost, a route and an affordance — and no way to
+       * reach it except by tapping the button, because this mapper only ever produced
+       * `move`. Naming a place two rooms away therefore failed forever, and failed with a
+       * list of compass directions, which reads as the game refusing a legal move. It is
+       * the most common thing anyone types.
+       */
+      const gate = canFastTravel(s);
+      const far = said.length > 2
+        ? reachable(s, loc.id).find((r) => nameMatches(s.locations[r.id]?.name, said))
+        : undefined;
+      if (far) {
+        if (!gate.ok) return { ok: false, intent, clarify: gate.reason };
+        return { ok: true, intent, action: { type: "travel", location_id: far.id } };
+      }
+
+      // Only now is it genuinely unclear — and the question names PLACES, because "north,
+      // out, down" is not something anyone can answer about a village they are standing in.
+      const here = exits
+        .map((x) => { const d = s.locations[x.to]; return d ? `${d.name} (${x.dir})` : x.dir; });
+      const known = gate.ok
+        ? reachable(s, loc.id).slice(0, 6).map((r) => `${s.locations[r.id]!.name} (${r.path.minutes} min)`)
+        : [];
+      const lines = [
+        here.length ? `From here: ${here.join(", ")}.` : "There is no way out of here.",
+        known.length ? `Further off, that you know: ${known.join(", ")}.` : "",
+      ].filter(Boolean);
+      return { ok: false, intent, clarify: `Where to? ${lines.join(" ")}` };
     }
 
     case "attack": {
@@ -215,10 +245,32 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
     case "dodge": return { ok: true, intent, action: { type: "dodge" } };
     case "flee": return { ok: true, intent, action: { type: "flee" } };
     case "move_zone": {
+      /**
+       * Zones are a COMBAT concept. Out of a fight there is no such thing as crossing
+       * one, so a player saying "go to the bakehouse" who lands here was misread — and
+       * the reply they got, "Move where? Zones here: by the well, the moot stone", is
+       * indistinguishable from the game refusing to let them walk across a village.
+       *
+       * The model cannot be relied on for this and does not have to be: whether a fight
+       * is happening is something code knows exactly.
+       */
+      if (!s.combat) return toAction(s, { ...intent, action: "move" });
+
       const zones = loc.zones;
       const n = intent.direction?.toLowerCase() ?? intent.target_name?.toLowerCase() ?? "";
       const z = zones.find((x) => x.id === n || x.name.toLowerCase().includes(n) && n.length > 2);
-      if (!z) return { ok: false, intent, clarify: `Move where? Zones here: ${zones.map((x) => x.name).join(", ") || "none"}.` };
+      if (!z) {
+        // Naming somewhere outside the fight is the usual way to land here, and a bare
+        // list of zones does not explain why the village is suddenly out of reach.
+        const named = placeWord(intent.direction) || placeWord(intent.target_name);
+        const elsewhere = named.length > 2 && !zones.some((x) => nameMatches(x.name, named));
+        return {
+          ok: false, intent,
+          clarify: elsewhere
+            ? `You are in a fight — you cannot walk to ${named} from inside it. Here you can cross to: ${zones.map((x) => x.name).join(", ") || "nowhere"}. To leave altogether, flee.`
+            : `Move where? Zones here: ${zones.map((x) => x.name).join(", ") || "none"}.`,
+        };
+      }
       return { ok: true, intent, action: { type: "move_zone", zone_id: z.id } };
     }
 
@@ -270,7 +322,50 @@ const SYSTEM = [
   "  read_ledger. Use an existing tag from the scene if one fits.",
   "- If you cannot tell what they mean, answer `unclear` with low confidence. Guessing wrong",
   "  costs the player a turn and teaches them the game is arbitrary.",
+  "",
+  "CHOOSING THE ACTION. The names below are not self-explanatory, and picking the wrong one",
+  "reads to a player as the game not understanding plain English:",
+  "- A QUESTION ABOUT THE GAME is `ask`, never an action. It costs no time and changes",
+  "  nothing. Set `question` to one of: options, surroundings, who, reach, condition, know,",
+  "  carrying, doing, time.",
+  "    \"what can I do\" / \"what are my options\" / \"what should I do\" / \"help\"  -> ask, options",
+  "    \"what's here\" / \"look around\" / \"describe the room\"                    -> ask, surroundings",
+  "    \"who is here\"                                                          -> ask, who",
+  "    \"where can I go\" / \"what are the exits\"                               -> ask, reach",
+  "    \"what am I carrying\" / \"what's in my pack\"                            -> ask, carrying",
+  "    \"how hurt am I\"                                                        -> ask, condition",
+  "    \"what was I doing\" / \"what am I meant to be doing\"                    -> ask, doing",
+  "  `inventory` is NOT how you answer a question. Use ask/carrying.",
+  "- GOING SOMEWHERE is `move`, and put the place the player named in `direction` exactly as",
+  "  they said it — \"the bakehouse\", not a compass point. The engine resolves the name, and",
+  "  it can also travel to somewhere further off that they already know.",
+  "- `move_zone` is ONLY for crossing a zone inside a fight. If no fight is happening it is",
+  "  always wrong; use `move`.",
+  "- `end_turn`, `dash`, `disengage`, `dodge` and `flee` are also combat-only.",
 ].join("\n");
+
+/**
+ * What the player actually named, with the words that carry no information removed.
+ *
+ * "go to the bakehouse", "to The Bakehouse", "the bakehouse" and "bakehouse" are one
+ * request. Stripping them here means every caller compares the same thing.
+ */
+function placeWord(raw: string | null | undefined): string {
+  return (raw ?? "")
+    .toLowerCase()
+    .replace(/^\s*(go|walk|head|move|travel|run|ride)\s+/, "")
+    .replace(/^\s*(to|towards|toward|into|in|over to|back to|for)\s+/, "")
+    .replace(/^\s*the\s+/, "")
+    .replace(/[.!?,]+$/, "")
+    .trim();
+}
+
+/** Whether a place name and what the player said are the same place. */
+function nameMatches(name: string | undefined, said: string): boolean {
+  if (!name || said.length < 3) return false;
+  const n = name.toLowerCase().replace(/^the\s+/, "");
+  return n === said || n.includes(said) || said.includes(n);
+}
 
 function renderIntentPrompt(s: GameState, playerText: string): string {
   const player = pc(s);
@@ -280,9 +375,16 @@ function renderIntentPrompt(s: GameState, playerText: string): string {
   const held = itemsOwnedBy(s, player.id);
 
   return [
+    // Half the action vocabulary is combat-only, and the model was never told which mode
+    // the game is in.
+    s.combat ? `## A FIGHT IS HAPPENING. Combat verbs and zones are available.`
+             : `## NO FIGHT. Combat verbs and zones are NOT available; walking is \`move\`.`,
+    ``,
     `## LOCATION`,
     `${loc.name}. ${loc.short_desc}`,
-    `Exits: ${visibleExits(s, loc).map((x) => x.dir).join(", ") || "none"}`,
+    // Directions alone are useless to a model asked to interpret "go to the bakehouse".
+    `Exits: ${visibleExits(s, loc).map((x) => `${x.dir} -> ${s.locations[x.to]?.name ?? "?"}`).join(", ") || "none"}`,
+    `Places you already know, further off: ${reachable(s, loc.id).slice(0, 8).map((r) => s.locations[r.id]!.name).join(", ") || "none"}`,
     ``,
     `## PRESENT`,
     here.length ? here.map((e) => `${e.name} (${e.aliases.join(", ") || "no aliases"})`).join("\n") : "nobody",

@@ -57,6 +57,28 @@ header{
 .tag.person{border-color:#4a3a2c;color:#d8c3a8}
 .tag.hostile{border-color:#5a2f27;color:#e0a196}
 .tag.hp{border-color:#3a4a30;color:#bcd4ac;font-family:var(--mono)}
+
+/* ── the combat banner. Not a panel behind a tab: a player who does not know a fight is
+      happening reads every combat-only refusal as the game being broken. */
+.fight{
+  margin-top:9px;border:1px solid #5a3a20;border-radius:var(--r);
+  background:#241a12;padding:9px 11px;
+}
+.fight .fhead{
+  display:flex;justify-content:space-between;gap:8px;align-items:baseline;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);font-weight:600;
+}
+.fight .pips{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0}
+.fight .pips b{color:var(--brass);font-weight:500}
+.fight .pips s{color:var(--faint);text-decoration:line-through}
+.combatant{display:flex;gap:8px;align-items:baseline;margin-top:7px;font-size:13px}
+.combatant .nm{flex:0 0 auto;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combatant.now .nm{color:var(--ember);font-weight:600}
+.combatant.enemy .nm{color:#e0a196}
+.combatant .hpn{font-family:var(--mono);font-size:11.5px;color:var(--muted);flex:0 0 auto}
+.combatant .it{flex:1;min-width:0;font-size:12px;color:var(--faint);font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combatant.gone{opacity:.45}
 .tag.hurt{border-color:#5a2f27;color:#e0a196}
 
 /* ── the feed */
@@ -118,6 +140,55 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
 .working{font-size:12px;color:var(--faint);padding:0 0 6px;letter-spacing:.04em}
 .working b{color:var(--ember);font-weight:500}
 
+/* ── the tab bar. Two unlabelled icons in opposite corners is not a menu; nobody finds
+      the map that way. Five named targets, always visible, is the whole fix. */
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:2px 0 8px}
+.tab{
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--raised);
+  font-size:10px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;
+}
+.tab .g{font-size:16px;line-height:1}
+.tab[disabled]{opacity:.4}
+.tab.dot{position:relative}
+.tab.dot::after{
+  content:"";position:absolute;top:5px;right:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--ember);
+}
+
+/* ── the map. A grid of known places, not a rendered world: this is a text game and the
+      map's job is to answer "where can I go and how far", not to look like terrain. */
+.mapwrap{overflow-x:auto;padding-bottom:4px}
+.mapgrid{position:relative;min-width:100%;height:var(--mh);}
+.mnode{
+  position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
+  font-size:11.5px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);
+  background:var(--raised);color:var(--muted);
+}
+.mnode.seen{color:var(--ink);border-color:#4a3a2c}
+.mnode.found{color:var(--muted);border-color:#3d3128}
+.mnode.here{background:var(--ember);color:#180f08;border-color:var(--ember);font-weight:600}
+.mnode.unknown{opacity:.45;font-style:italic}
+.mnode .mm{font-family:var(--mono);font-size:10px;opacity:.75;margin-left:5px}
+.mlegend{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.6}
+
+/* ── journal + log rows */
+.lead{
+  display:block;width:100%;text-align:left;border:0;border-left:2px solid var(--ember);
+  background:none;padding:3px 0 3px 11px;margin:6px 0;
+  font-family:var(--serif);font-size:15px;line-height:1.45;color:var(--prose);
+}
+.turnrow{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.turnrow:last-child{border-bottom:0}
+.turnrow .n{font-family:var(--mono);color:var(--faint);flex:0 0 30px;text-align:right}
+.turnrow .s{flex:1;min-width:0}
+.turnrow .c{font-size:12px;color:var(--faint);font-style:italic;margin-top:2px}
+.sealed{font-size:12px;color:var(--faint);font-style:italic;margin-top:3px}
+.topicbtn{width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--raised);padding:9px 11px;margin-bottom:6px}
+.topicbtn[disabled]{opacity:.5}
+.topicbtn .t{font-size:14px}
+
 /* ── drawers: sheet, palette, saves. Bottom sheets, because thumbs. */
 .scrim{position:fixed;inset:0;background:#000a;backdrop-filter:blur(2px);z-index:20}
 .sheetpane{
@@ -177,6 +248,7 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
       <div class="when mono" id="when"></div>
     </div>
     <div class="hmeta" id="hmeta"></div>
+    <div id="fight"></div>
   </header>
 
   <main id="feed"></main>
@@ -184,10 +256,15 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
   <footer>
     <div class="working hide" id="working"></div>
     <div class="chips" id="chips"></div>
+    <div class="tabs">
+      <button class="tab" data-pane="palette"><span class="g">⚔</span>Actions</button>
+      <button class="tab" data-pane="map"><span class="g">🗺</span>Map</button>
+      <button class="tab" data-pane="journal"><span class="g">📖</span>Journal</button>
+      <button class="tab" data-pane="log"><span class="g">🕰</span>Log</button>
+      <button class="tab" data-pane="sheet"><span class="g">🛡</span>Sheet</button>
+    </div>
     <div class="bar">
-      <button class="icon" id="openPalette" title="Actions" aria-label="Actions">⚔</button>
-      <textarea id="say" rows="1" placeholder="What do you do?" enterkeyhint="send"></textarea>
-      <button class="icon" id="openSheet" title="Character" aria-label="Character">☰</button>
+      <textarea id="say" rows="1" placeholder="What do you do?  (or ask: what can I do?)" enterkeyhint="send"></textarea>
       <button id="send" aria-label="Send">↑</button>
     </div>
   </footer>
@@ -296,6 +373,46 @@ function paintHeader() {
   }
   if (t.weather) tags.push('<span class="tag">' + esc(t.weather) + "</span>");
   $("hmeta").innerHTML = tags.join("");
+  paintFight();
+}
+
+/**
+ * The fight, if there is one.
+ *
+ * This is the single most important thing that was missing. In a fight the engine
+ * correctly refuses to let you stroll to the bakehouse, and correctly reads "go over
+ * there" as crossing a zone — but a client that never mentions the fight turns both of
+ * those into the game apparently not understanding plain English. Enemy intent is free:
+ * the CPU policy is deterministic, so the server already knows what each creature is
+ * about to do, and showing it removes guesswork without removing difficulty.
+ */
+function paintFight() {
+  const el = $("fight");
+  const c = S.screen && S.screen.combat;
+  if (!c) { el.innerHTML = ""; return; }
+
+  const now = c.order.find((o) => o.is_current) || {};
+  const mine = now.side === "party";
+  const whose = now.name || "someone";
+  const e = (S.screen.palette && S.screen.palette.economy) || null;
+
+  const pip = (on, label) => (on ? "<b>" + label + "</b>" : "<s>" + label + "</s>");
+  const pips = e
+    ? [pip(e.action, "action"), pip(e.bonus, "bonus"), e.moves + " move" + (e.moves === 1 ? "" : "s"), pip(e.reaction, "reaction")].join(" · ")
+    : "";
+
+  const rows = c.order.map((o) => {
+    const cls = [o.is_current ? "now" : "", o.side === "enemy" ? "enemy" : "", o.fled || o.hp.current <= 0 ? "gone" : ""].filter(Boolean).join(" ");
+    const state = o.fled ? "fled" : o.hp.current <= 0 ? "down" : o.hp.current + "/" + o.hp.max;
+    return '<div class="combatant ' + cls + '">'
+      + '<span class="nm">' + esc(o.name) + "</span>"
+      + '<span class="hpn">' + state + "</span>"
+      + '<span class="it">' + esc(o.intent || (o.is_current ? "acting now" : "")) + "</span></div>";
+  }).join("");
+
+  el.innerHTML = '<div class="fight"><div class="fhead"><span>⚔ Round ' + c.round + " — "
+    + (mine ? "your turn" : esc(whose) + " acts") + '</span><span class="pips">' + pips + "</span></div>"
+    + rows + "</div>";
 }
 
 function paintChips(list) {
@@ -458,13 +575,13 @@ function setBusy(what) {
   el.classList.remove("hide");
   el.innerHTML = { thinking: "the table is <b>listening</b>…", resolving: "rolling the <b>dice</b>…", writing: "the DM is <b>writing</b>…" }[what] || what;
   $("send").disabled = true;
-  $("openPalette").disabled = true;
+  document.querySelectorAll(".tab").forEach((t) => { t.disabled = true; });
 }
 function done() {
   S.busy = false;
   $("working").classList.add("hide");
   $("send").disabled = false;
-  $("openPalette").disabled = false;
+  document.querySelectorAll(".tab").forEach((t) => { t.disabled = false; });
 }
 
 // ─────────────────────────────────────────────────────────────── drawers
@@ -484,9 +601,17 @@ function closePane() {
 }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePane(); });
 
+const PANES = {};
+document.querySelector(".tabs").addEventListener("click", (e) => {
+  const b = e.target.closest(".tab");
+  if (!b || b.disabled) return;
+  const fn = PANES[b.dataset.pane];
+  if (fn) fn();
+});
+
 // The character sheet. Everything the server already computed — this view never does
 // arithmetic of its own, it just lays out what it was handed.
-$("openSheet").addEventListener("click", () => {
+PANES.sheet = (() => {
   const s = S.screen;
   if (!s) return;
   const sh = s.sheet, xp = sh.xp || {};
@@ -557,7 +682,7 @@ function fmtPurse(p) {
 // The action palette. Every entry is an Action the server itself offered, with the
 // cost and the maths it will use — tapping one sends it as `action_hint`, so the
 // intent parser is told rather than asked.
-$("openPalette").addEventListener("click", () => {
+PANES.palette = (() => {
   const p = S.screen && S.screen.palette;
   if (!p) return;
   let h = "<h2>What you can do</h2>";
@@ -578,6 +703,141 @@ $("openPalette").addEventListener("click", () => {
     closePane();
     submit(b.dataset.label, JSON.parse(b.dataset.act));
   });
+});
+
+// ─────────────────────────────────────────────────────────────── map
+// Not terrain — a text game's map answers "where can I go, and how long does it take".
+// Coordinates come from `mapModel`; a node you have never visited shows as a rumour.
+PANES.map = (() => {
+  const m = S.screen && S.screen.map;
+  if (!m || !m.nodes.length) return void openPane('<h2>Map</h2><div class="note">Nowhere charted yet.</div>');
+
+  const hereId = S.screen.scene && S.screen.scene.location.id;
+  const xs = m.nodes.map((n) => n.x), ys = m.nodes.map((n) => n.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const W = Math.max(1, x1 - x0), H = Math.max(1, y1 - y0);
+  const height = Math.min(420, Math.max(200, H * 38));
+
+  // Three states, three looks. `visited` you have walked; `seen` you have found but not
+  // entered; `known` is a rumour — a name on a map nobody has taken you to. Drawing the
+  // last two the same is what makes a map lie about how much of the world you have.
+  const nodes = m.nodes.map((n) => {
+    const here = n.id === hereId;
+    const cls = here ? "here" : n.state === "visited" ? "seen" : n.state === "seen" ? "found" : "unknown";
+    const left = 6 + ((n.x - x0) / W) * 88;
+    const top = 8 + ((n.y - y0) / H) * 84;
+    const mins = n.travel_minutes != null && !here ? '<span class="mm">' + n.travel_minutes + "m</span>" : "";
+    // A pin is the game pointing at something. For a player who does not know what to do,
+    // it is the most useful mark on the screen, so it goes on the label, not in a legend.
+    const pin = (n.pins || []).includes("quest") ? "★ " : (n.pins || []).includes("lead") ? "• " : "";
+    const go = !here && n.travel_minutes != null;
+    return '<button class="mnode ' + cls + '" style="left:' + left.toFixed(1) + "%;top:" + top.toFixed(1) + '%"'
+      + (go ? ' data-go="' + esc(n.id) + '" data-name="' + esc(n.name) + '"' : " disabled")
+      + ">" + pin + esc(n.name) + mins + "</button>";
+  }).join("");
+
+  const pane = openPane("<h2>Map</h2>"
+    + '<div class="mapwrap"><div class="mapgrid" style="--mh:' + height + 'px;height:' + height + 'px">' + nodes + "</div></div>"
+    + '<div class="mlegend">'
+    + "Orange is where you stand. Bright is somewhere you have walked — tap it to travel, and "
+    + "the minutes are real: clocks keep running while you walk. Dimmer is somewhere you have "
+    + "found but not entered. Faded italic is a name you have only heard. "
+    + "<b>★</b> is where a quest wants you; <b>•</b> is where a lead points.</div>");
+
+  pane.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-go]");
+    if (!b) return;
+    closePane();
+    submit("Travel to " + b.dataset.name, { type: "travel", location_id: b.dataset.go });
+  });
+});
+
+// ─────────────────────────────────────────────────────────── journal
+// What the game is about, in its own words: quests, the leads under them, who is with you,
+// and — when you are mid-conversation — what you could ask and why a door is shut.
+PANES.journal = (() => {
+  const s = S.screen;
+  if (!s) return;
+  const open = (s.quests || []).filter((q) => q.status === "active");
+  const shut = (s.quests || []).filter((q) => q.status !== "active");
+
+  let h = "<h2>Journal</h2>";
+
+  if (!open.length) h += '<div class="note">Nothing pressing.</div>';
+  for (const q of open) {
+    h += "<h3>" + esc(q.title) + "</h3>";
+    if (q.summary) h += '<div class="note" style="font-family:var(--serif);font-size:14.5px;line-height:1.5">' + esc(q.summary) + "</div>";
+    if (q.objective) h += '<div class="note" style="margin-top:6px">→ ' + esc(q.objective) + "</div>";
+    // A lead is a sentence you can act on. Tapping one puts it in the box so you can
+    // edit it into what you actually mean — same contract as the chips.
+    for (const l of q.leads || []) {
+      h += '<button class="lead" data-say="' + esc(l.text) + '">' + esc(l.text)
+        + (l.from ? ' <span class="note">— ' + esc(l.from) + "</span>" : "") + "</button>";
+    }
+  }
+
+  const c = s.conversation;
+  if (c && c.with && (c.topics || []).length) {
+    h += "<h3>You could ask " + esc(c.with.name) + "</h3>";
+    for (const t of c.topics) {
+      const shutWhy = t.access && t.access.kind !== "open" ? t.access.why : null;
+      h += '<button class="topicbtn" ' + (t.open ? 'data-say="' + esc(t.label) + '"' : "disabled") + ">"
+        + '<div class="t">' + esc(t.label) + (t.asked ? " ✓" : "") + "</div>"
+        // Say WHY it is closed. A greyed row with no reason teaches nothing; the reason
+        // is usually the most interesting sentence on the screen.
+        + (shutWhy ? '<div class="sealed">' + esc(shutWhy)
+            + (t.access.opens_when ? " — opens when " + esc(t.access.opens_when) : "") + "</div>" : "")
+        + "</button>";
+    }
+  }
+
+  if ((s.party || []).length) {
+    h += "<h3>With you</h3><div class=\"list\">" + s.party.map((m) =>
+      '<div class="li"><div class="t">' + esc(m.name) + "</div>"
+      + '<div class="d">' + esc(m.descriptor || m.role || "") + "</div></div>").join("") + "</div>";
+  }
+  if ((s.vows || []).length) {
+    h += "<h3>Sworn</h3><div class=\"list\">" + s.vows.map((v) =>
+      '<div class="li"><div class="t">' + esc(v.text || v.title || "") + "</div></div>").join("") + "</div>";
+  }
+  if (shut.length) {
+    h += "<h3>Behind you</h3><div class=\"list\">" + shut.map((q) =>
+      '<div class="li"><div class="t">' + esc(q.title) + '</div><div class="d">' + esc(q.status) + "</div></div>").join("") + "</div>";
+  }
+
+  const pane = openPane(h);
+  pane.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-say]");
+    if (!b) return;
+    closePane();
+    const say = $("say");
+    say.value = b.dataset.say;
+    say.focus();
+    say.style.height = "auto";
+    say.style.height = Math.min(120, say.scrollHeight) + "px";
+  });
+});
+
+// ─────────────────────────────────────────────────────────────── log
+// Turn by turn, with the cascades underneath. The feed is the story; this is the record —
+// what the engine did, including the triggers that fired because of what you did.
+PANES.log = (async () => {
+  let rows = [];
+  try { rows = (await api("/api/saves/" + encodeURIComponent(S.saveId) + "/history")).rows || []; }
+  catch (err) { return void openPane('<h2>Log</h2><div class="note">' + esc(err.message) + "</div>"); }
+
+  if (!rows.length) return void openPane('<h2>Log</h2><div class="note">Nothing has happened yet.</div>');
+
+  const body = rows.slice().reverse().map((r) =>
+    '<div class="turnrow"><div class="n">' + r.turn + "</div><div class=\"s\">"
+    + esc(r.summary)
+    + (r.children || []).map((c) => '<div class="c">↳ ' + esc(c.summary) + (c.trigger ? " (" + esc(c.trigger) + ")" : "") + "</div>").join("")
+    + "</div></div>").join("");
+
+  openPane("<h2>Log</h2>"
+    + '<div class="note">' + rows.length + " turns, newest first. Indented lines are what the "
+    + "world did in response — triggers firing, clocks landing, people reacting.</div>"
+    + '<div class="list" style="margin-top:12px">' + body + "</div>");
 });
 
 // ─────────────────────────────────────────────────────────────── saves

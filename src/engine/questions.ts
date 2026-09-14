@@ -2,6 +2,7 @@ import type { GameState } from "../schema/state.js";
 import { conditionFlags } from "../rules/conditions.js";
 import { dispositionOf } from "../rules/social.js";
 import { adjacentZones, combatantOf, currentCombatant } from "./combat.js";
+import { suggest } from "../rules/suggest.js";
 import {
   factsKnownToPc, hourOfDay, itemsAt, itemsOwnedBy, npcsPresent, pc,
   timeOfDayLabel, visibleExits,
@@ -76,7 +77,12 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string): Answ
       for (const f of loc.features) lines.push(`${f.name} — ${f.desc}`);
       const loose = itemsAt(s, loc.id);
       if (loose.length) lines.push(`Lying here: ${loose.map((i) => s.item_defs[i.def_id]?.name ?? i.def_id).join(", ")}.`);
-      lines.push(`Ways out: ${visibleExits(s, loc).map((x) => x.dir).join(", ") || "none you can see"}.`);
+      // Named, not pointed at: "north, out, down" tells a player nothing about a village
+      // they are standing in, and it is what they have to type back.
+      lines.push(`Ways out: ${visibleExits(s, loc).map((x) => {
+        const dest = s.locations[x.to];
+        return dest?.discovered ? `${dest.name} (${x.dir})` : x.dir;
+      }).join(", ") || "none you can see"}.`);
       return { kind, lines, brief: `Describe ${loc.name} again, in a sentence or two. Do not add anything new.` };
     }
 
@@ -187,6 +193,14 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string): Answ
       return { kind, lines, brief: "" };
     }
 
+    /**
+     * "What can I do?" is the question a new player asks, and it used to be answered with
+     * a statement of philosophy — "anything you can describe" — which is true, useless,
+     * and indistinguishable from the game not understanding the question. Someone who has
+     * never played a tabletop game is not asking what is permitted. They are asking what
+     * is WORTH doing, which is exactly what `suggest` already ranks and what a real DM
+     * answers by recapping the situation and its threads.
+     */
     case "options": {
       if (s.combat) {
         const me = combatantOf(s.combat, player.id);
@@ -196,7 +210,35 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string): Answ
           lines.push(`Action ${me.economy.action ? "available" : "spent"} · bonus ${me.economy.bonus ? "available" : "spent"} · ${me.economy.moves} move(s) · reaction ${me.economy.reaction ? "held" : "used"}.`);
         }
       }
-      lines.push("Anything you can describe. The bar shows what is definitely legal; the box will take the rest.");
+
+      const here = npcsPresent(s, loc.id);
+      if (here.length) lines.push(`Here with you: ${here.map((e) => e.name).join(", ")}. You can talk to any of them.`);
+
+      const ways = visibleExits(s, loc)
+        .map((x) => s.locations[x.to]?.name)
+        .filter((n): n is string => !!n);
+      if (ways.length) lines.push(`You can go to: ${ways.join(", ")}.`);
+
+      // The ranked shortlist, in the same words the chips use. Four is a menu; ten is a
+      // wall, and a wall is what made this question worth asking in the first place.
+      const worth = suggest(s).slice(0, 4).map((x) => x.fallback);
+      if (worth.length) {
+        lines.push("Worth doing right now:");
+        for (const w of worth) lines.push(`  · ${w}`);
+      }
+
+      // Leads are the game telling you what it is about. A player who is lost is usually
+      // a player who has not been shown these.
+      const leads = Object.values(s.quests)
+        .filter((q) => q.status === "active")
+        .flatMap((q) => q.leads.map((l) => l.text))
+        .slice(0, 3);
+      if (leads.length) {
+        lines.push("On your mind:");
+        for (const l of leads) lines.push(`  · ${l}`);
+      }
+
+      lines.push("None of that is a menu — describe anything and the game will try it.");
       return { kind, lines, brief: "" };
     }
   }

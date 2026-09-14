@@ -118,22 +118,28 @@ same process as the API. It talks to `GET /api/saves/:id` and `POST /api/saves/:
 and imports nothing from the engine, which is the constraint worth keeping — the client
 holds view models and a version number, never `GameState`.
 
-**Built:** streamed narrative feed, roll cards, the action palette, suggestion chips,
-the character sheet, character creation off `/api/catalogue`, save switching, the secret
-prompt, and recovery from a version conflict (both the 409 and the mid-stream frame).
-Also `prose_reset`, which is the client's half of a retried narration.
+**Built:** streamed narrative feed, roll cards, a five-tab bar (Actions, Map, Journal,
+Log, Sheet), the action palette, suggestion chips, the character sheet, character creation
+off `/api/catalogue`, save switching, the secret prompt, recovery from a version conflict
+(both the 409 and the mid-stream frame), and `prose_reset`. The Journal carries quests,
+leads and the conversation topics with their seal reasons; the Log is `timelineModel`
+with cascades; the Map is `mapModel` with quest and lead pins.
+
+**The combat banner is in the header, not behind a tab.** That was not a layout
+preference. A player who does not know a fight is happening reads every combat-only
+refusal as the game failing to understand English — which is exactly what happened the
+first time somebody else played it. Round, whose turn, the action/bonus/move/reaction
+pips, and every combatant with their wounds and their **intent**, which costs nothing
+because the CPU policy is deterministic.
 
 **Left, in the order they are worth doing** — every one has a tested view model already:
 
-- The map (`mapModel`: coordinates, edges, pins; pan, zoom, tap to travel).
-- Combat: the zone view, the initiative order, and **enemy intent**, which `combatModel`
-  already computes.
+- The combat ZONE view. The banner says who and what; it does not yet draw the ground.
 - The aggregate enemy phase — consecutive CPU turns as one beat with roll cards beneath.
   **Batch the narration, never the journal.**
-- The conversation panel (`screen().conversation`), with closed topics greyed *and the
-  reason shown*.
-- The history log and cascade inspector (`timelineModel` has the chain).
 - Rewind (`POST /api/saves/:id/rewind` exists and is tested; nothing calls it).
+- Map pan and zoom. It is a static absolute-positioned grid; fine for a village, not for
+  a region.
 - Speaker portraits. **Decide early** — it changes how much vertical space the feed gets.
 
 Two rules the first cut already follows, and the next person should not undo:
