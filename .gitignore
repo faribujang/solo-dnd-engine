@@ -16,3 +16,6 @@ Thumbs.db
 *.mts.tmp
 dbg*.ts
 dbg*.mts
+
+# Logs and pids from scripts/play-remote.ps1
+.run/
