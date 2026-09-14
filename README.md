@@ -2,7 +2,7 @@
 
 A single-player 5e campaign where the state is a database and the Dungeon Master is only a voice.
 
-Built to [`SPEC.md`](./SPEC.md). **The engine and the server are complete: 361 tests, byte-identical replay.**
+Built to [`SPEC.md`](./SPEC.md). The world it is being built for is [`WORLD.md`](./WORLD.md). **The engine and the server are complete: 361 tests, byte-identical replay.**
 What remains is the client — see [`HANDOFF.md`](./HANDOFF.md).
 
 Built so far: schemas, store, reducer, trigger DSL, the full LLM turn loop, a living world,

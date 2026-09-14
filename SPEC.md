@@ -3370,7 +3370,10 @@ the economy stops being bookkeeping.
 
 ## 76. Cinderhold
 
-The setting this was built for, recorded because the content now assumes it.
+The setting this was built for, recorded because the content now assumes it. **`WORLD.md`
+is the living version** — it carries the fiction, what is settled, what is open, and how a
+new idea stays implementable. This section is the engine-facing summary and will go stale
+first; trust `WORLD.md` where they differ.
 
 **The Meridian Syndicate didn't fight the war. It supplied it.** Both empires bought their
 magic from the same people; when they bled each other out, the supplier was the only

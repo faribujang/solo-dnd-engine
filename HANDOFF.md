@@ -5,7 +5,8 @@ rules, engine, view models, content, and gates. What remains is the half that wa
 iterate-until-green loop — rendering, tuning, and deployment.
 
 **State:** 361 tests, typecheck clean, both demos replaying byte-identically.
-`SPEC.md` is the full specification; this is the map of what to pick up.
+`SPEC.md` is the full specification, `WORLD.md` is the setting and the story, and this is
+the map of what to pick up.
 
 ---
 
