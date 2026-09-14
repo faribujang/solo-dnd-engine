@@ -4,7 +4,7 @@ Written for the next builder. Phases 0–8 have their **design-coherent half** d
 rules, engine, view models, content, and gates. What remains is the half that wants an
 iterate-until-green loop — rendering, tuning, and deployment.
 
-**State:** 361 tests, typecheck clean, both demos replaying byte-identically.
+**State:** 363 tests, typecheck clean, both demos replaying byte-identically.
 `SPEC.md` is the full specification, `WORLD.md` is the setting and the story, and this is
 the map of what to pick up.
 
@@ -306,7 +306,7 @@ Worth fixing before anything else.
 ## Verify before and after
 
 ```bash
-npm test                     # 361
+npm test                     # 363
 npx tsc --noEmit
 npm run demo && npm run rebuild -- demo    # byte-identical
 npm run demo1                              # 20 free-text turns, replays exactly

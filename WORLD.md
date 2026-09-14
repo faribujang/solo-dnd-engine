@@ -244,6 +244,14 @@ npm run play -- my_save --mock
 npm run serve -- --mock      # :8787
 ```
 
+**Point it at a real Dungeon Master** (the mock is a structural stand-in and a dull writer):
+
+```bash
+cp .env.example .env         # add GEMINI_API_KEY or OPENROUTER_API_KEY
+npm run models               # what your key can actually reach
+npm run models -- --write    # fill config/models.json from that
+```
+
 **Play the prologue:**
 
 ```bash
