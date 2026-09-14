@@ -147,10 +147,16 @@ export class GameService {
     campaigns: Array<{ id: string; title: string; premise: string }>;
     races: Array<{ id: string; name: string }>;
     classes: Array<{ id: string; name: string; hit_die: number; skill_choices: string[]; skill_count: number; caster: string }>;
-    backgrounds: Array<{ id: string; name: string; blurb: string; skills: string[] }>;
+    backgrounds: Array<{ id: string; name: string; blurb: string; local: string; skills: string[]; campaigns: string[] }>;
+    /** "<campaign>:<background>" -> what that campaign calls this life. */
+    background_local: Record<string, string>;
   }> {
     const { promises: fs } = await import("node:fs");
     const campaigns: Array<{ id: string; title: string; premise: string }> = [];
+    /** background id -> the campaigns that offer it. Empty list on a campaign means all. */
+    const offeredIn = new Map<string, string[]>();
+    /** "<campaign>:<background>" -> that campaign's one-line gloss. */
+    const localGloss: Record<string, string> = {};
     let dirs: string[] = [];
     try { dirs = await fs.readdir(this.contentRoot); } catch { dirs = []; }
     for (const d of dirs.sort()) {
@@ -158,6 +164,13 @@ export class GameService {
         const s = await loadCampaign(path.join(this.contentRoot, d));
         const camp = s.meta.campaign_id ? s.campaigns[s.meta.campaign_id] : undefined;
         campaigns.push({ id: d, title: s.meta.title, premise: camp?.premise ?? "" });
+        const offered = s.meta.backgrounds.length
+          ? s.meta.backgrounds
+          : Object.values(BACKGROUNDS).map((b) => ({ id: b.id, local: "" }));
+        for (const b of offered) {
+          offeredIn.set(b.id, [...(offeredIn.get(b.id) ?? []), d]);
+          if (b.local) localGloss[`${d}:${b.id}`] = b.local;
+        }
       } catch { /* not a campaign directory */ }
     }
     return {
@@ -166,9 +179,18 @@ export class GameService {
       classes: Object.values(CLASSES).map((c) => ({
         id: c.id, name: c.name, hit_die: c.hit_die, skill_choices: c.skill_choices, skill_count: c.skill_count, caster: c.caster,
       })),
+      // Every background the SRD has, plus which campaigns offer it and what each of
+       // those calls it. The client filters by the campaign being started, so a creation
+       // screen never offers a life the opening scene contradicts.
       backgrounds: Object.values(BACKGROUNDS).map((b) => ({
-        id: b.id, name: b.name, blurb: BACKGROUND_SOCIAL[b.id]?.blurb ?? "", skills: b.skills,
+        id: b.id,
+        name: b.name,
+        blurb: BACKGROUND_SOCIAL[b.id]?.blurb ?? "",
+        local: "",
+        skills: b.skills,
+        campaigns: offeredIn.get(b.id) ?? [],
       })),
+      background_local: localGloss,
     };
   }
 

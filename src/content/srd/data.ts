@@ -298,6 +298,10 @@ export const BACKGROUNDS: Record<string, BackgroundDef> = {
     id: "bg_folk_hero", name: "Folk Hero", skills: ["animal_handling", "survival"], tools: ["smiths_tools"], gold: 10,
     personality: { traits: ["judges people by their hands"], ideal: "The powerful should answer to the small.", bond: "Their village still expects them home.", flaw: "Cannot refuse a plea." },
   },
+  bg_guild_artisan: {
+    id: "bg_guild_artisan", name: "Guild Artisan", skills: ["insight", "persuasion"], tools: ["smiths_tools"], gold: 15,
+    personality: { traits: ["picks up other people's work to feel the weight of it"], ideal: "A thing made well outlives the argument about who made it.", bond: "The master who taught them, and the debt that never came up.", flaw: "Contempt for anyone who buys what they could make." },
+  },
   bg_sage: {
     id: "bg_sage", name: "Sage", skills: ["arcana", "history"], tools: [], gold: 10,
     personality: { traits: ["answers a question with a better question"], ideal: "What is written cannot be argued away.", bond: "One book, still unfinished.", flaw: "Would trade almost anyone for a primary source." },

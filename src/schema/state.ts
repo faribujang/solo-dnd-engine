@@ -28,6 +28,24 @@ export const CampaignMeta = z.object({
   campaign_id: Id.nullable().default(null),
   /** Which authored content this save was made from — the directory under content/campaign. */
   content_dir: z.string().default(""),
+  /**
+   * Which backgrounds this campaign offers, and what each one MEANS here.
+   *
+   * The SRD list is generic on purpose, and a generic list handed to a specific opening
+   * produces a specific contradiction: Wickmoor's prologue says you are a village smith's
+   * apprentice of three years, and `bg_noble` says you were born to a great house. The
+   * mechanical half was never the problem — `standing` already makes commoners wary of a
+   * noble, and it works — the fiction was. A campaign that frames its own lead has to be
+   * able to say which lives that lead could have had.
+   *
+   * Empty means every background, which is what a campaign with no opinion should get.
+   * The gloss is shown at creation, in the campaign's voice, beside the SRD blurb.
+   */
+  backgrounds: z.array(z.object({
+    id: z.string(),
+    /** One line: what someone with this background is, in THIS place. */
+    local: z.string(),
+  })).default([]),
   seed: z.string(),                           // every die derives from this + the situation
   turn: z.number().int().nonnegative().default(0),
   next_ids: z.record(z.string(), z.number().int().nonnegative()).default({}), // id counters

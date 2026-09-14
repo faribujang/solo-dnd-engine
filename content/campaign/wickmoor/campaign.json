@@ -26,5 +26,39 @@
     "levelling": "xp",
     "dice": "karmic"
   },
-  "taught": []
+  "taught": [],
+  "backgrounds": [
+    {
+      "id": "bg_folk_hero",
+      "local": "You pulled the Ruddock boy out of the millrace the spring the water came up. Wickmoor has not let you forget it, and would not let you if you asked."
+    },
+    {
+      "id": "bg_guild_artisan",
+      "local": "Cotter's apprentice, three years at the anvil. Your early work still hangs on the far wall, crooked, and he has never once taken it down."
+    },
+    {
+      "id": "bg_acolyte",
+      "local": "Ilsa Rooke taught you your letters out of the Accord's book, and a good deal she was not supposed to teach anyone."
+    },
+    {
+      "id": "bg_urchin",
+      "local": "You came up the North Road on your own at nine and nobody ever quite established from where. Halla fed you anyway."
+    },
+    {
+      "id": "bg_criminal",
+      "local": "Small things, mostly. Tollgate scrip that was never issued, a lamp-tithe ledger with a page that does not add up. Nobody has proved it."
+    },
+    {
+      "id": "bg_outlander",
+      "local": "Your people worked the high wood before the Syndicate priced the pitch. You know the ground past the treeline better than the road."
+    },
+    {
+      "id": "bg_soldier",
+      "local": "Too young for the war, old enough for the levy that came after it. Six months holding a line that was never attacked, and it marked you anyway."
+    },
+    {
+      "id": "bg_sage",
+      "local": "You read. In Wickmoor that is nearly a disease, and Sibby has been lending you things she should not."
+    }
+  ]
 }

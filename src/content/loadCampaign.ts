@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { GameState } from "../schema/state.js";
 import { fileURLToPath } from "node:url";
+import { BACKGROUNDS } from "./srd/data.js";
 
 const SRD_ITEMS = path.join(path.dirname(fileURLToPath(import.meta.url)), "srd", "items.json");
 
@@ -200,6 +201,11 @@ export function validateReferences(s: GameState): void {
 
   for (const f of s.facts) {
     for (const k of f.known_by) ent(k, `fact ${f.id} known_by`);
+  }
+
+  for (const b of s.meta.backgrounds) {
+    if (!BACKGROUNDS[b.id]) problems.push(`meta.backgrounds: no background "${b.id}"`);
+    if (!b.local.trim()) problems.push(`meta.backgrounds: "${b.id}" has no local gloss`);
   }
 
   if (problems.length > 0) {

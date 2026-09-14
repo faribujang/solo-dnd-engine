@@ -237,6 +237,35 @@ export const BACKGROUND_SOCIAL: Record<string, BackgroundSocial> = {
     ],
   },
 
+  /**
+   * Added because a campaign about a smith's apprentice had nowhere to put one. The SRD
+   * list is not a fixed set of lives, it is the set somebody happened to write down, and
+   * the trade that makes the tools everyone else uses was missing from it.
+   */
+  bg_guild_artisan: {
+    id: "bg_guild_artisan",
+    blurb: "You were apprenticed to a trade. You know what things cost to make, and who is lying about it.",
+    standing: [
+      { tag: "merchant", dims: d({ respect: 12, trust: 8 }), reason: "you price their goods out loud and you are not wrong" },
+      { tag: "commoner", dims: d({ affinity: 8, respect: 6 }), reason: "everyone here owns something someone like you made" },
+      { tag: "noble", dims: d({ respect: -5, affinity: 4 }), reason: "useful, and staff — both at once, and they do not hide it" },
+      { tag: "criminal", dims: d({ trust: 6 }), reason: "a trade that can make a key can make two" },
+      { tag: "scholar", dims: d({ respect: -6 }), reason: "they think with their hands, which you are not sure counts" },
+    ],
+    insights: [
+      {
+        id: "ins_price_it", when_tag: "merchant", label: "price it in front of them",
+        intent: "Name what the thing actually cost to make, part by part, without accusing anyone of anything.",
+        grants_trust: 12, costs_affinity: -4,
+      },
+      {
+        id: "ins_read_the_work", when_tag: "commoner", label: "read the work",
+        intent: "Notice who made what is in the room, and how well, and say so as one tradesman about another.",
+        grants_trust: 10, costs_affinity: 0,
+      },
+    ],
+  },
+
   bg_urchin: {
     id: "bg_urchin",
     blurb: "You raised yourself in the gutters of a city. You know every way in and out.",

@@ -884,6 +884,13 @@ async function newGame(campaignId, meta) {
   const cat = await catalogue();
   const cls0 = cat.classes[0];
 
+  // Only the lives this campaign's opening can support. Wickmoor's prologue puts you at
+  // Cotter's anvil at sixteen, so it does not offer Noble — no wording makes "born to a
+  // great house" true of a village apprentice, and a creation screen that contradicts the
+  // first scene teaches the player that none of this is being tracked.
+  const backgrounds = cat.backgrounds.filter((b) => !b.campaigns.length || b.campaigns.includes(campaignId));
+  const glossOf = (id) => (cat.background_local || {})[campaignId + ":" + id] || "";
+
   let h = "<h2>" + esc((meta && meta.title) || campaignId) + "</h2>"
     + '<div class="note" style="font-family:var(--serif);font-size:15px;line-height:1.55">' + esc((meta && meta.premise) || "") + "</div>"
     + '<h3>Who are you</h3>'
@@ -892,7 +899,7 @@ async function newGame(campaignId, meta) {
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
     +   sel("cRace", cat.races) + sel("cClass", cat.classes)
     + "</div>"
-    + sel("cBack", cat.backgrounds)
+    + sel("cBack", backgrounds)
     + '<div class="note" id="cBackBlurb" style="margin:-2px 0 4px"></div>'
     + '<h3>Skills <span id="cSkillN" style="color:var(--ember)"></span></h3>'
     + '<div id="cSkills" class="chips" style="flex-wrap:wrap;overflow:visible;gap:6px"></div>'
@@ -914,7 +921,7 @@ async function newGame(campaignId, meta) {
   const q = (x) => pane.querySelector(x);
 
   function classOf() { return cat.classes.find((c) => c.id === q("#cClass").value) || cls0; }
-  function backOf() { return cat.backgrounds.find((b) => b.id === q("#cBack").value) || cat.backgrounds[0]; }
+  function backOf() { return backgrounds.find((b) => b.id === q("#cBack").value) || backgrounds[0]; }
 
   // Class decides which skills are on offer and how many; background grants its own for
   // free, and those are shown as taken rather than offered twice.
@@ -922,7 +929,12 @@ async function newGame(campaignId, meta) {
     const c = classOf(), b = backOf();
     const free = new Set(b.skills || []);
     q("#cSkillN").textContent = "choose " + c.skill_count;
-    q("#cBackBlurb").textContent = b.blurb || "";
+    // The campaign's line about this life, where it has one — that is the half that makes
+    // a background feel like it belongs to this story rather than to a rulebook.
+    const local = glossOf(b.id);
+    q("#cBackBlurb").innerHTML = local
+      ? '<span style="font-family:var(--serif);font-size:14.5px;color:var(--prose)">' + esc(local) + "</span>"
+      : esc(b.blurb || "");
     q("#cSkills").innerHTML = (c.skill_choices || []).map((k) =>
       free.has(k)
         ? '<span class="chip" style="opacity:.45">' + esc(k) + " ✓</span>"
