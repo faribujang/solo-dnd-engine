@@ -17,6 +17,7 @@ import { levelUpPlan } from "../rules/character.js";
 import { levelForXp } from "../rules/progression.js";
 import { CLASSES } from "../content/srd/data.js";
 import { hasInspiration } from "../rules/inspiration.js";
+import { MONTAGE, crowdFor, describeMontage, harvestable, yieldFor, type MontageKind } from "../rules/montage.js";
 import type { Modifier } from "../rules/modifiers.js";
 
 /**
@@ -62,6 +63,12 @@ export type Action =
   | { type: "give"; target_id: string; item_instance_id: string }
   | { type: "look" }
   | { type: "wait"; minutes: number }
+  /**
+   * Hours, not a moment. One roll, real time, several beats — see rules/montage.ts.
+   * The verb that lets a player say "I spend the morning asking after him" and be
+   * answered, instead of being asked which single person they meant.
+   */
+  | { type: "montage"; kind: MontageKind; topic: string; band: DifficultyBand }
   | { type: "rest"; kind: "short" | "long" }
   | { type: "death_save" }
   | { type: "equip"; item_instance_id: string; slot: "main_hand" | "off_hand" | "armor" | "trinket" | null }
@@ -334,6 +341,58 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
           witnesses: witnessIds(s, loc.id, actor.id),
         },
         `${action.skill} (DC ${roll.target}): ${fmt(roll)} — ${DEGREE_LABEL[roll.degree ?? "failure"]}.`,
+      );
+    }
+
+    // ------------------------------------------------------------- montage
+    case "montage": {
+      // A montage is hours of legwork. You cannot do it in the middle of a fight, and the
+      // refusal says so plainly rather than listing zones.
+      if (s.combat) return { ok: false, reason: "Not in the middle of a fight." };
+
+      const spec = MONTAGE[action.kind];
+      const crowd = crowdFor(s, loc.id);
+      if (action.kind === "ask_around" && crowd.length === 0) {
+        return { ok: false, reason: "There is nobody here to ask." };
+      }
+
+      const dc = dcForBand(action.band, levers.dc_shift);
+      const roll = check(s, rng, actor.id, spec.skill, dc, `montage_${action.kind}`, undefined, lean);
+      const got = roll.degree !== "failure";
+
+      // CODE picks what the hours turned up. The model is handed the list and asked to
+      // describe a morning — it never decides what is true, only how it was found out.
+      const available = harvestable(s, action.topic, crowd);
+      const learned = available.slice(0, yieldFor(roll.degree, got));
+
+      const effects: Effect[] = learned.map((f) => ({ t: "teach_fact", entity_id: actor.id, fact_id: f.id }));
+
+      const payload: Record<string, unknown> = {
+        kind: action.kind,
+        topic: action.topic,
+        skill: spec.skill,
+        dc: roll.target,
+        outcome: roll.degree ?? (got ? "success" : "failure"),
+        learned_fact_ids: learned.map((f) => f.id),
+        asked: crowd.length,
+        // What the narrator needs to write the montage: the beats, in order, as facts.
+        beats: learned.map((f) => f.text),
+      };
+      payload[`montage_${action.kind}`] = true;
+      if (got) payload[`success_montage_${action.kind}`] = true;
+
+      return finish(
+        {
+          type: "skill_check",
+          target_ids: [],
+          payload: payload as GameEvent["payload"],
+          rolls: [roll],
+          direct_effects: effects,
+          // The cost, and the whole reason this is not free: clocks run for every minute.
+          duration_minutes: spec.minutes,
+          witnesses: witnessIds(s, loc.id, actor.id),
+        },
+        describeMontage(s, action.kind, action.topic, learned),
       );
     }
 
@@ -1007,6 +1066,7 @@ function actionKey(a: Action): string {
   switch (a.type) {
     case "move": return `move:${a.dir.toLowerCase()}`;
     case "skill_check": return `check:${a.skill}:${a.band}:${a.target_id ?? "-"}`;
+    case "montage": return `montage:${a.kind}:${a.topic}`;
     case "attack": return `attack:${a.target_id}`;
     case "talk": return `talk:${a.target_id}:${a.topic_id ?? "-"}`;
     case "take": return `take:${a.item_instance_id}`;

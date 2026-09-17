@@ -107,6 +107,14 @@ export const Entity = z.object({
   stable: z.boolean().default(false),          // at 0 HP but no longer dying
   aliases: z.array(z.string()).default([]),  // things the player might call them
   descriptor: z.string().default(""),        // one line, rendered into the DM prompt
+  /**
+   * How much of this world this person is allowed to carry. See rules/cast.ts.
+   *
+   * Authored content gets `standing` unless it says otherwise, which is the honest
+   * default: somebody a human bothered to write down is at least a named local with a
+   * relationship. `local` is what the narrator may mint mid-scene.
+   */
+  tier: z.enum(["principal", "standing", "local"]).default("standing"),
 
   location_id: Id,
   zone_id: z.string().nullable().default(null), // abstract combat zone within the location

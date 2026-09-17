@@ -8,6 +8,7 @@ import { adjacentZones, combatantOf, currentCombatant, hasSlot, hitChance, inRea
 import { conditionFlags, canMove } from "./conditions.js";
 import { spellsFor, spellDC } from "../content/srd/spells.js";
 import { canFastTravel, reachable } from "../engine/pathfind.js";
+import { MONTAGE, crowdFor } from "./montage.js";
 import { readApproaches, topicsFor } from "../engine/conversation.js";
 import { featureOfKind, featuresOf, usesLeft } from "./features.js";
 import type { Entity } from "../schema/entity.js";
@@ -270,6 +271,33 @@ export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affor
     ...(hd.used >= hd.max && actor.hp.current < actor.hp.max ? { why_unavailable: "No hit dice left. A long rest restores them." } : {}),
   });
   out.push({ action: { type: "rest", kind: "long" }, label: "Long rest", cost: "time", detail: "8 hours · full HP, all hit dice", available: true, group: "rest", teaches: TEACH.short_rest });
+
+  // ---- spending hours rather than a moment
+  // Offered plainly, because a player who has only ever been given single acts has no way
+  // to guess that "spend the morning asking around" is a thing the game understands.
+  if (!s.combat) {
+    const crowd = crowdFor(s, loc.id);
+    for (const kind of ["ask_around", "search", "watch"] as const) {
+      const spec = MONTAGE[kind];
+      const canAsk = kind !== "ask_around" || crowd.length > 0;
+      out.push({
+        action: { type: "montage", kind, topic: "", band: "medium" },
+        label: kind === "ask_around" ? "Ask around about something"
+          : kind === "search" ? "Spend hours searching here"
+          : "Watch this place a while",
+        cost: "time",
+        detail: `${Math.round(spec.minutes / 60)} hours · ${spec.skill}`
+          + (kind === "ask_around" ? ` · ${crowd.length} people about` : ""),
+        available: canAsk,
+        group: "move",
+        ...(canAsk ? {} : { why_unavailable: "There is nobody here to ask." }),
+        teaches: {
+          key: "montage",
+          text: "Some things take a morning, not a moment. Say what you are after and the hours pass — one roll, several things learned, and every clock in the world runs while you do it.",
+        },
+      });
+    }
+  }
 
   // ---- fast travel, over ground already covered
   const gate = canFastTravel(s);

@@ -274,6 +274,21 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
       return { ok: true, intent, action: { type: "move_zone", zone_id: z.id } };
     }
 
+    case "montage": {
+      // The topic is whatever they said they were after; an empty one is an idle morning,
+      // which is legal and still costs the hours.
+      const topic = (intent.topic ?? intent.target_name ?? "").trim();
+      return {
+        ok: true, intent,
+        action: {
+          type: "montage",
+          kind: intent.montage_kind ?? "ask_around",
+          topic,
+          band: intent.difficulty_band ?? "medium",
+        },
+      };
+    }
+
     case "wait":
       // Cap what a single "wait" can burn, so a typo does not skip a deadline.
       return { ok: true, intent, action: { type: "wait", minutes: Math.min(720, Math.max(1, intent.minutes ?? 10)) } };
@@ -342,6 +357,13 @@ const SYSTEM = [
   "- `move_zone` is ONLY for crossing a zone inside a fight. If no fight is happening it is",
   "  always wrong; use `move`.",
   "- `end_turn`, `dash`, `disengage`, `dodge` and `flee` are also combat-only.",
+  "- SPENDING HOURS on something open-ended is `montage`, not a single check. Use it",
+  "  whenever the player describes a stretch of time or a plural target rather than one",
+  "  act on one person: \"ask around about the surveyor\", \"spend the morning searching\",",
+  "  \"watch the tollgate all afternoon\", \"work the forge and listen\". Put what they are",
+  "  after in `topic`, and set `montage_kind` to ask_around, search, watch or work.",
+  "  A montage takes hours of game time, so do NOT use it for a single question to a",
+  "  single person — that is `talk`.",
 ].join("\n");
 
 /**

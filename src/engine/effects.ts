@@ -17,6 +17,8 @@ import { featureOfKind, rechargeFeatures } from "../rules/features.js";
 import { shiftPresence } from "../rules/factions.js";
 import { inspirationCap, inspirationOf } from "../rules/inspiration.js";
 import { Clock, vowComplete } from "../schema/clock.js";
+import { Entity } from "../schema/entity.js";
+import { Relationship } from "../schema/relationship.js";
 
 /**
  * Effects are the ONLY way state changes. Each one mutates the draft in place and may
@@ -410,6 +412,45 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const l = s.locations[eff.location_id];
       const x = l?.exits.find((ex) => ex.dir === eff.dir);
       if (x) x.revealed = true;
+      break;
+    }
+
+    /**
+     * A person the narrator named, made permanent.
+     *
+     * Minted with a commoner's stat block rather than nothing, because this engine has one
+     * vocabulary for everything that exists and an Entity that cannot fight, be hurt, be
+     * feared or be talked to is not a person — it is a prop that will fall over the moment
+     * the story asks anything of it. The cap is checked in validate.ts, where it can be
+     * refused and recorded; by the time an effect runs there is nothing to say no to.
+     */
+    case "introduce_local": {
+      const id = nextId(s, "npc");
+      const loc = s.locations[eff.location_id] ? eff.location_id : s.entities[s.meta.pc_id]!.location_id;
+      s.entities[id] = Entity.parse({
+        id,
+        kind: "npc",
+        tier: "local",
+        name: eff.name,
+        pronouns: eff.pronouns,
+        descriptor: eff.descriptor,
+        location_id: loc,
+        // Ordinary. A local who turns out to matter gets promoted and re-statted; a local
+        // who never does should never have been a threat in the first place.
+        abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+        hp: { current: 4, max: 4, temp: 0 },
+        ac: 10,
+        level: 0,
+        resources: { spell_slots: {}, hit_dice: { max: 0, used: 0 } },
+      });
+      // A relationship row from the start: the whole point of keeping them is that the
+      // next meeting remembers the last one.
+      const key = `${id}->${s.meta.pc_id}`;
+      s.relationships[key] = Relationship.parse({
+        subject: id,
+        object: s.meta.pc_id,
+        dims: { affinity: 0, trust: 0, fear: 0, respect: 0 },
+      });
       break;
     }
 

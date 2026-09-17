@@ -1,6 +1,7 @@
 import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
+import { canAdmit } from "../rules/cast.js";
 import { ATTITUDE_CLAMP_PER_TURN } from "../schema/relationship.js";
 import { NarratorProposal } from "./contracts.js";
 import type { Narration } from "./contracts.js";
@@ -164,6 +165,35 @@ export function validateNarration(
     const p = shaped.data;
 
     switch (p.t) {
+      /**
+       * A new named local. Two gates, and both of them are about the world staying
+       * coherent rather than about the model behaving.
+       *
+       * The CAP, because a DM that can mint people without limit will, and a world with
+       * four hundred names in it has no names in it. The DUPLICATE check, because the
+       * failure this feature exists to fix is the innkeeper being a different person
+       * every scene — and re-introducing somebody already standing there is that same
+       * bug wearing a hat.
+       */
+      case "introduce_local": {
+        const admit = canAdmit(s, "local");
+        if (!admit.ok) { reject("proposal", `cannot introduce ${p.name}: ${admit.reason}`, p); break; }
+        if (!s.locations[p.location_id]) { reject("proposal", `unknown location ${p.location_id}`, p); break; }
+        const wanted = p.name.trim().toLowerCase();
+        const clash = Object.values(s.entities).find(
+          (e) => e.alive && (e.name.toLowerCase() === wanted || e.aliases.some((a) => a.toLowerCase() === wanted)),
+        );
+        if (clash) { reject("proposal", `${p.name} already exists (${clash.id}) — speak to them instead of introducing them again`, p); break; }
+        effects.push({
+          t: "introduce_local",
+          name: p.name.trim(),
+          descriptor: p.descriptor.trim(),
+          pronouns: p.pronouns,
+          location_id: p.location_id,
+        });
+        break;
+      }
+
       case "set_flag":
         if (!/^[a-z][a-z0-9_]{2,63}$/.test(p.key)) {
           reject("proposal", `flag key "${p.key}" is not a safe snake_case identifier`, p);

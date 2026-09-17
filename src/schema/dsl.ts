@@ -82,6 +82,21 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("reveal_exit"), location_id: Id, dir: z.string() }),
   z.object({ t: z.literal("add_fact"), text: z.string(), subjects: z.array(Id).default([]), importance: z.number().int().min(1).max(5).default(3), secret: z.boolean().default(false), known_by: z.array(Id).default([]) }),
   z.object({ t: z.literal("teach_fact"), entity_id: Id, fact_id: Id }),
+  /**
+   * A named local, invented at the table and then real.
+   *
+   * The narrator could already invent people — it just could not KEEP them, so the
+   * innkeeper it named last scene was a different innkeeper this scene, which is the
+   * single most world-destroying thing a DM can do. This makes them persist, with a
+   * commoner's stat block and a relationship row, inside a hard cap.
+   */
+  z.object({
+    t: z.literal("introduce_local"),
+    name: z.string().min(1).max(60),
+    descriptor: z.string().min(1).max(200),
+    pronouns: z.string().default("they/them"),
+    location_id: Id,
+  }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   z.object({ t: z.literal("start_combat"), enemy_ids: z.array(Id) }),
   z.object({ t: z.literal("add_condition"), entity_id: Id, condition_id: z.string(), duration_minutes: z.number().int().nonnegative(), rounds: z.number().int().nonnegative().default(0) }),
@@ -164,7 +179,7 @@ export type Effect = z.infer<typeof Effect>;
 export const NARRATOR_ALLOWED_EFFECTS = [
   "set_flag", "add_lead", "reveal_location", "reveal_exit",
   "add_fact", "teach_fact", "adjust_attitude", "move_entity", "advance_time",
-  "set_opinion", "grant_inspiration", "tick_clock",
+  "set_opinion", "grant_inspiration", "tick_clock", "introduce_local",
 ] as const;
 
 /** The event types the engine understands. Triggers match on these. */

@@ -137,6 +137,7 @@ export function describe(a: Action): string {
     case "give": return `give ${a.item_instance_id} to ${a.target_id}`;
     case "look": return "look";
     case "wait": return `wait ${a.minutes}`;
+    case "montage": return `spend hours ${a.kind}${a.topic ? ` about ${a.topic}` : ""}`;
     case "rest": return `rest ${a.kind}`;
     case "recruit": return `ask ${a.target_id} to join you`;
     case "use_feature": return `use ${a.feature_id}`;

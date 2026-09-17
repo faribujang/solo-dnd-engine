@@ -13,6 +13,7 @@ import { actionKeyOf } from "../rules/suggest.js";
 import { Rng, seedToState } from "../rules/rng.js";
 import { BACKGROUNDS, CLASSES, RACES } from "../content/srd/data.js";
 import { BACKGROUND_SOCIAL } from "../rules/backgrounds.js";
+import { changesBetween } from "../rules/changes.js";
 import { loadCampaign } from "../content/loadCampaign.js";
 import {
   applyCreation, initialStateFor, CreateSaveRequest, CreationError, type Creation,
@@ -284,6 +285,10 @@ export class GameService {
       const overBudget = this.budget.max_tokens_per_save > 0 && c.tokens >= this.budget.max_tokens_per_save;
 
       const recent = await this.recentForPrompt(saveId);
+      // The world as it stood before this turn. Held for the diff at the end: the
+      // player is owed one receipt for the turn, not one for the dice and another for
+      // the prose.
+      const worldBefore = c.state;
       const before = c.version;
       let committed = 0;
       let landedVersion = before;
@@ -385,6 +390,11 @@ export class GameService {
       }
 
       emit({ t: "state", screen: this.view(out.state) });
+
+      // One receipt for the whole turn: mechanics, cascades and the narrator's own
+      // accepted effects, diffed against the world as it stood before any of it ran.
+      emit({ t: "changed", changes: changesBetween(worldBefore, out.state) });
+
       emit({
         t: "done",
         suggestions: out.suggestedActions,

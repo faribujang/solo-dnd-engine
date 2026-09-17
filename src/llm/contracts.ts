@@ -15,6 +15,8 @@ import { Ability } from "../schema/common.js";
 export const IntentAction = z.enum([
   "move", "skill_check", "attack", "cast", "talk", "use_item", "take", "give",
   "trade", "rest", "wait", "look", "inventory", "meta", "unclear",
+  // Hours rather than a moment: "ask around town", "spend the morning searching".
+  "montage",
   "end_turn", "dash", "disengage", "dodge", "flee", "move_zone",
   // Asking the DM is not taking a turn. See engine/questions.ts.
   "ask",
@@ -39,6 +41,8 @@ export const Intent = z.object({
   topic: z.string().nullable().default(null),
   minutes: z.number().int().nonnegative().nullable().default(null),
   rest_kind: z.enum(["short", "long"]).nullable().default(null),
+  /** For `montage`: how the hours were spent. */
+  montage_kind: z.enum(["ask_around", "search", "watch", "work"]).nullable().default(null),
   /** For `ask`: which question, and about what. */
   question: z.enum(["surroundings", "who", "reach", "condition", "know", "carrying", "doing", "time", "options"]).nullable().default(null),
   rationale: z.string().default(""),
@@ -90,6 +94,7 @@ export const NarratorProposal = z.discriminatedUnion("t", [
   z.object({ t: z.literal("teach_fact"), entity_id: z.string(), fact_id: z.string() }),
   z.object({ t: z.literal("move_entity"), entity_id: z.string(), location_id: z.string() }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
+  z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string() }),
 ]);
 export type NarratorProposal = z.infer<typeof NarratorProposal>;
 

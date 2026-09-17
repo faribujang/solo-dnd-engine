@@ -87,6 +87,13 @@ export type TurnFrame =
   | { t: "prose_reset" }
   /** After narration: chips, and anything the narrator's proposals changed. */
   | { t: "done"; suggestions: string[]; version: number; rejects: number }
+  /**
+   * What the turn actually moved, computed by diffing the world before and after.
+   *
+   * Sent after the prose, because it is a receipt rather than a headline — and because
+   * an empty one is itself information: the turn changed nothing.
+   */
+  | { t: "changed"; changes: unknown[] }
   /** A question, which never becomes a turn. */
   | { t: "answer"; lines: string[] }
   /** Refused, with the reason in the resolver's own words. */
