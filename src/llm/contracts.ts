@@ -94,7 +94,7 @@ export const NarratorProposal = z.discriminatedUnion("t", [
   z.object({ t: z.literal("teach_fact"), entity_id: z.string(), fact_id: z.string() }),
   z.object({ t: z.literal("move_entity"), entity_id: z.string(), location_id: z.string() }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
-  z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string() }),
+  z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string(), voice: z.string().default(""), trait: z.string().default("") }),
 ]);
 export type NarratorProposal = z.infer<typeof NarratorProposal>;
 

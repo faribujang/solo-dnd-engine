@@ -14,6 +14,7 @@ import { Rng, seedToState } from "../rules/rng.js";
 import { BACKGROUNDS, CLASSES, RACES } from "../content/srd/data.js";
 import { BACKGROUND_SOCIAL } from "../rules/backgrounds.js";
 import { changesBetween } from "../rules/changes.js";
+import { findRewindTargets } from "../rules/rewindFind.js";
 import { loadCampaign } from "../content/loadCampaign.js";
 import {
   applyCreation, initialStateFor, CreateSaveRequest, CreationError, type Creation,
@@ -450,6 +451,28 @@ export class GameService {
   }
 
   // ───────────────────────────────────────────────── rewind
+
+  /**
+   * Which turn did they mean?
+   *
+   * Proposes; never acts. Rewinding sets turns aside, and the one irreversible-feeling
+   * thing in the game should be confirmed against a named turn rather than guessed at
+   * from a sentence.
+   */
+  async planRewind(saveId: string, text: string): Promise<{
+    version: number;
+    turn: number;
+    candidates: Array<{ turn: number; summary: string; drops: number }>;
+  }> {
+    const c = await this.context(saveId);
+    const journal = await this.store.readJournal(saveId);
+    const found = findRewindTargets(c.state, journal, text);
+    return {
+      version: c.version,
+      turn: c.state.meta.turn,
+      candidates: found.map(({ turn, summary, drops }) => ({ turn, summary, drops })),
+    };
+  }
 
   async rewind(saveId: string, raw: unknown): Promise<Snapshot | VersionConflict> {
     const req = RewindRequest.parse({ ...(raw as object), save_id: saveId });

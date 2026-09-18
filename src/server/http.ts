@@ -55,6 +55,7 @@ const ROUTES: Array<{ method: string; pattern: RegExp; name: string }> = [
   { method: "POST", pattern: /^\/api\/saves\/([^/]+)\/preview$/, name: "preview" },
   { method: "GET", pattern: /^\/api\/saves\/([^/]+)\/history$/, name: "history" },
   { method: "POST", pattern: /^\/api\/saves\/([^/]+)\/rewind$/, name: "rewind" },
+  { method: "POST", pattern: /^\/api\/saves\/([^/]+)\/rewind\/plan$/, name: "rewind_plan" },
   { method: "GET", pattern: /^\/api\/saves\/([^/]+)\/rejects$/, name: "rejects" },
   { method: "GET", pattern: /^\/api\/saves\/([^/]+)\/costs$/, name: "costs" },
 ];
@@ -112,6 +113,11 @@ async function handle(service: GameService, opts: HttpOptions, req: http.Incomin
       }
       case "history":
         return json(res, 200, await service.history(id));
+      case "rewind_plan": {
+        const b = (await body(req)) as { text?: unknown };
+        if (typeof b.text !== "string" || !b.text.trim()) throw new ServiceError(400, "Describe where to go back to.");
+        return json(res, 200, await service.planRewind(id, b.text));
+      }
       case "rewind": {
         const out = await service.rewind(id, await body(req));
         if ("error" in out) return json(res, 409, out);

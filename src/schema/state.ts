@@ -41,6 +41,17 @@ export const CampaignMeta = z.object({
    * Empty means every background, which is what a campaign with no opinion should get.
    * The gloss is shown at creation, in the campaign's voice, beside the SRD blurb.
    */
+  /**
+   * Raise a cast cap for this campaign. See rules/cast.ts for what the tiers mean.
+   *
+   * Partial on purpose: a campaign that needs a bigger court says `{ principal: 50 }` and
+   * inherits the rest, rather than restating a table it does not care about.
+   */
+  cast_budget: z.object({
+    principal: z.number().int().positive().optional(),
+    standing: z.number().int().positive().optional(),
+    local: z.number().int().positive().optional(),
+  }).partial().default({}),
   backgrounds: z.array(z.object({
     id: z.string(),
     /** One line: what someone with this background is, in THIS place. */

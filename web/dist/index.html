@@ -196,6 +196,16 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
 .turnrow .n{font-family:var(--mono);color:var(--faint);flex:0 0 30px;text-align:right}
 .turnrow .s{flex:1;min-width:0}
 .turnrow .c{font-size:12px;color:var(--faint);font-style:italic;margin-top:2px}
+.turnrow .rb{
+  flex:0 0 auto;align-self:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--muted);
+}
+.turnrow .rb:active{border-color:var(--blood);color:var(--blood)}
+.warn{
+  border:1px solid #5a3a20;background:#241a12;border-radius:var(--r);
+  padding:11px 12px;margin:10px 0;font-size:13px;color:var(--ink);
+}
+.warn b{color:var(--ember)}
 .sealed{font-size:12px;color:var(--faint);font-style:italic;margin-top:3px}
 .topicbtn{width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r);
   background:var(--raised);padding:9px 11px;margin-bottom:6px}
@@ -451,9 +461,22 @@ $("chips").addEventListener("click", (e) => {
 // One POST that answers with a stream of frames, in order: intent, mechanics, state,
 // many prose deltas, done. The mechanics land before the narrator has written a word —
 // that is the whole reason this is a stream and not a JSON response.
+// Must stay in step with looksLikeRewind() in src/rules/rewindFind.ts. "Go back to the
+// forge" is WALKING — offering to delete an afternoon because somebody wanted to visit
+// the smith is the worst false positive this client could have.
+const REWIND_PHRASE = /\b(rewind|roll ?back|undo|take me back|revert)\b|\bgo back to (before|just before|the (moment|point|turn)|when)\b/i;
+
 async function submit(text, actionHint) {
   text = (text || "").trim();
   if (!text || S.busy) return;
+
+  // Rewinding is not a turn — it is a thing you do TO the turns. Caught here so it never
+  // reaches the intent parser, which would earnestly try to act it out in the fiction.
+  if (!actionHint && REWIND_PHRASE.test(text)) {
+    $("say").value = "";
+    addSaid(text);
+    return proposeRewind(text);
+  }
   S.busy = true;
   setBusy("thinking");
   addSaid(text);
@@ -905,17 +928,91 @@ PANES.log = (async () => {
 
   if (!rows.length) return void openPane('<h2>Log</h2><div class="note">Nothing has happened yet.</div>');
 
+  const latest = Math.max(...rows.map((r) => r.turn));
   const body = rows.slice().reverse().map((r) =>
     '<div class="turnrow"><div class="n">' + r.turn + "</div><div class=\"s\">"
     + esc(r.summary)
     + (r.children || []).map((c) => '<div class="c">↳ ' + esc(c.summary) + (c.trigger ? " (" + esc(c.trigger) + ")" : "") + "</div>").join("")
-    + "</div></div>").join("");
+    + "</div>"
+    // Rewinding to turn N keeps turn N. "Back to here" means undoing this one, which is
+    // what anybody pointing at a row in a log means.
+    + (r.turn > 0 ? '<button class="rb" data-rewind="' + (r.turn - 1) + '" data-what="' + esc(r.summary) + '">undo</button>' : "")
+    + "</div>").join("");
 
-  openPane("<h2>Log</h2>"
+  const pane = openPane("<h2>Log</h2>"
     + '<div class="note">' + rows.length + " turns, newest first. Indented lines are what the "
-    + "world did in response — triggers firing, clocks landing, people reacting.</div>"
+    + "world did in response — triggers firing, clocks landing, people reacting. "
+    + "<b>undo</b> takes the world back to just before that turn.</div>"
     + '<div class="list" style="margin-top:12px">' + body + "</div>");
+
+  pane.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rewind]");
+    if (b) confirmRewind(Number(b.dataset.rewind), b.dataset.what, latest);
+  });
 });
+
+/**
+ * Rewinding is the one thing in this game that takes turns away, so it is always
+ * confirmed against a NAMED turn rather than a number, and it always says how much it
+ * costs. Nothing is deleted — the dropped events are archived as a branch — but "nothing
+ * is deleted" is not a reason to do it without asking.
+ */
+function confirmRewind(toTurn, what, latest) {
+  const drops = Math.max(0, latest - toTurn);
+  const pane = openPane("<h2>Go back?</h2>"
+    + '<div class="warn">Back to <b>turn ' + toTurn + '</b> — just before “' + esc(what || "that") + '”.<br>'
+    + "This sets aside <b>" + drops + "</b> turn" + (drops === 1 ? "" : "s") + ". "
+    + "They are archived, not deleted, but the game will not remember them.</div>"
+    + '<button class="act" id="rwGo" style="border-color:var(--blood)"><div class="t">Go back to turn ' + toTurn + "</div></button>"
+    + '<button class="act" id="rwNo"><div class="t">Stay here</div></button>');
+
+  pane.querySelector("#rwNo").addEventListener("click", closePane);
+  pane.querySelector("#rwGo").addEventListener("click", async () => {
+    pane.querySelector("#rwGo").disabled = true;
+    try {
+      await api("/api/saves/" + encodeURIComponent(S.saveId) + "/rewind", {
+        method: "POST",
+        body: JSON.stringify({ save_id: S.saveId, to_turn: toTurn, expect_version: S.version }),
+      });
+      closePane();
+      await load(S.saveId);
+      addSys("Gone back to turn " + toTurn + ".");
+    } catch (err) {
+      pane.querySelector("#rwGo").disabled = false;
+      addErr(err.message);
+      closePane();
+    }
+  });
+}
+
+// Typed rather than tapped: "take me back to before I attacked Jory". The server matches
+// the description against the log and PROPOSES; it never rewinds on its own.
+async function proposeRewind(text) {
+  let plan;
+  try {
+    plan = await api("/api/saves/" + encodeURIComponent(S.saveId) + "/rewind/plan", {
+      method: "POST", body: JSON.stringify({ text }),
+    });
+  } catch (err) { return void addErr(err.message); }
+
+  if (!plan.candidates.length) {
+    addSys("I could not find that in the log. Open the Log tab and undo from there.");
+    return;
+  }
+  const pane = openPane("<h2>Go back to where?</h2>"
+    + '<div class="note">Closest matches in the log, best first.</div>'
+    + plan.candidates.map((c) =>
+        '<button class="act" data-rewind="' + c.turn + '" data-what="' + esc(c.summary) + '">'
+        + '<div class="t">turn ' + c.turn + " — just before “" + esc(c.summary) + "”</div>"
+        + '<div class="d">sets aside ' + c.drops + " turn" + (c.drops === 1 ? "" : "s") + "</div></button>").join("")
+    + '<button class="act" id="rwCancel"><div class="t">Never mind</div></button>');
+
+  pane.querySelector("#rwCancel").addEventListener("click", closePane);
+  pane.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rewind]");
+    if (b) confirmRewind(Number(b.dataset.rewind), b.dataset.what, plan.turn);
+  });
+}
 
 // ─────────────────────────────────────────────────────────────── saves
 let CAT = null;

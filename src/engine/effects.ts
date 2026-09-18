@@ -442,6 +442,13 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
         ac: 10,
         level: 0,
         resources: { spell_slots: {}, hit_dice: { max: 0, used: 0 } },
+        // Throwaway is not cardboard. A local the DM can HEAR is one it will voice the
+        // same way next week, which is the only reason keeping them is worth anything.
+        personality: {
+          traits: eff.trait ? [eff.trait] : [],
+          voice: eff.voice,
+          ideal: "", bond: "", flaw: "",
+        },
       });
       // A relationship row from the start: the whole point of keeping them is that the
       // next meeting remembers the last one.

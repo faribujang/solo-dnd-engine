@@ -25,6 +25,20 @@ export const Faction = z.object({
    * and the DM needs to know which one it is talking to.
    */
   wings: z.array(z.object({ id: z.string(), name: z.string(), wants: z.string() })).default([]),
+  /**
+   * What this faction thinks of the others, keyed by their id.
+   *
+   * A faction matrix that only records how everyone feels about the PLAYER describes a
+   * world where nothing happens unless the player is in the room. These are the standings
+   * that let two powers be at each other's throats over something the party never touched
+   * — and that let a party's choice of ally cost them somebody else automatically.
+   *
+   * `standing` runs -100 (at war) to 100 (allied). `note` is why, in their own words.
+   */
+  standings: z.record(z.string(), z.object({
+    standing: z.number().min(-100).max(100).default(0),
+    note: z.string().default(""),
+  })).default({}),
 });
 export type Faction = z.infer<typeof Faction>;
 

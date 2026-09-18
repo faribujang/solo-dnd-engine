@@ -27,16 +27,30 @@ import type { GameState } from "../schema/state.js";
 export type CastTier = "principal" | "standing" | "local";
 
 /**
- * The caps. Roughly a third of the named cast can move the plot, which is the ratio that
- * keeps a world feeling populated without making every passer-by load-bearing.
+ * The caps.
+ *
+ * Not set by what fits on disk — a save with all 385 of these in it is about five
+ * megabytes, and nothing anywhere cares. They are set by what a PLAYER can hold: roughly
+ * a third of a named cast can carry plot before every passer-by starts feeling
+ * load-bearing, and a principal tier past about forty stops being a story and starts
+ * being a staff directory.
+ *
+ * A campaign may raise them (`meta.cast_budget`). An arc that introduces a court, a
+ * crew or an army should be able to say so rather than being refused by a number some
+ * other campaign needed.
  */
 export const CAST_BUDGET: Record<CastTier, number> = {
-  principal: 25,
-  standing: 60,
-  local: 165,
+  principal: 35,
+  standing: 100,
+  local: 250,
 };
 
 export const CAST_TOTAL = CAST_BUDGET.principal + CAST_BUDGET.standing + CAST_BUDGET.local;
+
+/** This world's caps: the defaults, unless the campaign raised them. */
+export function budgetOf(s: GameState): Record<CastTier, number> {
+  return { ...CAST_BUDGET, ...s.meta.cast_budget };
+}
 
 export function tierOf(s: GameState, entityId: string): CastTier | null {
   const e = s.entities[entityId];
@@ -65,7 +79,7 @@ export function censusOf(s: GameState): Record<CastTier, number> {
  */
 export function canAdmit(s: GameState, tier: CastTier): { ok: true } | { ok: false; reason: string } {
   const have = censusOf(s)[tier];
-  const cap = CAST_BUDGET[tier];
+  const cap = budgetOf(s)[tier];
   if (have < cap) return { ok: true };
   return {
     ok: false,

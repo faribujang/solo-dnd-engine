@@ -96,6 +96,13 @@ export const Effect = z.discriminatedUnion("t", [
     descriptor: z.string().min(1).max(200),
     pronouns: z.string().default("they/them"),
     location_id: Id,
+    /**
+     * How they talk. Throwaway is not the same as cardboard — a local the DM can hear is
+     * a local it will voice consistently, which is the whole reason to keep them at all.
+     * Drives the narrator only; the rules never read it.
+     */
+    voice: z.string().max(200).default(""),
+    trait: z.string().max(200).default(""),
   }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   z.object({ t: z.literal("start_combat"), enemy_ids: z.array(Id) }),

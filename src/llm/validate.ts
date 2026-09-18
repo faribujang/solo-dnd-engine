@@ -190,6 +190,8 @@ export function validateNarration(
           descriptor: p.descriptor.trim(),
           pronouns: p.pronouns,
           location_id: p.location_id,
+          voice: (p.voice ?? "").trim().slice(0, 200),
+          trait: (p.trait ?? "").trim().slice(0, 200),
         });
         break;
       }

@@ -502,7 +502,8 @@ export interface TimelineRowModel {
  * costs one join.
  */
 export function timelineModel(s: GameState, journal: readonly GameEvent[]): TimelineRowModel[] {
-  const rows = timeline(journal);
+  const rows = timeline(journal, (id) =>
+    s.entities[id]?.name ?? s.locations[id]?.name ?? s.quests[id]?.title ?? id);
   const byParent = new Map<string, GameEvent[]>();
   for (const e of journal) {
     if (!e.derived_from) continue;

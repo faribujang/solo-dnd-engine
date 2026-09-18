@@ -72,27 +72,46 @@ export interface TimelineRow {
   world_minute: number;
 }
 
-export function timeline(journal: readonly GameEvent[]): TimelineRow[] {
+/**
+ * The log, one row per turn.
+ *
+ * `names` resolves an id to what a person would call it. Optional because the engine has
+ * callers with no world in hand, but every player-facing one should pass it: "spoke with
+ * npc_cotter about loc_moot_hall" is not a log, it is a stack trace — and it is also
+ * unmatchable when somebody later asks to be taken back to before they talked to Cotter.
+ */
+export function timeline(journal: readonly GameEvent[], names?: (id: string) => string): TimelineRow[] {
   const roots = journal.filter((e) => e.derived_from === null);
   return roots.map((e) => {
     const cascades = journal.filter((c) => c.derived_from === e.id).length;
     return {
       turn: e.turn,
       type: e.type,
-      summary: summarize(e),
+      summary: summarize(e, names ?? ((id) => id)),
       cascades,
       world_minute: e.world_minute,
     };
   });
 }
 
-function summarize(e: GameEvent): string {
+function summarize(e: GameEvent, names: (id: string) => string): string {
   const p = e.payload as Record<string, unknown>;
+  const who = e.target_ids.map(names).join(", ");
   switch (e.type) {
-    case "move": return `moved ${String(p["dir"] ?? "")} to ${String(p["to"] ?? "")}`.trim();
-    case "attack": return `attacked ${e.target_ids.join(", ")}${p["hit"] ? ` (hit for ${String(p["damage"])})` : " (miss)"}`;
-    case "skill_check": return `${String(p["skill"] ?? "check")} vs DC ${String(p["dc"] ?? "?")} — ${String(p["outcome"] ?? "")}`;
-    case "dialogue": return `spoke with ${e.target_ids.join(", ")}${p["topic"] ? ` about ${String(p["topic"])}` : ""}`;
+    case "move": {
+      // A zone move inside a fight carries no destination location, only a zone.
+      const to = String(p["to"] ?? "");
+      const zone = String(p["zone"] ?? "");
+      if (to) return `went to ${names(to)}`;
+      return zone ? `crossed to ${zone.replace(/^z_/, "").replace(/_/g, " ")}` : "moved";
+    }
+    case "attack": return `attacked ${who}${p["hit"] ? ` (hit for ${String(p["damage"])})` : " (missed)"}`;
+    case "skill_check": {
+      const kind = String(p["kind"] ?? "");
+      if (kind) return `spent hours ${kind.replace(/_/g, " ")}${p["topic"] ? ` about ${String(p["topic"])}` : ""}`;
+      return `${String(p["skill"] ?? "check")} vs DC ${String(p["dc"] ?? "?")} — ${String(p["outcome"] ?? "")}`;
+    }
+    case "dialogue": return `spoke with ${who}${p["topic"] ? ` about ${String(p["topic"])}` : ""}`;
     case "item_transfer": return `took ${String(p["def_id"] ?? "something")}`;
     case "rest": return `${String(p["kind"] ?? "short")} rest`;
     case "time_pass": return `waited ${String(p["minutes"] ?? "")} minutes`;
