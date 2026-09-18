@@ -98,6 +98,210 @@ through a shop counter without anyone explaining it.
 
 ---
 
+## 3a. The physics — what is true, and what cannot be
+
+Everything above says what Cinderhold **has**. This says what it **doesn't**, which is the
+half that can refuse things. A bible that only lists what exists cannot say no to space
+zombie pirates, and a generative DM will eventually propose them.
+
+Five laws. Anything new must be **derivable from these** *and* **expressible as an
+`Entity`** — that second gate is already enforced by the schema: if a thing cannot have hit
+points, ability scores, conditions and an attitude row, it cannot be journaled, so it does
+not exist. An ethereal spirit has an Intelligence score. That is not a concession; that is
+the price of being real here.
+
+### I. Magic is given, not taken
+
+Nobody studies their way into power. Something grants it — a patron, a vein, a machine, a
+place. **Every caster therefore has a creditor**, and *who gave you that* is a question with
+an answer, always, and often an unpleasant one.
+
+*Refuses:* the self-taught hedge wizard, power as pure personal achievement, anyone whose
+magic has no source anyone could cut off.
+
+### II. The dead stay dead
+
+No resurrection. No playable undead. What *does* persist is **records** — a shape that
+repeats what it did, in the place it did it, without deciding anything new. A revenant does
+not want revenge; it performs revenge, the same way, forever. Talking to one is archaeology,
+not conversation.
+
+*Refuses:* raise dead as a solution, death as a setback, ghosts who negotiate.
+*Costs:* Jory Finch is dead in one save and will stay dead. That is what made it matter.
+
+### III. Gods do not act
+
+They may exist. They do not intervene, and nothing in play has ever been an unambiguous
+divine act. Clerical power runs through the **Radiant Accord's institutions**, which means
+it can be granted, audited and **revoked by people** — a cleric cut off from the Accord is
+cut off from the source, and that is a political event, not a spiritual one.
+
+*Refuses:* deus ex machina, prophecy that constrains the plot, a god who takes sides.
+
+### IV. The ceiling is water, coal, clockwork — and whatever the monopoly can industrialise
+
+No gunpowder. No printing press. What there *is* instead is **arcane industry**: lamp-oil
+that burns on a bound principle, assay-engines, fetterlocks, lines of wire that carry a
+charge somebody else is paying for. The Syndicate's monopoly is not on magic but on the
+**apparatus**, and apparatus is the technology of this world.
+
+This is where the **research enclaves** live. Licensed, walled, competitive, and each one
+sitting on a line it has already crossed:
+
+- **Hextech-adjacent work** — grafting apparatus to a body so the body becomes the
+  apparatus. It works. The people it works on do not last.
+- **Artefact recovery** — digging up things from before the war whose principles nobody
+  alive can reconstruct. An artefact is allowed to have a property no rule in this document
+  explains, *provided* its origin is a place on the map and somebody is looking for it.
+- **Bound principles** — the ordinary, profitable middle: lamps, locks, ledgers.
+
+*Refuses:* firearms, mass printing, industrial revolution at large — the apparatus is
+expensive, licensed, and concentrated on purpose.
+*Permits:* a district that looks like Zaun, and one artefact per arc that breaks a rule.
+
+### V. There are other places, and they are not larger than this one
+
+Planes and spirit realms exist, and they **touch** this world at specific, named,
+findable points. What comes through is *powerful and particular* — never omniscient, never
+omnipotent, always **wanting something it cannot get on its own**, which is exactly why it
+deals with people. A thing from elsewhere that could simply take what it wants would have
+taken it already.
+
+The scope, stated so it can refuse things:
+
+- **Portals are places, not spells.** They have a location, an owner, a history, and
+  usually a price. Nobody opens one at will.
+- **Nothing from elsewhere is unbounded.** It has a domain, a currency, and a limit — a
+  statblock, in other words, which is the same thing.
+- **At most one crossing matters per arc.** A world where the veil is thin everywhere is a
+  world with no here.
+- **A patron is a creditor** (Law I), not a god (Law III). It can be bargained with,
+  cheated, and cut off.
+
+*Refuses:* portal-hopping as travel, planar tourism, an outer god who ends the argument.
+*Permits:* warlock pacts that are real relationships, a spirit realm with its own politics,
+Jory's dormant pact being something that *wanted* him.
+
+### The two-gate test
+
+> Is it derivable from the five laws? **And** can it be an `Entity`?
+
+Both, or it is not in this world.
+
+---
+
+## 3b. The nine regions
+
+The world at the scale a campaign moves through it. **These are the fixed points.** Every
+village, farm, shrine and roadhouse between them is the DM's to invent — that is what
+`introduce_local` and the seed system are for. What is written here is what must stay
+true no matter who is playing.
+
+Each region has: a **hold** (the place you go), a **why** (the one economic or political
+fact that makes it itself), a **tension** (what is already going wrong there), and a
+**refusal** (what this region is *not*, so it doesn't drift into being a generic other one).
+
+### 1. Cinderhold — the burnt marches
+*Prologue country. Where campaign one begins.*
+
+| | |
+|---|---|
+| **Hold** | **Harrowmoot** — a tollgate town grown into an assay market. Also **Wickmoor**, a village, before it burns. |
+| **Why** | The last cheap lamp-oil in the west, because the Syndicate holds it *uncontested* and prices it like a monopoly. |
+| **Tension** | Villages are being emptied and nobody will say by whom. The lamp-tithe falls due. |
+| **Refusal** | Not a wasteland. It is *inhabited*, taxed, and going quietly wrong. |
+
+### 2. The Meridian Reach — the cartel's own country
+*Where the Syndicate is not a faction but the government.*
+
+| | |
+|---|---|
+| **Hold** | **Aurelane**, the counting-city: bonded warehouses, a debt exchange, and a council that signs what it is told. |
+| **Why** | Everything routes through here. The Syndicate's ledgers *are* the law, and a debt is enforceable by people with writs. |
+| **Tension** | The wings are at each other's throats — the old smugglers who built it against the new licensors who want it respectable. |
+| **Refusal** | Not corrupt-and-decadent. It is *efficient*, which is worse and much harder to fight. |
+
+### 3. The Sable Verge — the enclave coast
+*Arcane industry, and the line it has already crossed.*
+
+| | |
+|---|---|
+| **Hold** | **Carrowmere**, a walled research port. Three enclaves under one charter, competing. |
+| **Why** | Apparatus is invented here and licensed everywhere. The Verge sells the future on instalment. |
+| **Tension** | One enclave is grafting apparatus into people. It works. The subjects do not last, and the charter has no clause for it. |
+| **Refusal** | Not steampunk whimsy. Law IV holds: no guns, no printing. What it has is *bound principle*, expensive and owned. |
+
+### 4. The Arcanate Remnant — the loyalist high country
+*An empire that lost, still pretending it is administering.*
+
+| | |
+|---|---|
+| **Hold** | **Vaunt Coldren**, a fortress-academy on a plateau, teaching a licensing nobody outside recognises. |
+| **Why** | It still trains casters properly, which makes its graduates the most valuable and most hunted people alive. |
+| **Tension** | It is out of money and has started selling commissions. Everyone knows. Nobody says it. |
+| **Refusal** | Not noble exiles awaiting restoration. They are *bureaucrats* running a state that ended, and they file reports about it. |
+
+### 5. The Radiant Marches — the Accord's heartland
+*Where magic was sanctified instead of sold.*
+
+| | |
+|---|---|
+| **Hold** | **Sanct Vellery**, a cathedral-town where the called are registered, sheltered and watched. |
+| **Why** | The Accord grants and revokes. A cleric cut off here is cut off everywhere — Law III, made into an institution. |
+| **Tension** | Sheltering the called is expensive, and the Syndicate has offered to fund it. Some of the Accord wants to say yes. |
+| **Refusal** | Not a theocracy of zealots. They are *shelterers* who have discovered that shelter costs money. |
+
+### 6. The Quill Compacts — the free harbours
+*The gap, informally governed, which is not the same as ungoverned.*
+
+| | |
+|---|---|
+| **Hold** | **Tessivane**, a harbour of seven families and a written compact nobody signed. |
+| **Why** | Contested supply, so the **cheapest prices in the world** — and Law: cheap means somebody is fighting over it. |
+| **Tension** | Two families are one insult from open war, and both have quietly asked the Syndicate for help. |
+| **Refusal** | Not pirates. Merchants with debts, families and long memories. The violence is *contractual*. |
+
+### 7. The Underhollow — the workings
+*Under everything, and under nobody.*
+
+| | |
+|---|---|
+| **Hold** | **Deepmarch**, a mining town in a worked-out seam that never closed. |
+| **Why** | The oil, the veins and the ore all come from here, and the people who dig it have never once set the price. |
+| **Tension** | Something in the deep workings is *answering* — and Law V says it is particular, it wants something, and it is findable. |
+| **Refusal** | Not an underdark of monsters. A company town with a very bad problem in the lower galleries. |
+
+### 8. The Greenwake — the strip-mined wild
+*Where the land is the party the war is still being fought against.*
+
+| | |
+|---|---|
+| **Hold** | **Ashhollow Stand**, a forest camp that moves, of people who were villages until the pitch ran out. |
+| **Why** | The Syndicate priced the high wood out of existence; the people who lived there did not stop existing. |
+| **Tension** | They have begun taking apparatus caravans, which makes them bandits on paper and something else in person. |
+| **Refusal** | Not noble savages or druidic mystics. *Displaced tradesfolk* with woodcraft and a grievance that is factually correct. |
+
+### 9. The Thin Coast — where the other places touch
+*Law V's one region, kept small on purpose.*
+
+| | |
+|---|---|
+| **Hold** | **Morrow Gate**, a shore town built around a crossing that has an owner, a fee and a waiting list. |
+| **Why** | The only reliable crossing anyone has mapped. What comes through is powerful, particular, and *wants things*. |
+| **Tension** | The owner is old, has no heir, and three powers are being extremely polite about it. |
+| **Refusal** | Not a planar hub. **One** crossing, with a gate-keeper and a price. Portal-hopping is not travel here. |
+
+### How these are meant to be used
+
+- **The DM invents everything between them.** Villages, roadhouses, shrines, a mill with a
+  grudge. Those are locals and named locals; the regions are the principals.
+- **A region is a political position, not a biome.** If two regions could swap their
+  tensions without anyone noticing, one of them is not pulling its weight.
+- **Campaign one uses two** — Cinderhold and, after the road, the Meridian Reach. Seven are
+  still unspent, which is the point: the world outlives the story.
+
+---
+
 ## 4. The peoples
 
 Placed by what industrialisation *did* to them, not by temperament.
