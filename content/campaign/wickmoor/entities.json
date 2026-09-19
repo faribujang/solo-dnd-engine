@@ -77,7 +77,8 @@
     "alive": true,
     "flags": {
       "background_id": "bg_folk_hero"
-    }
+    },
+    "tier": "standing"
   },
   "cmp_jory": {
     "id": "cmp_jory",
@@ -288,7 +289,8 @@
       "social_tags": [
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_cotter": {
     "id": "npc_cotter",
@@ -396,7 +398,8 @@
         "commoner"
       ],
       "faction_wing": "shepherds"
-    }
+    },
+    "tier": "standing"
   },
   "npc_nell": {
     "id": "npc_nell",
@@ -505,7 +508,8 @@
         "commoner",
         "merchant"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_tam": {
     "id": "npc_tam",
@@ -602,7 +606,8 @@
       "social_tags": [
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_sibby": {
     "id": "npc_sibby",
@@ -701,7 +706,8 @@
         "commoner",
         "wild"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_ilsa": {
     "id": "npc_ilsa",
@@ -812,7 +818,8 @@
         "commoner"
       ],
       "faction_wing": "shepherds"
-    }
+    },
+    "tier": "standing"
   },
   "npc_hob": {
     "id": "npc_hob",
@@ -908,7 +915,8 @@
         "commoner",
         "merchant"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_halla": {
     "id": "npc_halla",
@@ -1006,7 +1014,8 @@
       "social_tags": [
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_dunn": {
     "id": "npc_dunn",
@@ -1104,7 +1113,8 @@
       "social_tags": [
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_bryn": {
     "id": "npc_bryn",
@@ -1201,7 +1211,8 @@
       "social_tags": [
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_vosk": {
     "id": "npc_vosk",
@@ -1311,7 +1322,8 @@
         "lawful"
       ],
       "faction_wing": "assay"
-    }
+    },
+    "tier": "standing"
   },
   "mon_raider": {
     "id": "mon_raider",
@@ -1388,7 +1400,8 @@
     "alive": true,
     "flags": {
       "is_template": true
-    }
+    },
+    "tier": "standing"
   },
   "npc_saveri": {
     "id": "npc_saveri",
@@ -1500,7 +1513,8 @@
         "merchant"
       ],
       "faction_wing": "charter"
-    }
+    },
+    "tier": "standing"
   },
   "npc_emeric": {
     "id": "npc_emeric",
@@ -1603,7 +1617,8 @@
         "scholar"
       ],
       "faction_wing": "pensioners"
-    }
+    },
+    "tier": "standing"
   },
   "npc_rue": {
     "id": "npc_rue",
@@ -1703,7 +1718,8 @@
         "commoner",
         "merchant"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_kettle": {
     "id": "npc_kettle",
@@ -1808,7 +1824,8 @@
         "criminal",
         "commoner"
       ]
-    }
+    },
+    "tier": "standing"
   },
   "npc_bel": {
     "id": "npc_bel",
@@ -1911,7 +1928,8 @@
         "clergy"
       ],
       "faction_wing": "kindlers"
-    }
+    },
+    "tier": "standing"
   },
   "npc_barthel": {
     "id": "npc_barthel",
@@ -2015,7 +2033,8 @@
         "merchant"
       ],
       "faction_wing": "assay"
-    }
+    },
+    "tier": "standing"
   },
   "mon_cutter": {
     "id": "mon_cutter",
@@ -2092,6 +2111,829 @@
     "alive": true,
     "flags": {
       "is_template": true
-    }
+    },
+    "tier": "standing"
+  },
+  "npc_onn_wife": {
+    "id": "npc_onn_wife",
+    "kind": "npc",
+    "name": "Marda Onn",
+    "pronouns": "she/her",
+    "aliases": [
+      "marda",
+      "onn's wife"
+    ],
+    "descriptor": "a clerk's wife who does the Row's real filing for none of the Row's pay, and knows exactly which press holds what",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_assay_row",
+    "zone_id": "z_hall",
+    "faction_ids": [],
+    "abilities": {
+      "str": 9,
+      "dex": 11,
+      "con": 10,
+      "int": 14,
+      "wis": 15,
+      "cha": 12
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 9,
+      "max": 9,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "investigation",
+        "insight"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "answers a question with the year it happened in",
+        "keeps her hands folded because they shake now"
+      ],
+      "ideal": "The work should be done properly even if the people are not.",
+      "bond": "Barthel, who has not slept properly since the spring audit.",
+      "flaw": "Would rather be complicit than be the one who made a fuss.",
+      "voice": "flat, factual, and much angrier underneath than she lets on"
+    },
+    "goals": [
+      {
+        "text": "Get Barthel out of the Row before the audit lands on him",
+        "priority": 1
+      },
+      {
+        "text": "Never be the one who is blamed",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "commoner",
+        "merchant"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_gil": {
+    "id": "npc_gil",
+    "kind": "npc",
+    "name": "Gil Ashworth",
+    "pronouns": "he/him",
+    "aliases": [
+      "gil",
+      "ashworth",
+      "the crane man"
+    ],
+    "descriptor": "the crane operator at the Waterline, forty years on the same quay, missing the last two fingers of his left hand",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_waterline",
+    "zone_id": "z_crane",
+    "faction_ids": [],
+    "abilities": {
+      "str": 15,
+      "dex": 12,
+      "con": 14,
+      "int": 9,
+      "wis": 12,
+      "cha": 10
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 13,
+      "max": 13,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "athletics",
+        "perception"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "names every barge by its owner's grandfather",
+        "will not work a load he has not seen weighed"
+      ],
+      "ideal": "A quay is a promise. You do not drop things on people.",
+      "bond": "The two fingers, and the load he was told to swing anyway.",
+      "flaw": "Drinks to the edge of useless on the eighth day and nobody covers for him.",
+      "voice": "loud, slow, and impossible to hurry"
+    },
+    "goals": [
+      {
+        "text": "Keep the crane certified",
+        "priority": 1
+      },
+      {
+        "text": "See the man who gave that order lose something",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_ferrin": {
+    "id": "npc_ferrin",
+    "kind": "npc",
+    "name": "Ferrin Oake",
+    "pronouns": "they/them",
+    "aliases": [
+      "ferrin",
+      "oake",
+      "the factor"
+    ],
+    "descriptor": "the Syndicate factor who bonds the oil, young for the job and very aware of it",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_lamp_house",
+    "zone_id": "z_office",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 10,
+      "dex": 12,
+      "con": 11,
+      "int": 15,
+      "wis": 12,
+      "cha": 15
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 15,
+      "max": 15,
+      "temp": 0
+    },
+    "ac": 12,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "persuasion",
+        "deception",
+        "arcana"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "quotes the clause number before the clause",
+        "smiles at exactly the wrong moments and knows it"
+      ],
+      "ideal": "The price is the price. I did not set it and I am not sorry about it.",
+      "bond": "A licence that took six years and cannot be transferred.",
+      "flaw": "Cannot bear to be thought stupid, and will explain too much to prove he is not.",
+      "voice": "quick, over-precise, hunting for approval he will not admit to wanting"
+    },
+    "goals": [
+      {
+        "text": "Close the quarter clean",
+        "priority": 1
+      },
+      {
+        "text": "Be moved to Aurelane and never come back",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "merchant",
+        "lawful"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_teal": {
+    "id": "npc_teal",
+    "kind": "npc",
+    "name": "Teal",
+    "pronouns": "she/her",
+    "aliases": [
+      "teal",
+      "the runner"
+    ],
+    "descriptor": "a Cut runner of maybe fourteen who carries things between people who will not be seen together",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_the_cut",
+    "zone_id": "z_taproom",
+    "faction_ids": [],
+    "abilities": {
+      "str": 9,
+      "dex": 16,
+      "con": 10,
+      "int": 12,
+      "wis": 13,
+      "cha": 13
+    },
+    "level": 1,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 7,
+      "max": 7,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "stealth",
+        "sleight_of_hand",
+        "perception"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 1,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "counts the exits out loud when she is nervous",
+        "will not take a job she cannot explain to Bel"
+      ],
+      "ideal": "Everyone pays. That is the only rule that has ever been kept with me.",
+      "bond": "Bel, who fed her for a winter and has never mentioned it since.",
+      "flaw": "Takes the second job before she has finished the first.",
+      "voice": "fast, clipped, all consonants"
+    },
+    "goals": [
+      {
+        "text": "Earn enough to stop running",
+        "priority": 1
+      },
+      {
+        "text": "Never owe anyone in the Row",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "criminal",
+        "commoner"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_warder": {
+    "id": "npc_warder",
+    "kind": "npc",
+    "name": "Hask",
+    "pronouns": "he/him",
+    "aliases": [
+      "hask",
+      "the warder"
+    ],
+    "descriptor": "the Fetterlock's day warder, who is bored, and who has been bored for nine years",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_fetterlock",
+    "zone_id": "z_taproom",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 14,
+      "dex": 10,
+      "con": 14,
+      "int": 10,
+      "wis": 11,
+      "cha": 9
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 18,
+      "max": 18,
+      "temp": 0
+    },
+    "ac": 14,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "intimidation",
+        "perception"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "reads the same four pages of a ledger over and over",
+        "calls everyone 'friend' including the people he is locking up"
+      ],
+      "ideal": "I keep the door. What comes through it is somebody else's business.",
+      "bond": "A pension that vests in fourteen months.",
+      "flaw": "Will do almost anything rather than write an incident report.",
+      "voice": "friendly, tired, entirely unbothered"
+    },
+    "goals": [
+      {
+        "text": "Reach the pension",
+        "priority": 1
+      },
+      {
+        "text": "Have nothing happen on his shift",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "lawful"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_calder": {
+    "id": "npc_calder",
+    "kind": "npc",
+    "name": "Calder Wick",
+    "pronouns": "he/him",
+    "aliases": [
+      "calder",
+      "wick"
+    ],
+    "descriptor": "Bryn's uncle, who walked to Harrowmoot the night of the fire and has not stopped walking since",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_tollgate",
+    "zone_id": "z_gate",
+    "faction_ids": [],
+    "abilities": {
+      "str": 13,
+      "dex": 11,
+      "con": 13,
+      "int": 11,
+      "wis": 14,
+      "cha": 12
+    },
+    "level": 2,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 12,
+      "max": 12,
+      "temp": 0
+    },
+    "ac": 11,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "survival",
+        "persuasion"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 2,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "holds his hat when he asks anybody anything",
+        "has the same six questions and asks them in the same order"
+      ],
+      "ideal": "Somebody took her. Somebody knows. Those are two different people and I want both.",
+      "bond": "Bryn, who is nine, and who is alive, because he will not consider the alternative.",
+      "flaw": "Has asked so many people that he no longer hears the answers.",
+      "voice": "worn thin, polite past the point of sense, close to something"
+    },
+    "goals": [
+      {
+        "text": "Find Bryn Wick",
+        "priority": 1
+      },
+      {
+        "text": "Be told the truth by anybody at all",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "commoner"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_saltbeck": {
+    "id": "npc_saltbeck",
+    "kind": "npc",
+    "name": "Iven Saltbeck",
+    "pronouns": "he/him",
+    "aliases": [
+      "iven",
+      "saltbeck",
+      "the surveyor"
+    ],
+    "descriptor": "a Syndicate surveyor who arrived a week after Vosk and is doing the same job less politely",
+    "controller": "cpu",
+    "tier": "principal",
+    "location_id": "loc_counting_house",
+    "zone_id": "z_desks",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 11,
+      "dex": 13,
+      "con": 12,
+      "int": 14,
+      "wis": 13,
+      "cha": 11
+    },
+    "level": 4,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 22,
+      "max": 22,
+      "temp": 0
+    },
+    "ac": 13,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "investigation",
+        "intimidation",
+        "insight"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 4,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "writes while you are still talking",
+        "asks the question he already knows the answer to, first"
+      ],
+      "ideal": "A contract that closes late is a contract somebody was allowed to argue with.",
+      "bond": "Nothing anybody has found yet.",
+      "flaw": "Mistakes fear for agreement, every time, and has never been corrected.",
+      "voice": "clipped, incurious, entirely certain"
+    },
+    "goals": [
+      {
+        "text": "Close the Wickmoor contract inside the quarter",
+        "priority": 1
+      },
+      {
+        "text": "Find out what Vosk has not put in writing",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "lawful",
+        "merchant"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "npc_moss": {
+    "id": "npc_moss",
+    "kind": "npc",
+    "name": "Moss",
+    "pronouns": "they/them",
+    "aliases": [
+      "moss",
+      "the pensioner"
+    ],
+    "descriptor": "an Arcanate veteran in the Pensioners' Hall who lost the use of their hands and remembers every face that ever came through the academy gate",
+    "controller": "cpu",
+    "tier": "standing",
+    "location_id": "loc_pensioners_hall",
+    "zone_id": "z_hall",
+    "faction_ids": [
+      "fac_arcanate"
+    ],
+    "abilities": {
+      "str": 9,
+      "dex": 8,
+      "con": 10,
+      "int": 15,
+      "wis": 16,
+      "cha": 13
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 12,
+      "max": 12,
+      "temp": 0
+    },
+    "ac": 10,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "history",
+        "insight",
+        "arcana"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "describes people by how they stood, never by how they looked",
+        "refuses help with the cup and takes four minutes over it"
+      ],
+      "ideal": "We were told it would be remembered. Somebody has to do the remembering.",
+      "bond": "A cohort of thirty-one, of whom four are still drawing a pension.",
+      "flaw": "Tells the story that flatters the Arcanate before the one that is true.",
+      "voice": "dry, formal, warms only when talking about somebody long dead"
+    },
+    "goals": [
+      {
+        "text": "Be asked something only they can answer",
+        "priority": 1
+      },
+      {
+        "text": "Outlive the last of the cohort so somebody finishes the list",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "scholar",
+        "soldier"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
+  },
+  "mon_collector": {
+    "id": "mon_collector",
+    "kind": "monster",
+    "name": "a collection man",
+    "pronouns": "he/him",
+    "aliases": [
+      "collector",
+      "collection man"
+    ],
+    "descriptor": "Syndicate muscle in a good coat, here because a contract said somebody should be",
+    "controller": "cpu",
+    "tier": "local",
+    "location_id": "loc_counting_house",
+    "zone_id": "z_desks",
+    "faction_ids": [
+      "fac_meridian"
+    ],
+    "abilities": {
+      "str": 15,
+      "dex": 12,
+      "con": 14,
+      "int": 9,
+      "wis": 11,
+      "cha": 10
+    },
+    "level": 3,
+    "class_id": "cls_commoner",
+    "race_id": "race_human",
+    "hp": {
+      "current": 20,
+      "max": 20,
+      "temp": 0
+    },
+    "ac": 14,
+    "speed": 30,
+    "proficiency_bonus": 2,
+    "proficiencies": {
+      "skills": [
+        "intimidation",
+        "athletics"
+      ],
+      "saves": [],
+      "weapons": [],
+      "tools": []
+    },
+    "expertise": [],
+    "conditions": [],
+    "resources": {
+      "spell_slots": {},
+      "hit_dice": {
+        "max": 3,
+        "used": 0
+      }
+    },
+    "inventory": [],
+    "equipped": {
+      "main_hand": null,
+      "off_hand": null,
+      "armor": null,
+      "trinket": null
+    },
+    "personality": {
+      "traits": [
+        "cracks the same knuckle before anything happens"
+      ],
+      "ideal": "It is not personal and it is going to happen anyway.",
+      "bond": "The bonus at quarter end.",
+      "flaw": "Hits first when he is unsure, which is often.",
+      "voice": "bored, reasonable, and not listening"
+    },
+    "goals": [
+      {
+        "text": "Collect",
+        "priority": 1
+      },
+      {
+        "text": "Not be blamed for the mess",
+        "priority": 2
+      }
+    ],
+    "schedule": [],
+    "known_fact_ids": [],
+    "flags": {
+      "social_tags": [
+        "criminal"
+      ]
+    },
+    "alive": true,
+    "on_first_talk": []
   }
 }

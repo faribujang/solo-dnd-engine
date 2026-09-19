@@ -505,5 +505,557 @@
       "q_the_road"
     ],
     "blocks": []
+  },
+  "q_the_ledger": {
+    "id": "q_the_ledger",
+    "title": "What the Row Keeps",
+    "giver_entity_id": "npc_bel",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Somewhere under Assay Row there is a book with the name of every unlicensed caster in forty miles in it. Bel wants it burnt. Barthel Onn wants it never mentioned again. You have not decided what you want.",
+    "dm_notes": "THE LEDGER IS REAL and it is in the undercroft, third press, closed-year stamp 1184. It lists ninety-one names, of which eleven are dead and two are children. One of the children is Jory Finch, entered under a name that is not his.\n\nFOUR WAYS IN, and each costs something different:\n  1. BARTHEL ONN has a key and no spine. He will not hand it over — but his wife MARDA      does the Row's real filing, is furious about the spring audit, and will trade the      press number for a promise to get Barthel out before the next one.\n  2. TEAL, the Cut runner, will lift the key for a price she names herself. She will      also be caught, eventually, if you let her.\n  3. FERRIN OAKE at the Bonding House can requisition a ledger legitimately. He will do      it to look useful to somebody senior, and will absolutely mention it afterwards.\n  4. Through the cistern. Wet, cold, and nobody is watching it, because nobody has      fitted in thirty years.\n\nWHAT THEY DO WITH IT IS THE POINT. Burning it protects ninety-one people and destroys the only proof of what the Syndicate has been collecting. Copying it protects the proof and leaves the names where they are. Handing it to Saltbeck is a real option and the worst one, and he will pay.\n\nDO NOT RESOLVE THIS FOR THEM. If they ask what the right thing is, the honest answer from every character in this town is a different one.",
+    "current_step_id": "step_hear",
+    "steps": [
+      {
+        "id": "step_hear",
+        "desc": "Find out what the Row keeps under it",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_bel_ledger",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_bel"
+              ]
+            }
+          },
+          {
+            "id": "t_marda_ledger",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_onn_wife"
+              ]
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "knows_ledger",
+            "value": true
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_undercroft_row"
+          }
+        ]
+      },
+      {
+        "id": "step_get",
+        "desc": "Get under Assay Row",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_in_undercroft",
+            "on": "enter_location",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_undercroft_row"
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "reached_ledger",
+            "value": true
+          }
+        ]
+      },
+      {
+        "id": "step_decide",
+        "desc": "Decide what the names are worth",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_ledger_burnt",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "ledger_burnt",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_ledger_copied",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "ledger_copied",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_ledger_sold",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_saltbeck"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "ledger_sold",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "ledger_settled",
+            "value": true
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Bel says there is a book under the Row with her brother's name in it.",
+        "source_entity_id": "npc_bel",
+        "points_to_location_id": "loc_assay_row",
+        "learned_turn": 0
+      }
+    ],
+    "requires": [],
+    "blocks": [],
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "rewards": {
+      "xp": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    }
+  },
+  "q_the_pension": {
+    "id": "q_the_pension",
+    "title": "Four Marks a Month",
+    "giver_entity_id": "npc_emeric",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Emeric Sallow's Arcanate pension is four marks a month. Emeric Sallow has not been paid in six years. Somebody is still collecting it.",
+    "dm_notes": "THE ANSWER IS UNCOMFORTABLE: the pension is being drawn by the Pensioners' Hall itself, against Emeric's name, and it is what feeds MOSS and the other three survivors. The clerk who set it up died four years ago. Nobody currently alive decided to do this; everybody currently alive is living on it.\n\nEMERIC KNOWS. That is the part that lands. He has known for two years and has said nothing, because the alternative is four old people with nothing, and because being owed something is the last thing he has that is worth anything.\n\nTHIS IS A SIDE QUEST AND IT SHOULD FEEL LIKE ONE — small, quiet, and finishable in an afternoon. Its real function is that solving it kindly is what makes EMERIC name Saveri Crole without being asked. He does not trade information for money. He trades it for being owed something by somebody who turned out to be worth owing.\n\nIF THEY EXPOSE IT instead: the Hall loses the pension, Moss loses the cohort list they have been keeping for thirty years, and Emeric answers nothing, ever again.",
+    "current_step_id": "step_notice",
+    "steps": [
+      {
+        "id": "step_notice",
+        "desc": "Find out who is drawing Emeric's pension",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_asked_emeric",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_emeric"
+              ]
+            }
+          },
+          {
+            "id": "t_asked_moss",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_moss"
+              ]
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "knows_pension",
+            "value": true
+          }
+        ]
+      },
+      {
+        "id": "step_settle",
+        "desc": "Settle it, one way or the other",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_pension_kept",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "pension_quiet",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_pension_exposed",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "pension_exposed",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "pension_settled",
+            "value": true
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Emeric Sallow says his pension was four marks a month. He says it as if it still is.",
+        "source_entity_id": "npc_emeric",
+        "points_to_location_id": "loc_pensioners_hall",
+        "learned_turn": 0
+      }
+    ],
+    "requires": [],
+    "blocks": [],
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "rewards": {
+      "xp": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    }
+  },
+  "q_the_fetterlock": {
+    "id": "q_the_fetterlock",
+    "title": "Who They Took Instead",
+    "giver_entity_id": "npc_calder",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Calder Wick has walked to Harrowmoot every week since the fire, asking after a nine-year-old girl. The Fetterlock holds people against debts. Rue Tamsin will not discuss her guests.",
+    "dm_notes": "BRYN WICK IS NOT IN THE FETTERLOCK. She was, for eleven days, under a debt that was not hers, and then she was moved — because somebody realised she was the wrong child and that the right one was still in Wickmoor. That somebody is the same somebody who burnt it.\n\nWHAT IS IN THE FETTERLOCK is the intake book, and HASK the day warder who would genuinely rather not write an incident report about anything at all. He can be talked past, bored past, drunk past, or simply walked past on the eighth day. Rue will not help and will not stop them; she is not a jailer, she is a landlord with a bad contract.\n\nTHE ENTRY READS: 'W., f., 9, against Wickmoor tithe arrears. Released to contract.' Released to contract is not a thing that happens to children. It is the phrase the Row uses when a person becomes part of a bond.\n\nTHIS IS WHERE VOSK STOPS BEING A MYSTERY AND BECOMES A PROBLEM. The contract number in the intake book is the one Vosk is here to close.\n\nIF THEY TELL CALDER: he goes to the Counting House and asks Saltbeck directly, which is brave and stupid, and he does not come back out the same. Let them stop him if they move fast. Do not stop him for them.",
+    "current_step_id": "step_ask",
+    "steps": [
+      {
+        "id": "step_ask",
+        "desc": "Find out whether Bryn was ever here",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_hask_talked",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_warder"
+              ]
+            }
+          },
+          {
+            "id": "t_intake_seen",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "saw_intake_book",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "knows_bryn_taken",
+            "value": true
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_counting_house"
+          }
+        ]
+      },
+      {
+        "id": "step_number",
+        "desc": "Find out what 'released to contract' means",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_contract_named",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "knows_contract_number",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "bryn_thread_open",
+            "value": true
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Calder Wick is at the tollgate again, asking after a nine-year-old girl.",
+        "source_entity_id": "npc_calder",
+        "points_to_location_id": "loc_tollgate",
+        "learned_turn": 0
+      }
+    ],
+    "requires": [],
+    "blocks": [],
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "rewards": {
+      "xp": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    }
+  },
+  "q_what_cotter_did": {
+    "id": "q_what_cotter_did",
+    "title": "The Last Year of the War",
+    "giver_entity_id": "npc_cotter",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Cotter Vane has been short with you for a week, and he has never been short with you. Something he did eleven years ago is walking up the north road with a contract in its hand.",
+    "dm_notes": "COTTER CARRIED THE KEEPING. That is the whole of it. In the last year of the war an Accord courier put two things into Wickmoor for safekeeping: a child, and the binding that made the child what he is. Cotter took the child to the Finches and told nobody, including his own apprentice, for eleven years.\n\nHE IS NOT ASHAMED OF HIDING IT. He is ashamed that he was glad — that when the courier died on the moor he felt relief, because it meant nobody would come back for the boy and he could keep pretending the forge was the whole world.\n\nHE WILL NOT SAY THIS UNPROMPTED. Trust is what opens it, and only trust: he has been asked before, by people with better arguments than any roll will produce. What moves him is the player having already done something he would have done.\n\nIF COTTER IS DEAD when this opens, ILSA ROOKE carries it instead and says it worse — she was Accord, she knows what the binding was for, and she has been angry at him about it for eleven years. That is not a different quest. It is the same thing said by somebody with less love in it, which is how a world that has moved on is supposed to feel.",
+    "current_step_id": "step_ask",
+    "steps": [
+      {
+        "id": "step_ask",
+        "desc": "Ask Cotter what he did",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_cotter_said",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_cotter"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "cotter_told",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_ilsa_said",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_ilsa"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "ilsa_told_instead",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "knows_the_keeping",
+            "value": true
+          },
+          {
+            "t": "set_flag",
+            "key": "keeping_named",
+            "value": true
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "Cotter has been short with you all week, and he is never short with you.",
+        "source_entity_id": null,
+        "points_to_location_id": "loc_forge",
+        "learned_turn": 0
+      }
+    ],
+    "requires": [],
+    "blocks": [],
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "rewards": {
+      "xp": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    }
+  },
+  "q_the_contract": {
+    "id": "q_the_contract",
+    "title": "The Contract Closes",
+    "giver_entity_id": "npc_vosk",
+    "status": "unknown",
+    "visibility": "hidden",
+    "summary": "Amery Vosk came to Wickmoor to close a contract. The contract is not for oil, and it is not for land, and the clock on it is nearly out.",
+    "dm_notes": "THE CONTRACT IS FOR A PERSON. Bond 1184/7, held by the Meridian Syndicate against the Wickmoor lamp-tithe, secured on 'the keeping' — a phrase the Row uses without ever asking what is inside it. Vosk has spent four days trying to close it politely, because he believes that is possible. SALTBECK does not, and Saltbeck has been sent to do it the other way.\n\nVOSK IS NOT THE VILLAIN AND SHOULD NOT PLAY AS ONE. He is a competent man with a signed instruction who has worked out, somewhere around day three, what he is actually collecting. He has not told Aurelane. He is looking for a reason to fail, and he will not invent one — somebody has to hand it to him.\n\nTHREE ENDINGS, all of them legitimate, none of them clean:\n  VOID IT.    The ledger, the intake book and Emeric's pension together prove the tithe was               collected twice. A bond secured on a debt that was already paid is void. This               takes paperwork, not a sword, and it requires the players to have been thorough               rather than brave.\n  BUY IT.     Saveri Crole can close the bond by naming herself as the keeping. She has been               waiting eleven years for somebody to give her a reason, and it costs her               everything. DO NOT let the players engineer this without her choosing it.\n  BREAK IT.   Take the strongroom. It works, it is loud, and the Syndicate does not forget a               broken door — every price in Harrowmoot goes up within the month and the players               will hear about it from people they like.\n\nIF JORY IS DEAD: the bond is secured on a keeping that no longer exists, which does not void it — it makes it TRANSFERABLE. Saltbeck's instruction says 'the keeping', not a name, and Bryn Wick is nine and was already taken once by people who had the wrong child. The war still comes; it just comes for somebody else. Do not soften this and do not stage a rescue the players did not earn.",
+    "current_step_id": "step_learn",
+    "steps": [
+      {
+        "id": "step_learn",
+        "desc": "Find out what Vosk is actually here to collect",
+        "status": "active",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_contract_known",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "knows_contract_number",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_vosk_admits",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "match": {
+              "target_ids": [
+                "npc_vosk"
+              ]
+            },
+            "when": {
+              "t": "flag",
+              "key": "vosk_admitted",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "contract_named",
+            "value": true
+          },
+          {
+            "t": "reveal_location",
+            "location_id": "loc_counting_house"
+          }
+        ]
+      },
+      {
+        "id": "step_close",
+        "desc": "Decide how the contract closes",
+        "status": "locked",
+        "preconditions": [],
+        "completion_triggers": [
+          {
+            "id": "t_voided",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "bond_voided",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_bought",
+            "on": "dialogue",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "bond_bought",
+              "eq": true
+            }
+          },
+          {
+            "id": "t_broken",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "flag",
+              "key": "strongroom_broken",
+              "eq": true
+            }
+          }
+        ],
+        "on_complete": [
+          {
+            "t": "set_flag",
+            "key": "contract_closed",
+            "value": true
+          }
+        ]
+      }
+    ],
+    "leads": [
+      {
+        "text": "The traveller on the green keeps asking about the moot hall.",
+        "source_entity_id": "npc_vosk",
+        "points_to_location_id": "loc_counting_house",
+        "learned_turn": 0
+      }
+    ],
+    "requires": [],
+    "blocks": [],
+    "deadline_world_minute": null,
+    "failure_triggers": [],
+    "rewards": {
+      "xp": 0,
+      "item_def_ids": [],
+      "relationship_deltas": []
+    }
   }
 }

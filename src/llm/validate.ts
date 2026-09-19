@@ -158,6 +158,40 @@ export function validateNarration(
   let newLocals = 0;
   let newThreads = 0;
 
+  // ───────────────────────────────────────────────────────────── threads
+  // Same gates as the `open_thread` proposal, because they are the same thing arriving
+  // through the door the model actually uses.
+  if (n.new_thread && n.new_thread.text.trim()) {
+    const open = Object.values(s.threads).filter((t) => t.status === "open").length;
+    if (open >= MAX_OPEN_THREADS) {
+      reject("proposal", `${open} threads already hanging; finish something first`, n.new_thread);
+    } else {
+      effects.push({
+        t: "open_thread",
+        text: n.new_thread.text.trim().slice(0, 240),
+        subject_ids: n.new_thread.subject_ids.filter((id) => s.entities[id] || s.world.factions[id]),
+        location_id: null,
+        from_entity_id: n.new_thread.from_entity_id && s.entities[n.new_thread.from_entity_id]
+          ? n.new_thread.from_entity_id : null,
+      });
+      newThreads += 1;
+    }
+  }
+
+  if (n.settled_thread) {
+    const th = s.threads[n.settled_thread.thread_id];
+    if (!th) reject("proposal", `no thread ${n.settled_thread.thread_id}`, n.settled_thread);
+    else if (th.status !== "open") reject("proposal", `thread is already ${th.status}`, n.settled_thread);
+    else {
+      effects.push({
+        t: "resolve_thread",
+        thread_id: n.settled_thread.thread_id,
+        as: n.settled_thread.as,
+        outcome: (n.settled_thread.outcome ?? "").slice(0, 240),
+      });
+    }
+  }
+
   // -------------------------------------------------------------- proposals
   for (const raw of n.proposals.slice(0, MAX_PROPOSALS_PER_TURN)) {
     if (!(NARRATOR_ALLOWED_EFFECTS as readonly string[]).includes(raw.t)) {

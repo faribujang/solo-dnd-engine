@@ -220,6 +220,9 @@ export class MockLLM implements LLMClient {
       proposals: [],
       suggested_actions: [],
       scene_change: null,
+      // The mock never promises anything on the player's behalf.
+      new_thread: null,
+      settled_thread: null,
     };
 
     // Occasionally establish something — the real narrator does this constantly.

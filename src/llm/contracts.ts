@@ -123,6 +123,33 @@ export const Narration = z.object({
   proposals: z.array(WireProposal).default([]),
   suggested_actions: z.array(z.string()).default([]),
   scene_change: z.string().nullable().default(null),
+
+  /**
+   * A promise the player just made, and a promise just settled.
+   *
+   * These are threads (schema/thread.ts), and they are TOP-LEVEL FIELDS rather than
+   * entries in `proposals` for an entirely empirical reason: measured against a live
+   * model, `facts` and `attitude_deltas` come back populated on nearly every turn while
+   * `proposals` comes back empty on nearly all of them. A field the schema names gets
+   * filled; an option buried in a generic tagged union gets skipped, no matter how the
+   * prompt begs.
+   *
+   * Opening a thread is the single most common thing the narrator should do — the player
+   * says "I'll find out what happened to him" constantly — so it gets the shape that
+   * actually works rather than the shape that is tidier.
+   */
+  new_thread: z.object({
+    /** Second person, as an obligation: "Find out what happened to the courier." */
+    text: z.string(),
+    subject_ids: z.array(z.string()).default([]),
+    from_entity_id: z.string().nullable().default(null),
+  }).nullable().default(null),
+
+  settled_thread: z.object({
+    thread_id: z.string(),
+    as: z.enum(["kept", "broken", "faded"]),
+    outcome: z.string().default(""),
+  }).nullable().default(null),
 });
 export type Narration = z.infer<typeof Narration>;
 

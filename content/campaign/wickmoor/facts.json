@@ -409,5 +409,657 @@
       "opens_when": "you stand with her on something that costs you",
       "lifted_by_flag": "bel_trusts_you"
     }
+  },
+  {
+    "id": "fact_seed_0020",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Lamp-oil out of Harrowmoot is bonded at the Bonding House and costs four times what goes in.",
+    "kind": "world",
+    "subjects": [
+      "loc_lamp_house"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_bel",
+      "npc_kettle",
+      "npc_teal",
+      "npc_ferrin",
+      "npc_gil"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0021",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Fetterlock is an inn on paper. In practice Rue Tamsin holds people against debts they cannot pay.",
+    "kind": "world",
+    "subjects": [
+      "loc_fetterlock",
+      "npc_rue"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_rue",
+      "npc_calder",
+      "npc_warder",
+      "npc_bel",
+      "npc_kettle",
+      "npc_teal",
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0022",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Nobody has inspected the Waterline crane in nine years, and Gil Ashworth says so to anyone who stands still.",
+    "kind": "world",
+    "subjects": [
+      "loc_waterline",
+      "npc_gil"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 2,
+    "secret": false,
+    "known_by": [
+      "npc_gil",
+      "npc_teal",
+      "npc_bel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0023",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The spring audit went badly for Barthel Onn and he has not slept properly since.",
+    "kind": "world",
+    "subjects": [
+      "npc_barthel"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_ferrin"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0024",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Ferrin Oake has asked three times to be transferred to Aurelane and been refused three times.",
+    "kind": "world",
+    "subjects": [
+      "npc_ferrin"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 2,
+    "secret": false,
+    "known_by": [
+      "npc_ferrin",
+      "npc_saveri",
+      "npc_barthel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0025",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Four Arcanate pensioners are still alive in Harrowmoot. Moss keeps the list.",
+    "kind": "world",
+    "subjects": [
+      "npc_moss",
+      "loc_pensioners_hall"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_emeric",
+      "npc_moss",
+      "npc_emeric"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0026",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "There is a cistern under Assay Row that nobody has fitted through in thirty years.",
+    "kind": "world",
+    "subjects": [
+      "loc_undercroft_row"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_bel",
+      "npc_teal",
+      "npc_barthel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0027",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Hask the warder has fourteen months until his pension vests and will do almost anything to avoid an incident report.",
+    "kind": "world",
+    "subjects": [
+      "npc_warder"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_rue",
+      "npc_bel",
+      "npc_teal"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0028",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "A man called Calder Wick has walked up from the moor every week since the fire, asking after a girl.",
+    "kind": "world",
+    "subjects": [
+      "npc_calder",
+      "npc_bryn"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_rue",
+      "npc_calder",
+      "npc_warder",
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_bel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0029",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Teal runs messages between people in the Row who will not be seen together.",
+    "kind": "world",
+    "subjects": [
+      "npc_teal"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 2,
+    "secret": false,
+    "known_by": [
+      "npc_bel",
+      "npc_kettle",
+      "npc_teal",
+      "npc_barthel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0030",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The high moor road is visible for twenty minutes in either direction, which is why nobody robs it.",
+    "kind": "world",
+    "subjects": [
+      "loc_high_moor"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 2,
+    "secret": false,
+    "known_by": [
+      "npc_rue",
+      "npc_calder",
+      "npc_warder",
+      "npc_gil",
+      "npc_calder"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0031",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Assay Row keeps its closed ledgers in iron presses in the undercroft, by year.",
+    "kind": "world",
+    "subjects": [
+      "loc_undercroft_row"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_ferrin"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0032",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "One of the closed ledgers lists every person in forty miles who was ever reported for casting without a licence.",
+    "kind": "world",
+    "subjects": [
+      "loc_undercroft_row"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_bel"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0033",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Bel's brother was entered in the Row's ledger the year before he was taken.",
+    "kind": "world",
+    "subjects": [
+      "npc_bel"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": true,
+    "known_by": [
+      "npc_bel",
+      "npc_kettle"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0034",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Marda Onn does the filing her husband is paid for, and has done for six years.",
+    "kind": "world",
+    "subjects": [
+      "npc_onn_wife",
+      "npc_barthel"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0035",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Emeric Sallow's pension was four marks a month and he has not drawn it in six years.",
+    "kind": "world",
+    "subjects": [
+      "npc_emeric"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_emeric",
+      "npc_moss",
+      "npc_rue"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0036",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Pensioners' Hall has been drawing Emeric Sallow's pension against his name since the clerk who arranged it died.",
+    "kind": "world",
+    "subjects": [
+      "npc_emeric",
+      "npc_moss"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_moss"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Moss will not say what the Hall lives on",
+      "opens_when": "somebody proves they will not use it against the cohort",
+      "lifted_by_flag": "pension_trusted"
+    }
+  },
+  {
+    "id": "fact_seed_0037",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Emeric Sallow does not take money. He takes being owed something.",
+    "kind": "world",
+    "subjects": [
+      "npc_emeric"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_emeric",
+      "npc_moss",
+      "npc_rue",
+      "npc_saveri"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0038",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Fetterlock keeps an intake book, and Rue Tamsin keeps it honest, which is not the same as keeping it hidden.",
+    "kind": "world",
+    "subjects": [
+      "loc_fetterlock",
+      "npc_rue"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 3,
+    "secret": false,
+    "known_by": [
+      "npc_rue",
+      "npc_calder",
+      "npc_warder"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0039",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "A girl of nine was held at the Fetterlock for eleven days against Wickmoor tithe arrears, and then released to contract.",
+    "kind": "world",
+    "subjects": [
+      "npc_bryn"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_rue",
+      "npc_warder"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0040",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "'Released to contract' is what the Row writes when a person becomes part of a bond.",
+    "kind": "world",
+    "subjects": [],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_rue",
+      "npc_ferrin"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0041",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Amery Vosk is closing bond 1184/7, held against the Wickmoor lamp-tithe.",
+    "kind": "world",
+    "subjects": [
+      "npc_vosk"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_vosk",
+      "npc_saltbeck",
+      "npc_saveri"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0042",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Iven Saltbeck arrived a week after Vosk and has been asking the same questions less politely.",
+    "kind": "world",
+    "subjects": [
+      "npc_saltbeck",
+      "npc_vosk"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_ferrin",
+      "npc_rue"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0043",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Saltbeck was sent because somebody in Aurelane thinks Vosk is taking too long.",
+    "kind": "world",
+    "subjects": [
+      "npc_saltbeck",
+      "npc_vosk"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": true,
+    "known_by": [
+      "npc_saltbeck",
+      "npc_ferrin"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0044",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "A bond secured on a debt that was already paid is void, and the Row will honour that if it is proved on paper.",
+    "kind": "world",
+    "subjects": [],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": false,
+    "known_by": [
+      "npc_saveri",
+      "npc_barthel",
+      "npc_onn_wife",
+      "npc_ferrin",
+      "npc_emeric"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0045",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "The Wickmoor lamp-tithe was collected twice in 1184 — once by the Accord and once by the Syndicate.",
+    "kind": "world",
+    "subjects": [],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_emeric",
+      "npc_saveri"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Saveri Crole will not discuss 1184 with anybody",
+      "opens_when": "she has a reason to stop being nobody",
+      "lifted_by_flag": "saveri_moved"
+    }
+  },
+  {
+    "id": "fact_seed_0046",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "An Accord courier died on the high moor in the last year of the war.",
+    "kind": "world",
+    "subjects": [
+      "loc_high_moor"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 4,
+    "secret": false,
+    "known_by": [
+      "npc_cotter",
+      "npc_ilsa",
+      "npc_emeric",
+      "npc_moss"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": null
+  },
+  {
+    "id": "fact_seed_0047",
+    "turn": 0,
+    "world_minute": 440,
+    "text": "Cotter Vane met that courier, and has never once said so.",
+    "kind": "world",
+    "subjects": [
+      "npc_cotter"
+    ],
+    "location_id": null,
+    "quest_ids": [],
+    "importance": 5,
+    "secret": true,
+    "known_by": [
+      "npc_cotter",
+      "npc_ilsa"
+    ],
+    "source": "authored",
+    "superseded_by": null,
+    "seal": {
+      "why": "Cotter Vane has not said it in eleven years and will not say it to be asked",
+      "opens_when": "the apprentice has already done something he would have done",
+      "lifted_by_flag": "cotter_trusts_you"
+    }
   }
 ]

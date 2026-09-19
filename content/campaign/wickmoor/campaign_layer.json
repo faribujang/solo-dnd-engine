@@ -66,7 +66,10 @@
         "being decent inside a machine"
       ],
       "quest_ids": [
-        "q_the_keeping"
+        "q_the_keeping",
+        "q_the_ledger",
+        "q_the_pension",
+        "q_the_fetterlock"
       ],
       "climax_quest_id": "q_the_keeping",
       "seeds": [
@@ -103,6 +106,65 @@
       ],
       "requires_arc_ids": [
         "arc_wickmoor"
+      ]
+    },
+    "arc_reckoning": {
+      "id": "arc_reckoning",
+      "title": "What Wickmoor Kept",
+      "status": "locked",
+      "summary": "Eleven years ago somebody put two things into a village for safekeeping. The Syndicate has come to collect on a bond it never read properly.",
+      "themes": [
+        "what was hidden and who paid for it",
+        "paperwork as violence",
+        "being glad, and being ashamed of it"
+      ],
+      "quest_ids": [
+        "q_what_cotter_did",
+        "q_the_contract"
+      ],
+      "climax_quest_id": "q_the_contract",
+      "seeds": [
+        {
+          "id": "sd_saltbeck_report",
+          "text": "Saltbeck filed a report about Vosk before he ever met him.",
+          "kind": "fact",
+          "subject_ids": [
+            "npc_saltbeck",
+            "npc_vosk"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "sd_marda",
+          "text": "Marda Onn kept a copy of the spring audit, and has never said so.",
+          "kind": "fact",
+          "subject_ids": [
+            "npc_onn_wife"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "sd_teal_owes",
+          "text": "Teal took a second job in the Row and has not told Bel.",
+          "kind": "npc",
+          "subject_ids": [
+            "npc_teal",
+            "npc_bel"
+          ],
+          "promoted": false
+        },
+        {
+          "id": "sd_moss_list",
+          "text": "Moss has been keeping the cohort list for thirty years and is nearly at the end of it.",
+          "kind": "fact",
+          "subject_ids": [
+            "npc_moss"
+          ],
+          "promoted": false
+        }
+      ],
+      "requires_arc_ids": [
+        "arc_harrowmoot"
       ]
     }
   },

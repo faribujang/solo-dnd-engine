@@ -18,6 +18,7 @@ function narration(over: Partial<Narration> = {}): Narration {
     narration: "The room is as you left it.",
     facts: [], attitude_deltas: [], opinion_updates: [],
     proposals: [], suggested_actions: [], scene_change: null,
+    new_thread: null, settled_thread: null,
     ...over,
   };
 }

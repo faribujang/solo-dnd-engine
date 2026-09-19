@@ -30,6 +30,9 @@
         "name": "by the anvil",
         "adjacent": [
           "z_door"
+        ],
+        "terrain": [
+          "hazard"
         ]
       },
       {
@@ -37,7 +40,8 @@
         "name": "the doorway",
         "adjacent": [
           "z_anvil"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -126,6 +130,9 @@
         "name": "by the well",
         "adjacent": [
           "z_stone"
+        ],
+        "terrain": [
+          "cover"
         ]
       },
       {
@@ -133,6 +140,9 @@
         "name": "the moot stone",
         "adjacent": [
           "z_well"
+        ],
+        "terrain": [
+          "high"
         ]
       }
     ],
@@ -264,14 +274,16 @@
         "name": "by the ovens",
         "adjacent": [
           "z_counter"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_counter",
         "name": "the counter",
         "adjacent": [
           "z_ovens"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -328,14 +340,16 @@
         "name": "the hall floor",
         "adjacent": [
           "z_dais"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_dais",
         "name": "the elders' end",
         "adjacent": [
           "z_floor"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -417,6 +431,9 @@
         "name": "the bank",
         "adjacent": [
           "z_shallows"
+        ],
+        "terrain": [
+          "broken"
         ]
       },
       {
@@ -424,6 +441,10 @@
         "name": "the shallows",
         "adjacent": [
           "z_bank"
+        ],
+        "terrain": [
+          "broken",
+          "hazard"
         ]
       }
     ],
@@ -528,7 +549,8 @@
       {
         "id": "z_rise",
         "name": "the rise",
-        "adjacent": []
+        "adjacent": [],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -583,7 +605,8 @@
       {
         "id": "z_road",
         "name": "the road",
-        "adjacent": []
+        "adjacent": [],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -678,7 +701,8 @@
       {
         "id": "z_under",
         "name": "the undercroft",
-        "adjacent": []
+        "adjacent": [],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -735,14 +759,16 @@
         "name": "the gate",
         "adjacent": [
           "z_queue"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_queue",
         "name": "the queue",
         "adjacent": [
           "z_gate"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -864,6 +890,10 @@
         "name": "the front steps",
         "adjacent": [
           "z_hall"
+        ],
+        "terrain": [
+          "high",
+          "cover"
         ]
       },
       {
@@ -871,7 +901,8 @@
         "name": "the weighing hall",
         "adjacent": [
           "z_steps"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -930,14 +961,16 @@
         "name": "the common room",
         "adjacent": [
           "z_yard"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_yard",
         "name": "the yard",
         "adjacent": [
           "z_common"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -984,14 +1017,16 @@
         "name": "the examination floor",
         "adjacent": [
           "z_gallery"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_gallery",
         "name": "the gallery",
         "adjacent": [
           "z_floor"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -1048,14 +1083,16 @@
         "name": "the lane",
         "adjacent": [
           "z_arch"
-        ]
+        ],
+        "terrain": []
       },
       {
         "id": "z_arch",
         "name": "under the arch",
         "adjacent": [
           "z_lane"
-        ]
+        ],
+        "terrain": []
       }
     ],
     "contains_item_ids": [],
@@ -1069,6 +1106,441 @@
     "visited_count": 0,
     "danger_level": 2,
     "encounter_table_id": "enc_the_cut",
+    "flags": {}
+  },
+  "loc_undercroft_row": {
+    "id": "loc_undercroft_row",
+    "name": "Under Assay Row",
+    "region_id": null,
+    "coords": {
+      "x": 13,
+      "y": 2
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "Where every contract in forty miles is kept, in the dark, at a controlled temperature.",
+    "long_desc": "Brick barrel vaults under the Row, cold enough that your breath shows in high summer. The ledgers stand in iron presses, spine out, each one stamped with the year it was closed. There is a lamp bracket every eight feet and not one lamp lit — fire down here would cost the Syndicate more than a warehouse.",
+    "exits": [
+      {
+        "dir": "stair",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 3,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_presses",
+        "name": "between the presses",
+        "adjacent": [
+          "z_stair_foot"
+        ],
+        "terrain": [
+          "cover",
+          "dim"
+        ]
+      },
+      {
+        "id": "z_stair_foot",
+        "name": "the foot of the stair",
+        "adjacent": [
+          "z_presses",
+          "z_cistern"
+        ],
+        "terrain": []
+      },
+      {
+        "id": "z_cistern",
+        "name": "the cistern lip",
+        "adjacent": [
+          "z_stair_foot"
+        ],
+        "terrain": [
+          "hazard",
+          "broken"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "dark",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
+    "flags": {}
+  },
+  "loc_waterline": {
+    "id": "loc_waterline",
+    "name": "The Waterline",
+    "region_id": null,
+    "coords": {
+      "x": 16,
+      "y": 6
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "Where the Cut meets the barges, and where things leave Harrowmoot without being weighed.",
+    "long_desc": "A stone quay black with oil, four barges deep, and a crane that has not been inspected in living memory. Everything the Row stamps goes out from here; so does everything it never saw. The water moves slowly and smells of lamp-oil and rope.",
+    "exits": [
+      {
+        "dir": "lanes",
+        "to": "loc_the_cut",
+        "desc": "",
+        "travel_minutes": 4,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "road",
+        "to": "loc_tollgate",
+        "desc": "",
+        "travel_minutes": 9,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_quay",
+        "name": "the open quay",
+        "adjacent": [
+          "z_crane",
+          "z_barge"
+        ],
+        "terrain": []
+      },
+      {
+        "id": "z_crane",
+        "name": "under the crane",
+        "adjacent": [
+          "z_quay"
+        ],
+        "terrain": [
+          "high",
+          "hazard"
+        ]
+      },
+      {
+        "id": "z_barge",
+        "name": "the deck of a barge",
+        "adjacent": [
+          "z_quay"
+        ],
+        "terrain": [
+          "broken",
+          "cover"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
+    "flags": {}
+  },
+  "loc_lamp_house": {
+    "id": "loc_lamp_house",
+    "name": "The Bonding House",
+    "region_id": null,
+    "coords": {
+      "x": 11,
+      "y": 4
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "Where lamp-oil stops being a liquid and starts being a contract.",
+    "long_desc": "Vats on a stone floor, a rail of brass taps, and a smell that makes your eyes water for the first ten minutes and then stops entirely, which is worse. Every barrel leaves here bonded: sealed, stamped, and worth four times what went in.",
+    "exits": [
+      {
+        "dir": "row",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 6,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "yard",
+        "to": "loc_tollgate",
+        "desc": "",
+        "travel_minutes": 7,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_vats",
+        "name": "between the vats",
+        "adjacent": [
+          "z_rail"
+        ],
+        "terrain": [
+          "hazard",
+          "cover"
+        ]
+      },
+      {
+        "id": "z_rail",
+        "name": "the tap rail",
+        "adjacent": [
+          "z_vats",
+          "z_office"
+        ],
+        "terrain": []
+      },
+      {
+        "id": "z_office",
+        "name": "the weighing office",
+        "adjacent": [
+          "z_rail"
+        ],
+        "terrain": [
+          "cover"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
+    "flags": {}
+  },
+  "loc_wickmoor_after": {
+    "id": "loc_wickmoor_after",
+    "name": "Wickmoor, After",
+    "region_id": null,
+    "coords": {
+      "x": 14,
+      "y": 12
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_wickmoor",
+    "short_desc": "Home, with the roofs gone.",
+    "long_desc": "The green is still the green. That is the part nobody warns you about. The bakehouse wall stands to shoulder height and the ovens are intact and cold, and someone has stacked what could be saved into neat piles, which means somebody came back before you did.",
+    "exits": [
+      {
+        "dir": "road",
+        "to": "loc_north_road",
+        "desc": "",
+        "travel_minutes": 30,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "forge",
+        "to": "loc_forge",
+        "desc": "",
+        "travel_minutes": 2,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_green_after",
+        "name": "the green",
+        "adjacent": [
+          "z_bakehouse_after",
+          "z_hall_after"
+        ],
+        "terrain": []
+      },
+      {
+        "id": "z_bakehouse_after",
+        "name": "the bakehouse wall",
+        "adjacent": [
+          "z_green_after"
+        ],
+        "terrain": [
+          "cover"
+        ]
+      },
+      {
+        "id": "z_hall_after",
+        "name": "the moot hall steps",
+        "adjacent": [
+          "z_green_after"
+        ],
+        "terrain": [
+          "high",
+          "cover"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
+    "flags": {}
+  },
+  "loc_counting_house": {
+    "id": "loc_counting_house",
+    "name": "The Counting House",
+    "region_id": null,
+    "coords": {
+      "x": 12,
+      "y": 3
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": "set_harrowmoot",
+    "short_desc": "Four clerks, one door, and the only set of keys in Harrowmoot that matter.",
+    "long_desc": "Smaller than you expected and much quieter. Four desks, four clerks, and a strongroom door that was fitted by somebody who was paid properly. Amery Vosk's contract will close in this room, on paper, with a stamp, and nobody outside will hear a thing.",
+    "exits": [
+      {
+        "dir": "row",
+        "to": "loc_assay_row",
+        "desc": "",
+        "travel_minutes": 4,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_desks",
+        "name": "the clerks' floor",
+        "adjacent": [
+          "z_strongroom"
+        ],
+        "terrain": []
+      },
+      {
+        "id": "z_strongroom",
+        "name": "the strongroom door",
+        "adjacent": [
+          "z_desks"
+        ],
+        "terrain": [
+          "cover"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
+    "flags": {}
+  },
+  "loc_high_moor": {
+    "id": "loc_high_moor",
+    "name": "The High Moor",
+    "region_id": null,
+    "coords": {
+      "x": 15,
+      "y": 8
+    },
+    "map_visibility": "discoverable",
+    "settlement_id": null,
+    "short_desc": "Between the two towns, with nothing on it but weather and the road.",
+    "long_desc": "Heather to the knee and a wind that does not stop. The north road runs across it on a raised causeway built by somebody's empire, and if anyone is coming the other way you will see them for twenty minutes before you meet them. That cuts both ways.",
+    "exits": [
+      {
+        "dir": "north",
+        "to": "loc_tollgate",
+        "desc": "",
+        "travel_minutes": 40,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "south",
+        "to": "loc_north_road",
+        "desc": "",
+        "travel_minutes": 35,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      }
+    ],
+    "features": [],
+    "zones": [
+      {
+        "id": "z_causeway",
+        "name": "the causeway",
+        "adjacent": [
+          "z_heather",
+          "z_cairn"
+        ],
+        "terrain": [
+          "high"
+        ]
+      },
+      {
+        "id": "z_heather",
+        "name": "off the road",
+        "adjacent": [
+          "z_causeway"
+        ],
+        "terrain": [
+          "broken",
+          "dim"
+        ]
+      },
+      {
+        "id": "z_cairn",
+        "name": "the old cairn",
+        "adjacent": [
+          "z_causeway"
+        ],
+        "terrain": [
+          "cover",
+          "high"
+        ]
+      }
+    ],
+    "ambient": {
+      "light": "bright",
+      "sound": "",
+      "smell": ""
+    },
+    "discovered": false,
+    "visited_count": 0,
+    "danger": 0,
     "flags": {}
   }
 }

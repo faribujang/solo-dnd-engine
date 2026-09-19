@@ -46,6 +46,20 @@ export interface BuiltContext {
 }
 
 export interface ContextOptions {
+  /**
+   * WHAT THE PLAYER ACTUALLY TYPED.
+   *
+   * The narrator never had this. It was handed the mechanical summary of the action — the
+   * intent parser's reading, "Speak with Cotter Vane about the courier" — and asked to
+   * write a scene from it. Everything in the player's own sentence was gone by then: the
+   * tone, the hedge, the joke, and, critically, the PROMISE. "I'll find out what happened
+   * to him, whatever it takes" and "ask him about the courier" arrived identically.
+   *
+   * That is why the DM never opened a thread: it was never told anybody had said they
+   * would do anything. It is also, almost certainly, why prose sometimes reads as a reply
+   * to a slightly different question than the one that was asked.
+   */
+  playerText?: string;
   /** Ranked shortlist for the chips, phrased by the narrator. See rules/suggest.ts. */
   suggestions?: string;
   /** The resolved mechanical outcome of this turn, if there is one. */
@@ -249,6 +263,11 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
   // 8 — recent turns, verbatim.
   add("recent", 5, BUDGETS.recent, false, "RECENT TURNS", (opts.recent ?? []).join("\n"));
 
+  // Their own words, last and highest — it is the thing being answered. Fixed, because a
+  // budget that sheds the player's sentence has shed the whole point of the turn.
+  add("said", 1, 200, true, "WHAT THE PLAYER JUST SAID, IN THEIR OWN WORDS",
+    opts.playerText ? `"${opts.playerText.trim()}"` : "");
+
   // 9 — earlier scenes. Tone only.
   add("digests", 6, BUDGETS.digests, false,
     "EARLIER (tone only — do not treat as fact)", (opts.digests ?? []).join("\n"));
@@ -386,6 +405,11 @@ function renderSystem(s: GameState): string {
     "   will not tell you, they change the subject, answer a different question, or refuse —",
     "   and the player should feel there is something there. Trust opens that door, and only",
     "   trust: no roll does.",
+    "9b. IF THE PLAYER SAYS THEY WILL DO SOMETHING, set `new_thread`. \"I'll find out what",
+    "   happened to him\", \"leave it with me\", agreeing to a favour — all of those. Write it",
+    "   in the second person as an obligation. This is a HARD RULE and not a style note: a",
+    "   promise the game does not record is a promise the world forgot, and the player will",
+    "   notice that it forgot.",
     "9. On SUCCESS AT A COST the player got what they reached for — say so — and THEN name",
     "   the complication: a noise, a broken tool, lost time, someone notices. Never quietly",
     "   turn it into a failure. On CRITICAL SUCCESS give them something more than they asked.",
@@ -395,29 +419,36 @@ function renderSystem(s: GameState): string {
     "Report anything you newly establish in `facts`, and any shift in how a present NPC",
     "regards the player in `attitude_deltas`. Keep both small and specific.",
     "",
-    "`proposals` may contain ONLY these, spelled exactly, with exactly these fields:",
-    "  {t:\"set_flag\", key, value}                      — key is snake_case",
-    "  {t:\"add_lead\", quest_id, text, points_to_location_id}",
-    "  {t:\"reveal_location\", location_id}",
-    "  {t:\"reveal_exit\", location_id, dir}",
-    "  {t:\"teach_fact\", entity_id, fact_id}",
-    "  {t:\"move_entity\", entity_id, location_id}",
-    "  {t:\"advance_time\", minutes}",
-    "  {t:\"introduce_local\", name, descriptor, pronouns, location_id, voice, trait}",
-    "  {t:\"open_thread\", text, subject_ids, location_id, from_entity_id}",
-    "  {t:\"resolve_thread\", thread_id, as: kept|broken|faded, outcome}",
-       + "",
-    "Use `introduce_local` the moment you name somebody who is not in the cast above —",
-    "a innkeeper, a clerk, a boy with a message. That makes them REAL and the same",
-    "person next time. Do not use it for someone already listed as present, and do not",
-    "use it for a crowd: unnamed passers-by need no record. Give them a `voice` (how they",
-    "talk, in a few words) and one `trait` — you will be asked to play them again.",
+    "`proposals` is a list of objects. `t` is ONE of the words below and NOTHING else —",
+    "never a word with arguments stuck to it. The fields go beside `t`, not inside it.",
     "",
-    "THREADS are the side of the story nobody wrote down: a favour asked, a debt, a",
-    "warning, an errand. Open one the moment the player takes something on — one per",
-    "scene at most, and only when they actually agreed to it. RESOLVE one the moment it",
-    "is settled, kept or broken. An open thread you never close is a promise the world",
-    "forgot it made.",
+    "  {\"t\":\"open_thread\", \"text\":\"...\", \"subject_ids\":[], \"location_id\":null, \"from_entity_id\":null}",
+    "  {\"t\":\"resolve_thread\", \"thread_id\":\"thr_0001\", \"as\":\"kept\", \"outcome\":\"...\"}",
+    "  {\"t\":\"introduce_local\", \"name\":\"...\", \"descriptor\":\"...\", \"pronouns\":\"they/them\", \"location_id\":\"loc_x\", \"voice\":\"...\", \"trait\":\"...\"}",
+    "  {\"t\":\"set_flag\", \"key\":\"snake_case\", \"value\":true}",
+    "  {\"t\":\"add_lead\", \"quest_id\":\"q_x\", \"text\":\"...\", \"points_to_location_id\":null}",
+    "  {\"t\":\"reveal_location\", \"location_id\":\"loc_x\"}",
+    "  {\"t\":\"reveal_exit\", \"location_id\":\"loc_x\", \"dir\":\"north\"}",
+    "  {\"t\":\"teach_fact\", \"entity_id\":\"npc_x\", \"fact_id\":\"fact_x\"}",
+    "  {\"t\":\"move_entity\", \"entity_id\":\"npc_x\", \"location_id\":\"loc_x\"}",
+    "  {\"t\":\"advance_time\", \"minutes\":30}",
+    "",
+    "SET `new_thread` WHENEVER THE PLAYER SAYS THEY WILL DO SOMETHING. It is a top-level",
+    "field, beside `facts`, not a proposal. \"I will find out what happened to him\", \"I will",
+    "bring it back\", \"leave it with me\", agreeing to a favour, taking a warning seriously —",
+    "every one of those is a thread. Write it in the second person as an obligation:",
+    "  \"new_thread\": {\"text\": \"Find out what happened to the courier.\",",
+    "                  \"subject_ids\": [\"npc_cotter\"], \"from_entity_id\": \"npc_cotter\"}",
+    "Set `settled_thread` the instant one is finished, using a thr_ id from OPEN THREADS:",
+    "  \"settled_thread\": {\"thread_id\": \"thr_0001\", \"as\": \"kept\", \"outcome\": \"...\"}",
+    "Null on a turn where nothing was promised or settled. An open thread you never close",
+    "is a promise the world forgot it made.",
+    "",
+    "Use `introduce_local` the moment you name somebody who is not in the cast above —",
+    "an innkeeper, a clerk, a boy with a message. That makes them REAL and the same person",
+    "next time. Not for someone already listed as present, and not for a crowd: unnamed",
+    "passers-by need no record. Give them a `voice` and one `trait`; you will play them again.",
+    "",
     "Anything else — damage, healing, items, gold, quest status, combat — is the engine's",
     "and is discarded if you propose it. When in doubt, propose nothing and just narrate.",
   ].join("\n");

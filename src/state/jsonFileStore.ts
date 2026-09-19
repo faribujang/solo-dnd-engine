@@ -39,7 +39,7 @@ export class JsonFileStore implements StateStore {
     await fs.writeFile(path.join(d, "digests.json"), stable([]), "utf8");
     await fs.writeFile(path.join(d, "settlements.json"), stable({}), "utf8");
     await fs.writeFile(path.join(d, "campaign_layer.json"), stable({ groups: {}, arcs: {}, campaigns: {}, legacy: [], combat: null }), "utf8");
-    await fs.writeFile(path.join(d, "world_extra.json"), stable({ clocks: {}, vows: {}, encounter_tables: {} }), "utf8");
+    await fs.writeFile(path.join(d, "world_extra.json"), stable({ clocks: {}, vows: {}, encounter_tables: {}, threads: {} }), "utf8");
     await this.writeState(id, initial);
   }
 
@@ -57,12 +57,12 @@ export class JsonFileStore implements StateStore {
         readJsonl(path.join(d, "facts.jsonl")),
         readJsonOr(path.join(d, "settlements.json"), {}),
         readJsonOr(path.join(d, "campaign_layer.json"), { groups: {}, arcs: {}, campaigns: {}, legacy: [], combat: null }),
-        readJsonOr(path.join(d, "world_extra.json"), { clocks: {}, vows: {}, encounter_tables: {} }),
+        readJsonOr(path.join(d, "world_extra.json"), { clocks: {}, vows: {}, encounter_tables: {}, threads: {} }),
       ]);
 
     const items = itemsFile as { defs: unknown; instances: unknown };
     const cl = layer as { groups: unknown; arcs: unknown; campaigns: unknown; legacy: unknown; combat?: unknown };
-    const wx = extra as { clocks: unknown; vows: unknown; encounter_tables: unknown };
+    const wx = extra as { clocks: unknown; vows: unknown; encounter_tables: unknown; threads: unknown };
 
     // Parsing here rather than trusting the disk is deliberate: an authored campaign or a
     // hand-edited save is exactly where a malformed world would otherwise slip in.
@@ -85,6 +85,10 @@ export class JsonFileStore implements StateStore {
       conversation: (cl as { conversation?: unknown }).conversation ?? null,
       clocks: wx.clocks,
       vows: wx.vows,
+      // Threads live here or they do not live at all: a slice of state the store does
+      // not name is written nowhere and read back empty, which looks exactly like a
+      // feature that does not work.
+      threads: wx.threads ?? {},
       encounter_tables: wx.encounter_tables,
     });
   }
@@ -108,7 +112,7 @@ export class JsonFileStore implements StateStore {
       fs.writeFile(path.join(d, "campaign_layer.json"),
         stable({ groups: s.groups, arcs: s.arcs, campaigns: s.campaigns, legacy: s.legacy, combat: s.combat, conversation: s.conversation }), "utf8"),
       fs.writeFile(path.join(d, "world_extra.json"),
-        stable({ clocks: s.clocks, vows: s.vows, encounter_tables: s.encounter_tables }), "utf8"),
+        stable({ clocks: s.clocks, vows: s.vows, encounter_tables: s.encounter_tables, threads: s.threads }), "utf8"),
       fs.writeFile(
         path.join(d, "facts.jsonl"),
         s.facts.map((f) => stableLine(f)).join("\n") + (s.facts.length ? "\n" : ""),

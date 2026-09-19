@@ -219,6 +219,8 @@ export async function takeLLMTurn(
     }));
 
   const context = buildContext(working, {
+    // The narrator answers what was said, not what the parser made of it.
+    playerText,
     suggestions: renderSuggestionsForPrompt(shortlist),
     mechanics: [mechanics, ...cpuLines.map((l) => `Then: ${l}`), ...ambientBeats.map((b) => `Meanwhile: ${b}`)].join("\n"),
     ...(opts.recent ? { recent: opts.recent } : {}),
