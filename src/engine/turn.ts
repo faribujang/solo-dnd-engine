@@ -18,6 +18,7 @@ import { levelForXp } from "../rules/progression.js";
 import { CLASSES } from "../content/srd/data.js";
 import { hasInspiration } from "../rules/inspiration.js";
 import { MONTAGE, crowdFor, describeMontage, harvestable, yieldFor, type MontageKind } from "../rules/montage.js";
+import { violenceImpact } from "../rules/violence.js";
 import type { Modifier } from "../rules/modifiers.js";
 
 /**
@@ -105,6 +106,9 @@ const DURATION = {
   short_rest: 60,
   long_rest: 480,
 } as const;
+
+/** The most time one `wait` may burn. See the `wait` case for why this is not optional. */
+export const MAX_WAIT_MINUTES = 720;
 
 export function resolve(s: GameState, action: Action, opts?: { nonce?: string; actorId?: string }): ResolveResult {
   const actor = opts?.actorId ? mustEntity(s, opts.actorId) : pc(s);
@@ -356,13 +360,29 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
         return { ok: false, reason: "There is nobody here to ask." };
       }
 
+      /**
+       * Nothing to find is a REFUSAL, not a bad roll.
+       *
+       * Forty montages in a row taught three facts and burned five days; thirty-seven of
+       * them returned nothing at all while the raiders' trail went cold in the background.
+       * That is the game punishing a player for doing the thing its own action bar told
+       * them to do. The engine knows the well is dry before it rolls, so it says so and
+       * charges nothing — which also lets a player probe cheaply, and being told "nobody
+       * here knows anything you don't" is real information about a town.
+       */
+      const available = harvestable(s, action.topic, crowd);
+      if (available.length === 0) {
+        return {
+          ok: false,
+          reason: action.topic
+            ? `You could spend the day on it, but nobody here knows anything about ${action.topic} that you do not.`
+            : `You know everything this place is willing to tell you. Somewhere else, or someone in particular.`,
+        };
+      }
+
       const dc = dcForBand(action.band, levers.dc_shift);
       const roll = check(s, rng, actor.id, spec.skill, dc, `montage_${action.kind}`, undefined, lean);
       const got = roll.degree !== "failure";
-
-      // CODE picks what the hours turned up. The model is handed the list and asked to
-      // describe a morning — it never decides what is true, only how it was found out.
-      const available = harvestable(s, action.topic, crowd);
       const learned = available.slice(0, yieldFor(roll.degree, got));
 
       const effects: Effect[] = learned.map((f) => ({ t: "teach_fact", entity_id: actor.id, fact_id: f.id }));
@@ -452,6 +472,30 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
         if (damage >= target.hp.current) dropped = true;
       }
 
+      const watchers = witnessIds(s, loc.id, actor.id);
+
+      /**
+       * What it costs you, in code.
+       *
+       * This used to be empty, and the consequence was precise: you could put a blade in
+       * the village smith and his regard for you did not move by a single point. A real
+       * playthrough LOOKED right only because the narrator happened to propose attitude
+       * deltas — meaning a dead provider, or an incurious one, let you murder somebody's
+       * friend in front of them and stay well liked.
+       *
+       * How a person feels about being stabbed is not voice. The narrator may still layer
+       * its own reading on top; this is the floor beneath it.
+       */
+      const impact = violenceImpact(s, {
+        attackerId: actor.id,
+        victimId: target.id,
+        witnessIds: watchers,
+        hit,
+        damage,
+        downed: dropped,
+        killed: dropped && damage >= target.hp.current + target.hp.max,
+      });
+
       return finish(
         {
           type: "attack",
@@ -459,8 +503,9 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
           payload: { hit, damage, attacks },
           rolls,
           direct_effects: effects,
+          attitude_impact: impact,
           duration_minutes: s.combat ? 0 : DURATION.attack,
-          witnesses: witnessIds(s, loc.id, actor.id),
+          witnesses: watchers,
         },
         mech,
       );
@@ -1000,8 +1045,22 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
     // ------------------------------------------------------- wait and rest
     case "wait":
     case "rest": {
+      /**
+       * A cap on WAITING, enforced where the action is resolved rather than where it is
+       * parsed.
+       *
+       * It used to live in the intent mapper alone, which meant it only applied to text a
+       * model had read: any client sending `{type:"wait", minutes:999999}` — a palette
+       * entry, a replayed action, a test — skipped 694 days in one turn, finishing every
+       * clock in the world and ending the campaign silently. A rule that only holds for
+       * one of an action's two entry points is not a rule.
+       *
+       * Twelve hours, because past that you are not waiting, you are sleeping (`rest`) or
+       * travelling. Longer stretches are still reachable: take the action again and watch
+       * what each one costs you.
+       */
       const minutes = action.type === "wait"
-        ? action.minutes
+        ? Math.min(MAX_WAIT_MINUTES, Math.max(0, action.minutes))
         : action.kind === "long" ? DURATION.long_rest : DURATION.short_rest;
 
       const effects: Effect[] = [];

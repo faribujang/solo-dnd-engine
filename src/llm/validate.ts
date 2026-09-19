@@ -2,6 +2,12 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
 import { canAdmit } from "../rules/cast.js";
+
+/** New named people one turn may invent. A scene introduces someone; it does not cast. */
+const MAX_NEW_LOCALS_PER_TURN = 1;
+
+/** Named people one place can hold before it stops being a place and becomes a crowd. */
+const MAX_NAMED_IN_ONE_PLACE = 14;
 import { ATTITUDE_CLAMP_PER_TURN } from "../schema/relationship.js";
 import { NarratorProposal } from "./contracts.js";
 import type { Narration } from "./contracts.js";
@@ -147,6 +153,9 @@ export function validateNarration(
     effects.push({ t: "set_opinion", subject, object, opinion: o.opinion.trim() });
   }
 
+  // How many people this turn has already invented. See the `introduce_local` case.
+  let newLocals = 0;
+
   // -------------------------------------------------------------- proposals
   for (const raw of n.proposals.slice(0, MAX_PROPOSALS_PER_TURN)) {
     if (!(NARRATOR_ALLOWED_EFFECTS as readonly string[]).includes(raw.t)) {
@@ -176,6 +185,27 @@ export function validateNarration(
        * bug wearing a hat.
        */
       case "introduce_local": {
+        /**
+         * The global cap is the wrong defence on its own.
+         *
+         * A narrator minting three people a turn reaches 250 in eighty-four turns, and by
+         * the time the cap bites there are two hundred and fifty-four people standing on
+         * a village green. The world is already ruined; the cap just stops it getting
+         * worse. So: at most ONE new person per turn, and a room that is already crowded
+         * takes no more. Both are about the world staying legible, not about the model
+         * behaving.
+         */
+        if (newLocals >= MAX_NEW_LOCALS_PER_TURN) {
+          reject("proposal", `only ${MAX_NEW_LOCALS_PER_TURN} new person per turn; ${p.name} can wait for the next scene`, p);
+          break;
+        }
+        const crowdHere = Object.values(s.entities).filter(
+          (e) => e.alive && e.location_id === p.location_id && e.kind !== "monster").length;
+        if (crowdHere >= MAX_NAMED_IN_ONE_PLACE) {
+          reject("proposal", `${s.locations[p.location_id]?.name ?? p.location_id} already has ${crowdHere} named people in it`, p);
+          break;
+        }
+
         const admit = canAdmit(s, "local");
         if (!admit.ok) { reject("proposal", `cannot introduce ${p.name}: ${admit.reason}`, p); break; }
         if (!s.locations[p.location_id]) { reject("proposal", `unknown location ${p.location_id}`, p); break; }
@@ -193,6 +223,7 @@ export function validateNarration(
           voice: (p.voice ?? "").trim().slice(0, 200),
           trait: (p.trait ?? "").trim().slice(0, 200),
         });
+        newLocals += 1;
         break;
       }
 

@@ -290,8 +290,9 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
     }
 
     case "wait":
-      // Cap what a single "wait" can burn, so a typo does not skip a deadline.
-      return { ok: true, intent, action: { type: "wait", minutes: Math.min(720, Math.max(1, intent.minutes ?? 10)) } };
+      // The clamp lives in the resolver (MAX_WAIT_MINUTES) so it holds for every entry
+      // point, not just for text a model read. This only supplies a sensible default.
+      return { ok: true, intent, action: { type: "wait", minutes: Math.max(1, intent.minutes ?? 10) } };
 
     case "trade":
     case "use_item":

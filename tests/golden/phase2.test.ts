@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { loadCampaign } from "../../src/content/loadCampaign.js";
 import { takeLLMTurn } from "../../src/engine/llmTurn.js";
 import { takeTurn } from "../../src/engine/session.js";
+import { MAX_WAIT_MINUTES } from "../../src/engine/turn.js";
 import { buildContext } from "../../src/context/build.js";
 import { MockLLM } from "../../src/llm/mock.js";
 import type { GameState } from "../../src/schema/state.js";
@@ -122,24 +123,44 @@ describe("canon test: a turn-3 detail survives to turn 55", () => {
  * THE DEADLINE TEST — a quest fails by expiry with its cascade intact.
  */
 describe("a quest can be failed by letting its deadline expire", () => {
+  it("refuses to let one `wait` skip a deadline, however it was asked for", async () => {
+    // The cap used to live in the intent mapper alone, so any client sending the action
+    // directly — a palette entry, a replay, a test — skipped 694 days in a single turn and
+    // finished every clock in the world. A rule that holds for only one of an action's
+    // entry points is not a rule.
+    const s = await loadCommitted();
+    const before = s.world.world_minute;
+    const out = takeTurn(s, { type: "wait", minutes: 999_999 });
+    expect(out.ok).toBe(true);
+    expect(out.state.world.world_minute - before).toBe(MAX_WAIT_MINUTES);
+  });
+
   it("expires q_thornes_debt when the clock passes 4000 without completing it", async () => {
     let s = await loadCommitted();
     expect(s.quests["q_thornes_debt"]!.status).toBe("active");
     expect(s.world.world_minute).toBeLessThan(4000);
 
-    // Never read the ledger. Just let time pass.
+    // Never read the ledger. Just let time pass — in the increments a player actually
+    // has. One `wait` is capped at MAX_WAIT_MINUTES so that no single action can skip a
+    // deadline; reaching one takes repeated, visible decisions to burn the day.
     let out = takeTurn(s, { type: "rest", kind: "long" });        // +480
     s = out.state;
     out = takeTurn(s, { type: "rest", kind: "long" });            // +480
     s = out.state;
-    out = takeTurn(s, { type: "wait", minutes: 2500 });           // well past
-    s = out.state;
+    // The deadline is now crossed partway through, on whichever turn happens to carry the
+    // world past it — so the whole run is collected rather than only the last turn.
+    const everything = [...out.journal];
+    for (let i = 0; i < 6; i++) {
+      out = takeTurn(s, { type: "wait", minutes: MAX_WAIT_MINUTES });
+      s = out.state;
+      everything.push(...out.journal);
+    }
 
     expect(s.world.world_minute).toBeGreaterThanOrEqual(4000);
     expect(s.quests["q_thornes_debt"]!.status).toBe("expired");
 
     // The cascade is journaled: a quest_update event exists for the expiry.
-    const expiry = out.journal.find(
+    const expiry = everything.find(
       (e) => e.type === "quest_update" && (e.payload as { quest_id?: string }).quest_id === "q_thornes_debt",
     );
     expect(expiry).toBeDefined();

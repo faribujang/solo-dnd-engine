@@ -202,10 +202,18 @@ describe("the cast budget", () => {
     const s = await world();
     const here = s.entities[s.meta.pc_id]!.location_id;
 
-    // Fill the local tier to its cap.
+    // Fill the local tier to its cap, SPREAD OUT — packing them all into one room would
+    // trip the crowd limit first and prove nothing about the global cap.
+    // Everywhere except `here`, so the room we introduce into is empty and the GLOBAL cap
+    // is unambiguously the thing doing the refusing.
+    const everywhere = Object.keys(s.locations).filter((id) => id !== here);
     for (let i = 0; i < CAST_BUDGET.local; i++) {
       const id = `npc_filler_${i}`;
-      s.entities[id] = { ...structuredClone(s.entities[s.meta.pc_id]!), id, name: `Filler ${i}`, tier: "local", kind: "npc" };
+      s.entities[id] = {
+        ...structuredClone(s.entities[s.meta.pc_id]!),
+        id, name: `Filler ${i}`, tier: "local", kind: "npc",
+        location_id: everywhere[i % everywhere.length]!,
+      };
     }
     expect(censusOf(s).local).toBe(CAST_BUDGET.local);
     expect(canAdmit(s, "local").ok).toBe(false);
@@ -218,6 +226,41 @@ describe("the cast budget", () => {
     expect(v.rejects[0]!.reason).toMatch(/cap/);
     // And the prose survives, as every rejected proposal must.
     expect(v.narration).toBe("Somebody new is behind the counter.");
+  });
+
+  it("invents at most one person per turn", async () => {
+    const s = await world();
+    const here = s.entities[s.meta.pc_id]!.location_id;
+    const v = validateNarration(s, narration([
+      { t: "introduce_local", name: "First Arrival", descriptor: "a carter", pronouns: "they/them", location_id: here },
+      { t: "introduce_local", name: "Second Arrival", descriptor: "a carter's boy", pronouns: "he/him", location_id: here },
+      { t: "introduce_local", name: "Third Arrival", descriptor: "another carter entirely", pronouns: "she/her", location_id: here },
+    ]), ctxFor(s));
+
+    // A narrator minting three a turn reaches the global cap in eighty-four turns, by
+    // which point a village green holds two hundred and fifty-four people. The cap alone
+    // does not save the world; it only stops it getting worse.
+    expect(v.effects).toHaveLength(1);
+    expect(v.rejects).toHaveLength(2);
+    expect(v.rejects[0]!.reason).toMatch(/per turn/);
+  });
+
+  it("will not keep adding people to a room that is already a crowd", async () => {
+    const s = await world();
+    const here = s.entities[s.meta.pc_id]!.location_id;
+    for (let i = 0; i < 20; i++) {
+      const id = `npc_crowd_${i}`;
+      s.entities[id] = {
+        ...structuredClone(s.entities[s.meta.pc_id]!),
+        id, name: `Bystander ${i}`, tier: "local", kind: "npc", location_id: here,
+      };
+    }
+    const v = validateNarration(s, narration([
+      { t: "introduce_local", name: "One More Face", descriptor: "in the press of bodies", pronouns: "they/them", location_id: here },
+    ]), ctxFor(s));
+
+    expect(v.effects).toHaveLength(0);
+    expect(v.rejects[0]!.reason).toMatch(/already has/);
   });
 
   it("does not count monsters as cast — a room of raiders is one encounter", async () => {
