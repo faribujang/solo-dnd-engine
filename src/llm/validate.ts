@@ -2,6 +2,7 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
 import { canAdmit } from "../rules/cast.js";
+import { MAX_NEW_THREADS_PER_TURN, MAX_OPEN_THREADS } from "../schema/thread.js";
 
 /** New named people one turn may invent. A scene introduces someone; it does not cast. */
 const MAX_NEW_LOCALS_PER_TURN = 1;
@@ -155,6 +156,7 @@ export function validateNarration(
 
   // How many people this turn has already invented. See the `introduce_local` case.
   let newLocals = 0;
+  let newThreads = 0;
 
   // -------------------------------------------------------------- proposals
   for (const raw of n.proposals.slice(0, MAX_PROPOSALS_PER_TURN)) {
@@ -224,6 +226,38 @@ export function validateNarration(
           trait: (p.trait ?? "").trim().slice(0, 200),
         });
         newLocals += 1;
+        break;
+      }
+
+      /**
+       * Picking up an obligation. Two gates, both about the Journal staying readable:
+       * one new thread per turn, and a ceiling on how many can hang at once. A world
+       * with forty open promises in it is a to-do list, not a story.
+       */
+      case "open_thread": {
+        if (newThreads >= MAX_NEW_THREADS_PER_TURN) {
+          reject("proposal", `one new thread per turn; "${p.text.slice(0, 40)}" can wait`, p);
+          break;
+        }
+        const open = Object.values(s.threads).filter((t) => t.status === "open").length;
+        if (open >= MAX_OPEN_THREADS) {
+          reject("proposal", `${open} threads already hanging; finish something first`, p);
+          break;
+        }
+        // Only people and places that exist. A promise about nobody is not a promise.
+        const subjects = p.subject_ids.filter((id) => s.entities[id] || s.world.factions[id]);
+        const where = p.location_id && s.locations[p.location_id] ? p.location_id : null;
+        const from = p.from_entity_id && s.entities[p.from_entity_id] ? p.from_entity_id : null;
+        effects.push({ t: "open_thread", text: p.text.trim(), subject_ids: subjects, location_id: where, from_entity_id: from });
+        newThreads += 1;
+        break;
+      }
+
+      case "resolve_thread": {
+        const th = s.threads[p.thread_id];
+        if (!th) { reject("proposal", `no thread ${p.thread_id}`, p); break; }
+        if (th.status !== "open") { reject("proposal", `thread ${p.thread_id} is already ${th.status}`, p); break; }
+        effects.push({ t: "resolve_thread", thread_id: p.thread_id, as: p.as, outcome: (p.outcome ?? "").slice(0, 240) });
         break;
       }
 

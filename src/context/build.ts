@@ -64,6 +64,8 @@ export interface ContextOptions {
   companionLines?: readonly { name: string; sign: string; to: string; line: string }[];
 }
 
+const NL = String.fromCharCode(10);
+
 const BUDGETS = {
   system: 600,
   canon: 1200,
@@ -79,6 +81,7 @@ const BUDGETS = {
   companions: 220,
   background: 220,
   politics: 220,
+  threads: 260,
 } as const;
 
 export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltContext {
@@ -106,6 +109,12 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
     if (body.trim() !== "") sections.push({ id, priority, budget, fixed, title, body });
   };
 
+  // What the player has taken on. Without this block the DM cannot close a thread,
+  // cannot have an NPC ask about one, and will open duplicates of promises already made.
+  const openThreads = Object.values(s.threads)
+    .filter((t) => t.status === "open")
+    .sort((a, b) => a.id.localeCompare(b.id));
+
   // 1 — system persona and the hard constraints.
   const system = renderSystem(s);
 
@@ -116,6 +125,17 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
 
   // 3 — the scene.
   add("scene", 2, BUDGETS.scene, false, "SCENE", renderScene(s, opts.verboseLocation ?? false));
+
+  // 3b — what the player has taken on. High priority and cheap: an open thread the DM
+  // cannot see is a promise the world forgot it made, and it will open a duplicate of it
+  // next scene.
+  add("threads", 2, BUDGETS.threads, false,
+    "OPEN THREADS — things the player took on. Close one with `resolve_thread` the moment it is settled.",
+    openThreads.map((t) => {
+      const who = t.from_entity_id ? s.entities[t.from_entity_id]?.name : null;
+      const about = t.subject_ids.map((id) => s.entities[id]?.name).filter(Boolean).join(", ");
+      return `- ${t.id}: ${t.text}${who ? ` (asked by ${who})` : ""}${about ? ` [about ${about}]` : ""}`;
+    }).join(NL));
 
   // 4 — the player's sheet.
   add("pc", 2, BUDGETS.pc, false, "PLAYER CHARACTER", renderPc(s));
@@ -363,12 +383,20 @@ function renderSystem(s: GameState): string {
     "  {t:\"move_entity\", entity_id, location_id}",
     "  {t:\"advance_time\", minutes}",
     "  {t:\"introduce_local\", name, descriptor, pronouns, location_id, voice, trait}",
+    "  {t:\"open_thread\", text, subject_ids, location_id, from_entity_id}",
+    "  {t:\"resolve_thread\", thread_id, as: kept|broken|faded, outcome}",
        + "",
     "Use `introduce_local` the moment you name somebody who is not in the cast above —",
     "a innkeeper, a clerk, a boy with a message. That makes them REAL and the same",
     "person next time. Do not use it for someone already listed as present, and do not",
     "use it for a crowd: unnamed passers-by need no record. Give them a `voice` (how they",
     "talk, in a few words) and one `trait` — you will be asked to play them again.",
+    "",
+    "THREADS are the side of the story nobody wrote down: a favour asked, a debt, a",
+    "warning, an errand. Open one the moment the player takes something on — one per",
+    "scene at most, and only when they actually agreed to it. RESOLVE one the moment it",
+    "is settled, kept or broken. An open thread you never close is a promise the world",
+    "forgot it made.",
     "Anything else — damage, healing, items, gold, quest status, combat — is the engine's",
     "and is discarded if you propose it. When in doubt, propose nothing and just narrate.",
   ].join("\n");

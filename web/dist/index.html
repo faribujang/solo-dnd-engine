@@ -186,6 +186,7 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
 .mlegend{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.6}
 
 /* ── journal + log rows */
+.lead.now{border-left-color:var(--ember)}
 .lead{
   display:block;width:100%;text-align:left;border:0;border-left:2px solid var(--ember);
   background:none;padding:3px 0 3px 11px;margin:6px 0;
@@ -862,6 +863,27 @@ PANES.journal = (() => {
   const shut = (s.quests || []).filter((q) => q.status !== "active");
 
   let h = "<h2>Journal</h2>";
+
+  // Threads first. A promise the player made themselves outranks an errand they were
+  // handed, and it is the half of the story nobody authored.
+  const threads = s.threads || [];
+  const openThreads = threads.filter((t) => t.status === "open");
+  const doneThreads = threads.filter((t) => t.status !== "open");
+  if (openThreads.length) {
+    h += "<h3>You said you would</h3>";
+    for (const t of openThreads) {
+      h += '<button class="lead' + (t.here ? " now" : "") + '" data-say="' + esc(t.text) + '">'
+        + esc(t.text)
+        + (t.from ? ' <span class="note">— ' + esc(t.from) + "</span>" : "")
+        + (t.here ? ' <span class="note" style="color:var(--ember)">· they are here</span>' : "")
+        + "</button>";
+    }
+  }
+  if (doneThreads.length) {
+    h += "<h3>Settled</h3><div class=\"list\">" + doneThreads.map((t) =>
+      '<div class="li"><div class="t" style="opacity:.7">' + esc(t.text) + "</div>"
+      + '<div class="d">' + esc(t.status) + (t.outcome ? " — " + esc(t.outcome) : "") + "</div></div>").join("") + "</div>";
+  }
 
   if (!open.length) h += '<div class="note">Nothing pressing.</div>';
   for (const q of open) {

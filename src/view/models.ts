@@ -569,6 +569,8 @@ export interface ScreenModel {
   sheet: SheetModel;
   party: CompanionModel[];
   quests: QuestModel[];
+  /** Promises, debts and errands the story picked up. See schema/thread.ts. */
+  threads: ThreadModel[];
   vows: VowModel[];
   palette: PaletteModel;
   map: MapModel;
@@ -589,6 +591,39 @@ export function conversationModel(s: GameState): ConversationModel | null {
   };
 }
 
+export interface ThreadModel {
+  id: string; text: string; status: string; from: string | null; outcome: string;
+  /** True when somebody this is about is standing in front of you. */
+  here: boolean;
+}
+
+/**
+ * Open promises first, then what recently became of the others.
+ *
+ * Settled threads are kept in the list on purpose, briefly: a side quest you finished is
+ * one of the few places a text game can show a player that the world noticed.
+ */
+export function threadModel(s: GameState): ThreadModel[] {
+  const hereIds = new Set(
+    Object.values(s.entities)
+      .filter((e) => e.alive && e.location_id === pc(s).location_id)
+      .map((e) => e.id),
+  );
+  const all = Object.values(s.threads);
+  const rank = (t: { status: string }) => (t.status === "open" ? 0 : 1);
+  return all
+    .sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id))
+    .slice(0, 24)
+    .map((t) => ({
+      id: t.id,
+      text: t.text,
+      status: t.status,
+      from: t.from_entity_id ? s.entities[t.from_entity_id]?.name ?? null : null,
+      outcome: t.outcome,
+      here: t.subject_ids.some((id) => hereIds.has(id)),
+    }));
+}
+
 export function screen(s: GameState): ScreenModel {
   return {
     scene: sceneModel(s),
@@ -596,6 +631,7 @@ export function screen(s: GameState): ScreenModel {
     sheet: sheetModel(s),
     party: partyModel(s),
     quests: questModel(s),
+    threads: threadModel(s),
     vows: vowModel(s),
     palette: palette(s),
     map: mapModel(s),

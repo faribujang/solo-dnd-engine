@@ -11,6 +11,7 @@ import { Arc, Campaign, Group, LegacyEntry, SessionZero, Settlement } from "./ca
 import { CombatState } from "./combat.js";
 import { Clock, Vow } from "./clock.js";
 import { EncounterTable } from "./encounter.js";
+import { Thread } from "./thread.js";
 import { Conversation } from "../engine/conversation.js";
 
 export const CampaignMeta = z.object({
@@ -86,6 +87,8 @@ export const GameState = z.object({
   legacy: z.array(LegacyEntry).default([]),
   combat: CombatState.nullable().default(null),
   clocks: z.record(z.string(), Clock).default({}),
+  /** Promises, debts and errands the story picked up along the way. See schema/thread.ts. */
+  threads: z.record(z.string(), Thread).default({}),
   vows: z.record(z.string(), Vow).default({}),
   encounter_tables: z.record(z.string(), EncounterTable).default({}),
   /** Who the player is currently talking to, if anyone. Talking is a state, not an action. */

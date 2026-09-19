@@ -63,6 +63,15 @@ export function suggest(s: GameState, ctx: SuggestContext = {}): Suggestion[] {
 
   // Ids a lead points at, and ids named by a lead's text — both are "the player has a
   // reason to care about this".
+  // A promise whose subject is in the room is the most actionable thing there is —
+  // stronger than any lead, because the player made it themselves.
+  const threadTargets = new Set<string>();
+  for (const th of Object.values(s.threads)) {
+    if (th.status !== "open") continue;
+    for (const id of th.subject_ids) threadTargets.add(id);
+    if (th.location_id) threadTargets.add(th.location_id);
+  }
+
   const leadTargets = new Set<string>();
   const leadText: string[] = [];
   for (const q of activeQuests) {
@@ -103,6 +112,9 @@ export function suggest(s: GameState, ctx: SuggestContext = {}): Suggestion[] {
 
     // A lead the player holds but has not followed.
     if (touches.some((id) => leadTargets.has(id))) { score += 2; because.push("follows a lead"); }
+    // Scored above a lead on purpose: a lead is the world pointing, a thread is the
+    // player having already said yes.
+    if (touches.some((id) => threadTargets.has(id))) { score += 3; because.push("you said you would"); }
     if (a.action.type === "talk") {
       const who = nameOf(s, a.action.target_id).toLowerCase();
       if (leadText.some((t) => t.includes(who))) { score += 1; because.push("named in a lead"); }

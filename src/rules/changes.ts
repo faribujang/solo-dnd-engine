@@ -33,6 +33,8 @@ export type Change =
   | { t: "faction"; name: string; note: string }
   | { t: "place"; name: string; note: string }
   | { t: "person"; name: string; note: string }
+  /** A promise picked up, or one settled. */
+  | { t: "thread"; text: string; note: string }
   | { t: "self"; note: string };
 
 /** Report an attitude move this size even when it crosses no boundary. */
@@ -87,6 +89,15 @@ export function changesBetween(before: GameState, after: GameState): Change[] {
           ? (dT > 0 ? "trusts you further" : "trusts you less")
           : (dA > 0 ? "warmer toward you" : "colder toward you");
     out.push({ t: "attitude", who, note, sign: biggest >= 0 ? "up" : "down" });
+  }
+
+  // ── threads: what you just took on, and what you just settled.
+  for (const [id, th] of Object.entries(after.threads)) {
+    const old = before.threads[id];
+    if (!old) { out.push({ t: "thread", text: th.text, note: "you said you would" }); continue; }
+    if (old.status === "open" && th.status !== "open") {
+      out.push({ t: "thread", text: th.text, note: th.outcome || th.status });
+    }
   }
 
   // ── clocks. The world moving on its own, which is the one kind of pressure a player
@@ -179,6 +190,7 @@ function oneLine(c: Change): string {
     case "faction": return `${c.name} ${c.note}`;
     case "place": return `found ${c.name}`;
     case "person": return `${c.name} ${c.note}`;
+    case "thread": return `${c.text} — ${c.note}`;
     case "self": return c.note;
   }
 }

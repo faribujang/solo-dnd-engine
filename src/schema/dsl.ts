@@ -105,6 +105,24 @@ export const Effect = z.discriminatedUnion("t", [
     trait: z.string().max(200).default(""),
   }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
+  /**
+   * Pick up an obligation. The narrator is trusted with these precisely because they
+   * have no mechanical teeth: a thread is a sentence and a status, and nothing in the
+   * rules engine reads one.
+   */
+  z.object({
+    t: z.literal("open_thread"),
+    text: z.string().min(1).max(240),
+    subject_ids: z.array(Id).default([]),
+    location_id: Id.nullable().default(null),
+    from_entity_id: Id.nullable().default(null),
+  }),
+  z.object({
+    t: z.literal("resolve_thread"),
+    thread_id: Id,
+    as: z.enum(["kept", "broken", "faded"]),
+    outcome: z.string().max(240).default(""),
+  }),
   z.object({ t: z.literal("start_combat"), enemy_ids: z.array(Id) }),
   z.object({ t: z.literal("add_condition"), entity_id: Id, condition_id: z.string(), duration_minutes: z.number().int().nonnegative(), rounds: z.number().int().nonnegative().default(0) }),
   z.object({ t: z.literal("remove_condition"), entity_id: Id, condition_id: z.string() }),
@@ -187,6 +205,7 @@ export const NARRATOR_ALLOWED_EFFECTS = [
   "set_flag", "add_lead", "reveal_location", "reveal_exit",
   "add_fact", "teach_fact", "adjust_attitude", "move_entity", "advance_time",
   "set_opinion", "grant_inspiration", "tick_clock", "introduce_local",
+  "open_thread", "resolve_thread",
 ] as const;
 
 /** The event types the engine understands. Triggers match on these. */

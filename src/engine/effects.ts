@@ -19,6 +19,7 @@ import { inspirationCap, inspirationOf } from "../rules/inspiration.js";
 import { Clock, vowComplete } from "../schema/clock.js";
 import { Entity } from "../schema/entity.js";
 import { Relationship } from "../schema/relationship.js";
+import { Thread, THREAD_FADE_MINUTES } from "../schema/thread.js";
 
 /**
  * Effects are the ONLY way state changes. Each one mutates the draft in place and may
@@ -461,6 +462,32 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       break;
     }
 
+    case "open_thread": {
+      const id = nextId(s, "thr");
+      s.threads[id] = Thread.parse({
+        id,
+        text: eff.text,
+        subject_ids: [...eff.subject_ids],
+        location_id: eff.location_id,
+        from_entity_id: eff.from_entity_id,
+        opened_turn: s.meta.turn,
+        opened_world_minute: s.world.world_minute,
+        // Everything picked up has a shelf life. An obligation that can never expire is
+        // not an obligation, it is furniture.
+        fades_at_world_minute: s.world.world_minute + THREAD_FADE_MINUTES,
+        source: "narrator",
+      });
+      break;
+    }
+
+    case "resolve_thread": {
+      const th = s.threads[eff.thread_id];
+      if (!th || th.status !== "open") break;
+      th.status = eff.as;
+      th.outcome = eff.outcome;
+      break;
+    }
+
     case "add_fact": {
       const id = nextId(s, "fact");
       /**
@@ -506,6 +533,22 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     case "advance_time": {
       if (eff.minutes <= 0) break;
       s.world.world_minute += eff.minutes;
+
+      /**
+       * Threads nobody has touched in ten days quietly stop mattering.
+       *
+       * Sorted, for the same reason the clocks below are: two threads fading in one tick
+       * must fade in the same order on replay as they did live, or the ids minted after
+       * them renumber and the rebuild gate fails.
+       */
+      for (const id of Object.keys(s.threads).sort()) {
+        const th = s.threads[id]!;
+        if (th.status !== "open") continue;
+        if (th.fades_at_world_minute !== null && s.world.world_minute >= th.fades_at_world_minute) {
+          th.status = "faded";
+          th.outcome = "nobody mentioned it again";
+        }
+      }
       // Clocks that run on their own advance with the calendar, whether or not anyone
       // is watching. That is the point of them.
       // SORTED, and not incidentally.
