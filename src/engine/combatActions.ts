@@ -7,6 +7,7 @@ import type { Rng } from "../rules/rng.js";
 import { rollD20, rollDamage, rollDice } from "../rules/dice.js";
 import { abilityModOf, saveModifier, skillModifier } from "../rules/checks.js";
 import { conditionFlags, canAct, canMove } from "../rules/conditions.js";
+import { attackModifiers } from "../rules/terrain.js";
 import { SPELLS, spellDC } from "../content/srd/spells.js";
 import {
   adjacentZones, castingMod, combatOver, combatantOf, currentCombatant, hasSlot, inReach,
@@ -61,6 +62,9 @@ export function beginCombatEffects(s: GameState, rng: Rng, actor: Entity, enemyI
     concentration: {},
     log: [],
     started_turn: s.meta.turn + 1,
+    // Most fights are for nothing but the fight. An authored encounter can say otherwise
+    // by starting combat with one attached; see rules/objectives.ts.
+    objective: null,
   };
   const mech = `Initiative: ${order.map((c) => `${s.entities[c.entity_id]!.name} ${c.initiative}`).join(", ")}.`;
   return { effects: [{ t: "begin_combat", combat }], rolls: [], mech };

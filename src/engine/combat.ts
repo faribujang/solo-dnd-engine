@@ -1,5 +1,6 @@
 import type { Entity } from "../schema/entity.js";
 import type { GameState } from "../schema/state.js";
+import { objectiveState } from "../rules/objectives.js";
 import type { Combatant, CombatState } from "../schema/combat.js";
 import type { Rng } from "../rules/rng.js";
 import type { Action } from "./turn.js";
@@ -37,9 +38,24 @@ export function activeSide(s: GameState, c: CombatState, side: Combatant["side"]
 /** Combat ends when one side has nobody left standing (downed party members still count
  *  as present, since the fight is not over while they can be saved). */
 export function combatOver(s: GameState, c: CombatState): "party" | "enemy" | null {
+  /**
+   * The objective is asked FIRST, and that ordering is the whole feature.
+   *
+   * A fight whose point is "hold the door for three rounds" must end when the door has
+   * been held — not when somebody finally dies. Checking elimination first would mean an
+   * encounter designed around surviving could only ever be resolved by killing, which is
+   * the thing objectives exist to stop.
+   */
+  const objective = objectiveState(s, c);
+  if (objective === "won") return "party";
+  if (objective === "lost") return "enemy";
+
   const enemies = activeSide(s, c, "enemy");
   const party = activeSide(s, c, "party").filter((x) => (s.entities[x.entity_id]?.hp.current ?? 0) > 0);
-  if (enemies.length === 0) return "party";
+
+  // An objective may declare that wiping out the other side is NOT a win — an escape is
+  // not achieved by killing everyone who was chasing you, it is achieved by leaving.
+  if (enemies.length === 0) return c.objective && !c.objective.killing_also_wins ? null : "party";
   if (party.length === 0) return "enemy";
   return null;
 }

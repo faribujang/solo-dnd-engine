@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TerrainTrait } from "../rules/terrain.js";
 import { DifficultyBand, Flags, Id, LightLevel, Skill } from "./common.js";
 import { Trigger } from "./dsl.js";
 
@@ -35,6 +36,14 @@ export const Zone = z.object({
   id: z.string(),
   name: z.string(),
   adjacent: z.array(z.string()).default([]),
+  /**
+   * What the ground does. See rules/terrain.ts.
+   *
+   * Empty means flat and featureless, which is what every zone used to be — and is why
+   * every fight played the same. Terrain is the cheapest variety available, because it
+   * changes decisions rather than numbers.
+   */
+  terrain: z.array(TerrainTrait).default([]),
 });
 export type Zone = z.infer<typeof Zone>;
 

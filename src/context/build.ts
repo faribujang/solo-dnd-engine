@@ -1,4 +1,6 @@
 import type { GameState } from "../schema/state.js";
+import { describeObjective } from "../rules/objectives.js";
+import { describeZone } from "../rules/terrain.js";
 import { estimateTokens } from "../llm/client.js";
 import { dispositionOf, offersUnpromptedAid, willShareSecrets } from "../rules/social.js";
 import { skillModifier } from "../rules/checks.js";
@@ -136,6 +138,25 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
       const about = t.subject_ids.map((id) => s.entities[id]?.name).filter(Boolean).join(", ");
       return `- ${t.id}: ${t.text}${who ? ` (asked by ${who})` : ""}${about ? ` [about ${about}]` : ""}`;
     }).join(NL));
+
+  // 3c — the fight, when there is one. The ground and the objective are the two things
+  // that make one fight different from another, and the narrator was told neither.
+  if (s.combat) {
+    const me = pc(s);
+    const obj = describeObjective(s, s.combat);
+    const ground = describeZone(s, s.combat.location_id, me.zone_id);
+    const zones = (s.locations[s.combat.location_id]?.zones ?? [])
+      .map((z) => {
+        const g = describeZone(s, s.combat!.location_id, z.id);
+        return `- ${z.name}${g ? `: ${g}` : ""}`;
+      });
+    add("fight", 2, BUDGETS.mechanics, false, "THE FIGHT",
+      [
+        obj ? `Objective: ${obj}` : "",
+        ground ? `${me.name} is standing in: ${ground}` : "",
+        zones.length ? `Ground:${NL}${zones.join(NL)}` : "",
+      ].filter(Boolean).join(NL));
+  }
 
   // 4 — the player's sheet.
   add("pc", 2, BUDGETS.pc, false, "PLAYER CHARACTER", renderPc(s));

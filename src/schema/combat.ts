@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Id } from "./common.js";
+import { CombatObjective } from "../rules/objectives.js";
 
 /**
  * Combat is a CombatState INSIDE GameState, not a separate mode of the app. The turn
@@ -48,6 +49,13 @@ export const CombatState = z.object({
   /** Round-scoped log lines, for the combat panel. Cleared when combat ends. */
   log: z.array(z.string()).default([]),
   started_turn: z.number().int().nonnegative(),
+  /**
+   * What this fight is FOR, when it is for something other than a body count.
+   *
+   * Authored, never invented — the shape of an encounter is a design decision. See
+   * rules/objectives.ts.
+   */
+  objective: CombatObjective.nullable().default(null),
 });
 export type CombatState = z.infer<typeof CombatState>;
 

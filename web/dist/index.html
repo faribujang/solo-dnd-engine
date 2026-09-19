@@ -79,6 +79,11 @@ header{
 .combatant .it{flex:1;min-width:0;font-size:12px;color:var(--faint);font-style:italic;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .combatant.gone{opacity:.45}
+.fight .fobj{
+  margin-top:6px;font-size:12.5px;color:var(--brass);
+  border-top:1px solid #3d2a18;padding-top:6px;
+}
+.fight .fground{margin-top:4px;font-size:12px;color:var(--faint);font-style:italic}
 .tag.hurt{border-color:#5a2f27;color:#e0a196}
 
 /* ── the feed */
@@ -434,9 +439,20 @@ function paintFight() {
       + '<span class="it">' + esc(o.intent || (o.is_current ? "acting now" : "")) + "</span></div>";
   }).join("");
 
+  // What the fight is FOR, when it is for anything but a body count. Without this on
+  // screen an objective is a rule the player loses to without knowing it existed.
+  const obj = c.objective
+    ? '<div class="fobj">◎ ' + esc(c.objective) + "</div>"
+    : "";
+
+  // The ground the player is standing on, which is the other half of why one fight is
+  // different from another.
+  const myZone = (c.zones || []).find((z) => (z.occupants || []).some((n) => n === (S.screen.sheet && S.screen.sheet.name)));
+  const ground = myZone && myZone.ground ? '<div class="fground">' + esc(myZone.name) + " — " + esc(myZone.ground) + "</div>" : "";
+
   el.innerHTML = '<div class="fight"><div class="fhead"><span>⚔ Round ' + c.round + " — "
     + (mine ? "your turn" : esc(whose) + " acts") + '</span><span class="pips">' + pips + "</span></div>"
-    + rows + "</div>";
+    + obj + ground + rows + "</div>";
 }
 
 function paintChips(list) {

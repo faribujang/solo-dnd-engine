@@ -1,5 +1,7 @@
 import type { Roll } from "../schema/common.js";
 import { crowdAt } from "../engine/bystanders.js";
+import { describeObjective } from "../rules/objectives.js";
+import { TERRAIN, describeZone } from "../rules/terrain.js";
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
 import type { Affordance, Cost } from "../rules/affordances.js";
@@ -475,7 +477,8 @@ export interface CombatModel {
      *  policy is deterministic given state. */
     intent: string | null;
   }>;
-  zones: Array<{ id: string; name: string; occupants: string[]; adjacent: string[] }>;
+  objective: string;
+  zones: Array<{ id: string; name: string; occupants: string[]; adjacent: string[]; terrain: string[]; ground: string }>;
   concentration: Array<{ who: string; spell: string }>;
 }
 
@@ -682,8 +685,14 @@ export function combatModel(s: GameState, rng: Rng): CombatModel | null {
     round: c.round,
     current: c.order[c.current]!.entity_id,
     order,
+    // What the fight is for, if it is for anything but a body count. Without this on
+    // screen an objective is a rule the player loses to without knowing it existed.
+    objective: describeObjective(s, c),
     zones: (loc?.zones ?? []).map((z) => ({
       id: z.id, name: z.name, occupants: occupants.get(z.id) ?? [], adjacent: z.adjacent,
+      // The ground, in words. A trait a player cannot see is set dressing.
+      terrain: z.terrain.map((t) => TERRAIN[t].label),
+      ground: describeZone(s, c.location_id, z.id),
     })),
     concentration: Object.entries(c.concentration).map(([who, con]) => ({
       who: s.entities[who]?.name ?? who,
