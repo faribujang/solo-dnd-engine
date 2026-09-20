@@ -9,6 +9,12 @@ const MAX_NEW_LOCALS_PER_TURN = 1;
 
 /** Named people one place can hold before it stops being a place and becomes a crowd. */
 const MAX_NAMED_IN_ONE_PLACE = 14;
+
+/** Things one scene may put into somebody's hands. */
+const MAX_GIFTS_PER_TURN = 2;
+
+/** Kinds the narrator may never hand over, because they move numbers. */
+const GIFT_FORBIDDEN = new Set(["weapon", "armor", "shield"]);
 import { ATTITUDE_CLAMP_PER_TURN } from "../schema/relationship.js";
 import { NarratorProposal } from "./contracts.js";
 import type { Narration } from "./contracts.js";
@@ -157,6 +163,7 @@ export function validateNarration(
   // How many people this turn has already invented. See the `introduce_local` case.
   let newLocals = 0;
   let newThreads = 0;
+  let gifts = 0;
 
   // ───────────────────────────────────────────────────────────── threads
   // Same gates as the `open_thread` proposal, because they are the same thing arriving
@@ -292,6 +299,30 @@ export function validateNarration(
         if (!th) { reject("proposal", `no thread ${p.thread_id}`, p); break; }
         if (th.status !== "open") { reject("proposal", `thread ${p.thread_id} is already ${th.status}`, p); break; }
         effects.push({ t: "resolve_thread", thread_id: p.thread_id, as: p.as, outcome: (p.outcome ?? "").slice(0, 240) });
+        break;
+      }
+
+      /**
+       * Somebody hands the player a real thing.
+       *
+       * Three gates: the item has to be one the campaign defines, the recipient has to be
+       * here, and two per turn. The DM may not invent a sword — but "Cotter puts a loaf
+       * and a waterskin in your hands" should put a loaf and a waterskin in the player's
+       * hands, and until now it put nothing anywhere.
+       */
+      case "give_item": {
+        if (gifts >= MAX_GIFTS_PER_TURN) { reject("proposal", "two handed-over items per turn is the limit", p); break; }
+        const def = s.item_defs[p.item_def_id];
+        if (!def) { reject("proposal", `no such item as ${p.item_def_id}`, p); break; }
+        // A sword or a breastplate changes what the dice do, and that belongs to the
+        // engine. Everything else is a prop and the story may hand it over.
+        if (GIFT_FORBIDDEN.has(def.kind)) {
+          reject("proposal", `${def.name} is ${def.kind} — the engine hands out gear, not the narrator`, p);
+          break;
+        }
+        if (!ctx.presentEntityIds.includes(p.entity_id)) { reject("proposal", `${p.entity_id} is not here to receive anything`, p); break; }
+        effects.push({ t: "give_item", entity_id: p.entity_id, item_def_id: p.item_def_id, qty: Math.min(5, Math.max(1, p.qty ?? 1)) });
+        gifts += 1;
         break;
       }
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadCampaign, validateReferences } from "../../src/content/loadCampaign.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../../src/schema/dsl.js";
+import { validateNarration } from "../../src/llm/validate.js";
 
 const CAMPAIGN = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -114,12 +115,43 @@ describe("referential integrity catches real content bugs", () => {
 describe("the narrator whitelist", () => {
   it("excludes every effect that could change mechanical outcomes", () => {
     const forbidden = [
-      "damage", "heal", "give_item", "remove_item", "set_quest_status",
+      "damage", "heal", "remove_item", "set_quest_status",
       "advance_quest", "faction_rep", "spawn_entity", "start_combat",
     ];
     for (const f of forbidden) {
       expect(NARRATOR_ALLOWED_EFFECTS as readonly string[]).not.toContain(f);
     }
+  });
+
+  /**
+   * `give_item` used to be on that list, and the instinct was right for the wrong reason.
+   * A narrator that cannot hand the player anything describes Cotter filling their pack
+   * and leaves it empty — the player looks, finds nothing, and stops believing the prose.
+   * The line is not "no items", it is "nothing that moves a number": the gate lives in
+   * validate.ts and refuses weapons, armour and shields by kind.
+   */
+  it("lets a character hand over a prop, but never gear", async () => {
+    const s = await loadCampaign(CAMPAIGN);
+    const here = s.entities[s.meta.pc_id]!.location_id;
+    const present = Object.values(s.entities).filter((e) => e.location_id === here).map((e) => e.id);
+    const ctx = { presentEntityIds: present, locationId: here };
+
+    const prop = Object.values(s.item_defs).find((d) => d.kind === "consumable" || d.kind === "tool")!;
+    const gear = Object.values(s.item_defs).find((d) => d.kind === "weapon" || d.kind === "armor")!;
+
+    const shape = (defId: string) => ({
+      narration: "He puts it into your hands without a word.",
+      facts: [], attitude_deltas: [], opinion_updates: [],
+      proposals: [{ t: "give_item", entity_id: s.meta.pc_id, item_def_id: defId, qty: 1 }],
+      suggested_actions: [], scene_change: null, new_thread: null, settled_thread: null,
+    }) as never;
+
+    const good = validateNarration(s, shape(prop.id), ctx);
+    expect(good.effects).toHaveLength(1);
+
+    const bad = validateNarration(s, shape(gear.id), ctx);
+    expect(bad.effects).toHaveLength(0);
+    expect(bad.rejects[0]!.reason).toMatch(/engine hands out gear/);
   });
 
   it("includes the soft, narrative-only effects", () => {

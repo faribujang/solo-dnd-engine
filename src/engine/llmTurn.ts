@@ -203,8 +203,29 @@ export async function takeLLMTurn(
     .filter((e) => e.derived_from === null && e.id !== root.id && e.actor_id && e.actor_id !== pc(working).id && e.rolls.length)
     .map((e) => `${working.entities[e.actor_id!]?.name ?? e.actor_id}: ${(e.payload as { hit?: boolean; damage?: number }).hit === undefined ? e.type : (e.payload as { hit?: boolean }).hit ? `hit for ${(e.payload as { damage?: number }).damage}` : "missed"}`);
   // Code ranks what is worth doing; the narrator only phrases it (rules/suggest.ts).
+  /**
+   * What this turn just put in front of the player.
+   *
+   * `suggest` has always scored "just became possible" highest and nothing ever told it
+   * what was new, so the top of the list was the same every turn — read the weather, ask
+   * somebody about nothing. A shortlist that ignores the last thing that happened makes
+   * the player the follower rather than the lead, because the game is never pointing at
+   * what they just found out.
+   */
+  const newThisTurn = [
+    ...root.target_ids,
+    ...journal.flatMap((e) => [
+      ...e.target_ids,
+      ...e.direct_effects.flatMap((eff) => {
+        const f = eff as Record<string, unknown>;
+        return [f["entity_id"], f["location_id"], f["fact_id"], f["quest_id"], ...(Array.isArray(f["subjects"]) ? f["subjects"] : [])];
+      }),
+    ]),
+  ].filter((x): x is string => typeof x === "string" && x.length > 0);
+
   const shortlist = suggest(working, {
     ...(opts.triedThisScene ? { triedThisScene: opts.triedThisScene } : {}),
+    newThisTurn: [...new Set(newThisTurn)],
   });
 
   // Companions who spoke this turn. The reducer already wrote their line and moved their

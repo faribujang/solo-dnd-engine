@@ -164,6 +164,34 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
         return { ok: true, intent, action: { type: "travel", location_id: far.id } };
       }
 
+      /**
+       * "Go to Hob Tanner and ask him about the pitch."
+       *
+       * Crossing a room to somebody is not travel, and answering it with "that is not a
+       * location" is the game correcting the player's English rather than understanding
+       * it. If what they named is a person standing here, they meant to go and talk to
+       * them, and that is one action.
+       */
+      const person = said.length > 2 ? (findEntity(said) ?? findAnyone(s, said)) : null;
+      if (person && s.entities[person]?.location_id === loc.id) {
+        return {
+          ok: true, intent,
+          action: { type: "talk", target_id: person, ...(intent.topic ? { topic: intent.topic } : {}) },
+        };
+      }
+      // Named somebody real who is somewhere else: say where, rather than "no such place".
+      if (person) {
+        const them = s.entities[person]!;
+        const where = s.locations[them.location_id];
+        const known = where && (where.discovered || where.visited_count > 0);
+        return {
+          ok: false, intent,
+          clarify: known
+            ? `${them.name} is not here — you last knew them to be at ${where.name}.`
+            : `${them.name} is not here, and you do not know where they are.`,
+        };
+      }
+
       // Only now is it genuinely unclear — and the question names PLACES, because "north,
       // out, down" is not something anyone can answer about a village they are standing in.
       const here = exits
@@ -412,6 +440,35 @@ const SYSTEM = [
  * "go to the bakehouse", "to The Bakehouse", "the bakehouse" and "bakehouse" are one
  * request. Stripping them here means every caller compares the same thing.
  */
+/**
+ * Somebody by name, anywhere in the world the player could know about.
+ *
+ * `findEntity` deliberately searches only the room — for targeting, that is correct, since
+ * you cannot stab somebody two villages away. But "go to Hob Tanner" is not targeting, it
+ * is asking where he is, and answering "that is not a location" teaches the player that
+ * the game does not know its own cast. Restricted to people already met, so this cannot
+ * become a way to ask the engine where anyone is.
+ */
+function findAnyone(s: GameState, said: string): string | null {
+  const me = s.meta.pc_id;
+  const met = new Set<string>();
+  for (const key of Object.keys(s.relationships)) {
+    const [a, b] = key.split("->");
+    if (a === me && b) met.add(b);
+    if (b === me && a) met.add(a);
+  }
+
+  const n = said.toLowerCase().trim();
+  if (n.length < 3) return null;
+  for (const id of [...met].sort()) {
+    const e = s.entities[id];
+    if (!e || !e.alive || e.kind === "monster") continue;
+    const forms = [e.id.toLowerCase(), e.name.toLowerCase(), ...e.aliases.map((a) => a.toLowerCase())];
+    if (forms.some((f) => f === n || n.includes(f) || (f.includes(n) && n.length >= 4))) return e.id;
+  }
+  return null;
+}
+
 function placeWord(raw: string | null | undefined): string {
   return (raw ?? "")
     .toLowerCase()

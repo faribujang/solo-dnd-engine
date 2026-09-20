@@ -206,6 +206,18 @@ export const NARRATOR_ALLOWED_EFFECTS = [
   "add_fact", "teach_fact", "adjust_attitude", "move_entity", "advance_time",
   "set_opinion", "grant_inspiration", "tick_clock", "introduce_local",
   "open_thread", "resolve_thread",
+  /**
+   * Handing something over — and ONLY things that cannot change a roll.
+   *
+   * The narrator describing a gift the engine never made is the worst lie this system
+   * tells: the player is told they have a thing, opens their pack, and it is not there.
+   * But "no items from the narrator" was the right instinct for the wrong reason — a
+   * sword is a mechanical outcome; a loaf, a lantern and a dead man's ring are props.
+   *
+   * validate.ts enforces the line: the definition must already exist in the campaign,
+   * and its kind must not be weapon, armour or shield.
+   */
+  "give_item",
 ] as const;
 
 /** The event types the engine understands. Triggers match on these. */

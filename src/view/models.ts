@@ -715,6 +715,8 @@ export interface ScreenModel {
   quests: QuestModel[];
   /** Promises, debts and errands the story picked up. See schema/thread.ts. */
   threads: ThreadModel[];
+  /** Everyone the player has met. */
+  people: PersonModel[];
   vows: VowModel[];
   palette: PaletteModel;
   map: MapModel;
@@ -768,6 +770,59 @@ export function threadModel(s: GameState): ThreadModel[] {
     }));
 }
 
+export interface PersonModel {
+  id: string;
+  name: string;
+  descriptor: string;
+  /** How they read to you, in words. */
+  disposition: string;
+  /** Where you last knew them to be, or "" if you do not. */
+  where: string;
+  /** Their own words about you, when they have formed any. */
+  opinion: string;
+}
+
+/**
+ * THE CAST, AS THE PLAYER KNOWS IT.
+ *
+ * The people are the half of a campaign anybody actually keeps in their head, and they
+ * lived nowhere in the interface — every name was in scrollback. This is the player's
+ * journal, not the DM's notes, so it holds people they have MET: a relationship row in
+ * either direction, which is the same test the rest of the engine uses for whether two
+ * people have any history at all.
+ */
+export function peopleModel(s: GameState): PersonModel[] {
+  const me = s.meta.pc_id;
+  const met = new Set<string>();
+  for (const key of Object.keys(s.relationships)) {
+    const [a, b] = key.split("->");
+    if (a === me && b) met.add(b);
+    if (b === me && a) met.add(a);
+  }
+
+  const here = pc(s).location_id;
+  return [...met]
+    .map((id) => s.entities[id])
+    .filter((e): e is Entity => !!e && e.kind !== "monster" && e.id !== me)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((e) => {
+      const rel = s.relationships[`${e.id}->${me}`];
+      const loc = s.locations[e.location_id];
+      // Where they are is only knowable if you can see them or have been there.
+      const known = e.location_id === here || (loc && loc.visited_count > 0);
+      return {
+        id: e.id,
+        name: e.name,
+        descriptor: e.descriptor,
+        disposition: e.alive
+          ? (rel ? dispositionOf(rel.dims.affinity) : "hard to read")
+          : "dead",
+        where: known && loc ? loc.name : "",
+        opinion: rel?.opinion ?? "",
+      };
+    });
+}
+
 export function screen(s: GameState): ScreenModel {
   return {
     scene: sceneModel(s),
@@ -776,6 +831,7 @@ export function screen(s: GameState): ScreenModel {
     party: partyModel(s),
     quests: questModel(s),
     threads: threadModel(s),
+    people: peopleModel(s),
     vows: vowModel(s),
     palette: palette(s),
     map: mapModel(s),

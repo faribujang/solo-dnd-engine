@@ -337,6 +337,12 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
   background:var(--raised);padding:9px 11px;margin-bottom:6px}
 .topicbtn[disabled]{opacity:.5}
 .topicbtn .t{font-size:14px}
+.jtabs{display:flex;gap:6px;margin:0 0 10px}
+.jtab{
+  font-size:11px;letter-spacing:.09em;text-transform:uppercase;padding:5px 12px;
+  border:1px solid var(--line);border-radius:999px;background:var(--raised);color:var(--muted);
+}
+.jtab.on{color:var(--ember);border-color:#4a3a2c}
 
 /* ── drawers: sheet, palette, saves. Bottom sheets, because thumbs. */
 .scrim{position:fixed;inset:0;background:#000a;backdrop-filter:blur(2px);z-index:20}
@@ -1048,7 +1054,7 @@ VIEWS.map = (() => mapHtml());
  * So: a fixed viewport, an absolutely-positioned plane inside it, and one transform.
  * Dragging and zooming move the plane; nothing re-lays-out, so it stays smooth on a phone.
  */
-const MAPV = { x: 0, y: 0, k: 1, ready: false, level: null, focus: undefined };
+const MAPV = { x: 0, y: 0, k: 1, ready: false, level: null, focus: undefined, pinnedTo: null };
 
 /**
  * The plane every scale draws onto, in pixels.
@@ -1088,12 +1094,24 @@ function mapPlacer(points) {
  */
 function mapScope() {
   const m = S.screen && S.screen.map;
-  const hereId = S.screen && S.screen.scene && S.screen.scene.location.id;
   if (!m) return { level: "world", focus: null };
-  if (MAPV.level && MAPV.focus !== undefined) return { level: MAPV.level, focus: MAPV.focus };
-  // Default: the town you are standing in, or the world if you are out on the road.
   const mine = (m.settlements || []).find((st) => st.here);
-  return mine ? { level: "settlement", focus: mine.id } : { level: "world", focus: null };
+  const auto = mine ? { level: "settlement", focus: mine.id } : { level: "world", focus: null };
+
+  /**
+   * A drill-down is a detour, not a destination.
+   *
+   * Looking at another town and then walking somewhere used to leave the map exactly
+   * where you left it, so arriving at the riverbend showed you the world and you had to
+   * go and find yourself on it. Moving is the strongest possible signal that what you
+   * want to look at has changed, so a move drops whatever you were peering at and comes
+   * back to you.
+   */
+  if (MAPV.pinnedTo && MAPV.pinnedTo !== (S.screen.scene && S.screen.scene.location.id)) {
+    MAPV.level = null; MAPV.focus = undefined; MAPV.pinnedTo = null;
+  }
+  if (MAPV.level && MAPV.focus !== undefined) return { level: MAPV.level, focus: MAPV.focus };
+  return auto;
 }
 
 function mapHtml() {
@@ -1365,13 +1383,22 @@ function mapBindOnce() {
 // ─────────────────────────────────────────────────────────── journal
 // What the game is about, in its own words: quests, the leads under them, who is with you,
 // and — when you are mid-conversation — what you could ask and why a door is shut.
+/** Which page of the Journal is showing. */
+let JOURNAL_TAB = "quests";
+
 VIEWS.journal = (() => {
   const s = S.screen;
   if (!s) return;
   const open = (s.quests || []).filter((q) => q.status === "active");
   const shut = (s.quests || []).filter((q) => q.status !== "active");
 
-  let h = "<h2>Journal</h2>";
+  let h = "<h2>Journal</h2>"
+    + '<div class="jtabs">'
+    + ["quests", "people"].map((t) =>
+        '<button class="jtab' + (JOURNAL_TAB === t ? " on" : "") + '" data-jtab="' + t + '">' + t + "</button>").join("")
+    + "</div>";
+
+  if (JOURNAL_TAB === "people") return h + journalPeople(s);
 
   // Threads first. A promise the player made themselves outranks an errand they were
   // handed, and it is the half of the story nobody authored.
@@ -1437,6 +1464,40 @@ VIEWS.journal = (() => {
   }
 
   return h;
+});
+
+/**
+ * Who you have met, and what you know about them.
+ *
+ * The cast is the half of a campaign a player actually keeps in their head, and it was
+ * nowhere in the interface — every name lived in scrollback. Only people you have met,
+ * because this is your journal and not the DM's notes.
+ */
+function journalPeople(s) {
+  const here = new Set((s.scene && s.scene.present ? s.scene.present : []).map((p) => p.id));
+  const party = new Set((s.party || []).map((p) => p.id));
+  const rows = (s.people || []).slice().sort((a, b) =>
+    (here.has(b.id) ? 1 : 0) - (here.has(a.id) ? 1 : 0) || a.name.localeCompare(b.name));
+
+  if (!rows.length) return '<div class="note">Nobody yet. The people you meet will collect here.</div>';
+
+  return '<div class="list">' + rows.map((p) =>
+    '<div class="li"><div class="t">' + esc(p.name)
+    + (here.has(p.id) ? ' <span class="note" style="color:var(--ember)">· here</span>' : "")
+    + (party.has(p.id) ? ' <span class="note" style="color:var(--moss)">· with you</span>' : "")
+    + "</div>"
+    + (p.descriptor ? '<div class="d serif">' + esc(p.descriptor) + "</div>" : "")
+    + '<div class="d">' + esc(p.disposition || "") + (p.where ? " · last seen at " + esc(p.where) : "") + "</div>"
+    + (p.opinion ? '<div class="d serif">“' + esc(p.opinion) + "”</div>" : "")
+    + "</div>").join("") + "</div>";
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-jtab]");
+  if (!b) return;
+  JOURNAL_TAB = b.dataset.jtab;
+  const sheet = document.querySelector(".sheetpane");
+  if (sheet) sheet.innerHTML = sheetChrome(VIEWS.journal());
 });
 
 // ─────────────────────────────────────────────────────────────── log
@@ -1558,10 +1619,11 @@ document.addEventListener("click", (e) => {
 
   // Changing scale. The transform resets, because a view of a town and a view of the
   // world share no coordinates worth preserving.
+  const pin = () => { MAPV.pinnedTo = S.screen && S.screen.scene ? S.screen.scene.location.id : null; };
   const down = t.closest("[data-mapdown]");
-  if (down) { MAPV.level = "settlement"; MAPV.focus = down.dataset.mapdown; remountMap(); return; }
+  if (down) { MAPV.level = "settlement"; MAPV.focus = down.dataset.mapdown; pin(); remountMap(); return; }
   const into = t.closest("[data-mapinto]");
-  if (into) { MAPV.level = "place"; MAPV.focus = into.dataset.mapinto; remountMap(); return; }
+  if (into) { MAPV.level = "place"; MAPV.focus = into.dataset.mapinto; pin(); remountMap(); return; }
   const up = t.closest("[data-mapup]");
   if (up) {
     if (up.dataset.mapup === "world") { MAPV.level = "world"; MAPV.focus = null; }
@@ -1636,7 +1698,8 @@ function paintSides() {
     const el = document.getElementById("panelMap");
     // Only rebuild the map when the world actually moved, or panning is interrupted on
     // every frame of narration.
-    const stamp = (S.screen.map && S.screen.map.nodes.length) + ":" + S.version;
+    const where = S.screen.scene ? S.screen.scene.location.id : "";
+    const stamp = (S.screen.map && S.screen.map.nodes.length) + ":" + S.version + ":" + where;
     if (el && el.dataset.stamp !== stamp) {
       el.innerHTML = mapHtml();
       el.dataset.stamp = stamp;

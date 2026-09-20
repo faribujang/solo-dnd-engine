@@ -95,6 +95,7 @@ export const NarratorProposal = z.discriminatedUnion("t", [
   z.object({ t: z.literal("move_entity"), entity_id: z.string(), location_id: z.string() }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string(), voice: z.string().default(""), trait: z.string().default("") }),
+  z.object({ t: z.literal("give_item"), entity_id: z.string(), item_def_id: z.string(), qty: z.number().int().positive().default(1) }),
   z.object({ t: z.literal("open_thread"), text: z.string(), subject_ids: z.array(z.string()).default([]), location_id: z.string().nullable().default(null), from_entity_id: z.string().nullable().default(null) }),
   z.object({ t: z.literal("resolve_thread"), thread_id: z.string(), as: z.enum(["kept", "broken", "faded"]), outcome: z.string().default("") }),
 ]);

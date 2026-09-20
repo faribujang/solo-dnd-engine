@@ -172,6 +172,18 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
       ].filter(Boolean).join(NL));
   }
 
+  // The finite list of things that exist, so a gift is never invented. Cheap: ids and
+  // names only, and it is the difference between a loaf arriving in the pack and the
+  // player being told they were handed one.
+  add("items", 4, 260, false,
+    "ITEMS A CHARACTER MAY HAND OVER — `give_item` may only pass one of these",
+    Object.values(s.item_defs)
+      .filter((d) => d.kind !== "weapon" && d.kind !== "armor" && d.kind !== "shield")
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .slice(0, 40)
+      .map((d) => `- ${d.id}: ${d.name}`)
+      .join(NL));
+
   // 4 — the player's sheet.
   add("pc", 2, BUDGETS.pc, false, "PLAYER CHARACTER", renderPc(s));
 
@@ -380,7 +392,11 @@ function renderSystem(s: GameState): string {
     "   no damage, no gold, no dice results, no success or failure of your own invention.",
     "3. If a mechanics block is present, narrate that exact outcome. A failed roll stays",
     "   failed no matter how good a scene a success would make.",
-    "4. Speak only for NPCs listed as present, and only about things that NPC knows. A",
+    "4. The PRESENT block is EXHAUSTIVE. If somebody is not in it they are not in the",
+   "   room, and writing them into the scene makes the game and the prose disagree — the",
+   "   player will try to talk to them and be told there is nobody there. If you want",
+   "   somebody here, propose `move_entity` and THEN play them.",
+    "4b. Speak only for NPCs listed as present, and only about things that NPC knows. A",
     "   character cannot mention what they never saw and nobody told them.",
     "5. Second person, present tense. One or two paragraphs. End on the situation, not on a",
     "   question, and never on a list of options.",
@@ -430,6 +446,11 @@ function renderSystem(s: GameState): string {
     "",
     `The player character is ${pc(s).name}. Address them as "you".`,
     "",
+    "`suggested_actions` must follow from THIS turn. Phrase each one around what the",
+    "player just learned, was just told, or just walked into — never generic business",
+    "like reading the weather. If nothing new happened, point at the oldest unanswered",
+    "thing instead.",
+    "",
     "Report anything you newly establish in `facts`, and any shift in how a present NPC",
     "regards the player in `attitude_deltas`. Keep both small and specific.",
     "",
@@ -446,6 +467,7 @@ function renderSystem(s: GameState): string {
     "  {\"t\":\"teach_fact\", \"entity_id\":\"npc_x\", \"fact_id\":\"fact_x\"}",
     "  {\"t\":\"move_entity\", \"entity_id\":\"npc_x\", \"location_id\":\"loc_x\"}",
     "  {\"t\":\"advance_time\", \"minutes\":30}",
+    "  {\"t\":\"give_item\", \"entity_id\":\"pc_main\", \"item_def_id\":\"item_def_x\", \"qty\":1}",
     "",
     "SET `new_thread` WHENEVER THE PLAYER SAYS THEY WILL DO SOMETHING. It is a top-level",
     "field, beside `facts`, not a proposal. \"I will find out what happened to him\", \"I will",
@@ -463,7 +485,11 @@ function renderSystem(s: GameState): string {
     "next time. Not for someone already listed as present, and not for a crowd: unnamed",
     "passers-by need no record. Give them a `voice` and one `trait`; you will play them again.",
     "",
-    "Anything else — damage, healing, items, gold, quest status, combat — is the engine's",
+    "If a character hands the player something, propose `give_item` — otherwise they are",
+    "told they have it and their pack stays empty. You may only pass items the campaign",
+    "already defines, and never a weapon, armour or a shield — gear is the engine's.",
+    "",
+    "Anything else — damage, healing, gold, quest status, combat — is the engine's",
     "and is discarded if you propose it. When in doubt, propose nothing and just narrate.",
   ].join("\n");
 }
