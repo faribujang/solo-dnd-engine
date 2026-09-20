@@ -160,6 +160,16 @@ export interface MapNode {
   pins: Array<"player" | "quest" | "lead" | "settlement">;
   /** Minutes to walk there, or null if there is no known route. */
   travel_minutes: number | null;
+  /**
+   * Who the player knows is here.
+   *
+   * Deliberately NOT everybody who is here. A map that shows the position of every person
+   * in the world is a map that answers questions the player has not asked anybody — it
+   * would give away where Saveri Crole is before they have found a single person willing
+   * to say her name. So: everyone in the room you are standing in, and elsewhere, only
+   * people you have actually met, in places you have actually been.
+   */
+  people: string[];
 }
 
 export interface MapModel {
@@ -173,8 +183,45 @@ export interface MapModel {
  * Fog of war is not a rendering choice: undiscovered locations are simply absent, so a
  * client cannot leak the shape of the map by drawing greyed nodes in the right places.
  */
+/**
+ * Who the player can reasonably be said to know is standing in a place.
+ *
+ * The room you are in is free — you can see it. Anywhere else costs two things: you have
+ * been there, and you have met them. Knowledge in this engine is a ledger, and the map is
+ * not allowed to be the one surface that ignores it.
+ */
+function peopleKnownAt(
+  s: GameState,
+  locationId: string,
+  here: string,
+  met: ReadonlySet<string>,
+): string[] {
+  const loc = s.locations[locationId];
+  if (!loc) return [];
+  const visible = locationId === here || loc.visited_count > 0;
+  if (!visible) return [];
+
+  return Object.values(s.entities)
+    .filter((e) =>
+      e.alive
+      && e.location_id === locationId
+      && e.id !== s.meta.pc_id
+      && e.kind !== "monster"
+      && (locationId === here || met.has(e.id)))
+    .map((e) => e.name)
+    .sort();
+}
+
 export function mapModel(s: GameState): MapModel {
   const here = pc(s).location_id;
+  // "Met" is a relationship row in either direction — the same test the rest of the
+  // engine uses for whether two people have any history at all.
+  const met = new Set<string>();
+  for (const key of Object.keys(s.relationships)) {
+    const [a, b] = key.split("->");
+    if (a === s.meta.pc_id && b) met.add(b);
+    if (b === s.meta.pc_id && a) met.add(a);
+  }
   const routes = new Map(reachable(s, here).map((r) => [r.id, r.path.minutes]));
 
   const questTargets = new Set<string>();
@@ -201,6 +248,7 @@ export function mapModel(s: GameState): MapModel {
     nodes.push({
       id: l.id, name: l.name, x: l.coords.x, y: l.coords.y,
       state: l.visited_count > 0 ? "visited" : l.discovered ? "seen" : "known",
+      people: peopleKnownAt(s, l.id, here, met),
       danger: l.danger_level, settlement_id: l.settlement_id, pins,
       travel_minutes: l.id === here ? 0 : (routes.get(l.id) ?? null),
     });
