@@ -124,20 +124,20 @@ describe("the narrator whitelist", () => {
   });
 
   /**
-   * `give_item` used to be on that list, and the instinct was right for the wrong reason.
-   * A narrator that cannot hand the player anything describes Cotter filling their pack
-   * and leaves it empty — the player looks, finds nothing, and stops believing the prose.
-   * The line is not "no items", it is "nothing that moves a number": the gate lives in
-   * validate.ts and refuses weapons, armour and shields by kind.
+   * `give_item` used to be forbidden outright, and then briefly forbidden by KIND, and
+   * both were wrong. A narrator that cannot hand the player anything describes a smith
+   * unwrapping eleven-year-old steel and leaves the pack empty; a narrator that cannot
+   * hand over weapons cannot play that scene at all, which is the scene that exposed it.
+   *
+   * The item must already EXIST — the stats were authored by a person either way — and
+   * an author may lock a particular thing with `gift_ok: false` when it is meant to be
+   * fought for rather than handed over.
    */
-  it("lets a character hand over a prop, but never gear", async () => {
+  it("hands over anything the campaign defines, unless the author locked it", async () => {
     const s = await loadCampaign(CAMPAIGN);
     const here = s.entities[s.meta.pc_id]!.location_id;
     const present = Object.values(s.entities).filter((e) => e.location_id === here).map((e) => e.id);
     const ctx = { presentEntityIds: present, locationId: here };
-
-    const prop = Object.values(s.item_defs).find((d) => d.kind === "consumable" || d.kind === "tool")!;
-    const gear = Object.values(s.item_defs).find((d) => d.kind === "weapon" || d.kind === "armor")!;
 
     const shape = (defId: string) => ({
       narration: "He puts it into your hands without a word.",
@@ -146,12 +146,48 @@ describe("the narrator whitelist", () => {
       suggested_actions: [], scene_change: null, new_thread: null, settled_thread: null,
     }) as never;
 
-    const good = validateNarration(s, shape(prop.id), ctx);
-    expect(good.effects).toHaveLength(1);
+    // A weapon the campaign defines: allowed. This is the bow from under the hearth.
+    const weapon = Object.values(s.item_defs).find((d) => d.kind === "weapon")!;
+    expect(validateNarration(s, shape(weapon.id), ctx).effects).toHaveLength(1);
 
-    const bad = validateNarration(s, shape(gear.id), ctx);
-    expect(bad.effects).toHaveLength(0);
-    expect(bad.rejects[0]!.reason).toMatch(/engine hands out gear/);
+    // Something nobody wrote down: refused.
+    const invented = validateNarration(s, shape("item_def_vorpal_nonsense"), ctx);
+    expect(invented.effects).toHaveLength(0);
+    expect(invented.rejects[0]!.reason).toMatch(/no such item/);
+
+    // And an author's lock is honoured.
+    const locked = structuredClone(s);
+    locked.item_defs[weapon.id]!.gift_ok = false;
+    const refused = validateNarration(locked, shape(weapon.id), ctx);
+    expect(refused.effects).toHaveLength(0);
+    expect(refused.rejects[0]!.reason).toMatch(/not something to be handed over/);
+  });
+
+  /**
+   * Models guess ids from names — `npc_jory_finch` for `cmp_jory`, `pc_jackson` for
+   * `pc_main` — and every guess was being rejected, so attitude and opinion updates
+   * failed silently for dozens of turns while the prose said people were warming to you.
+   */
+  it("understands the ids a model actually produces", async () => {
+    const s = await loadCampaign(CAMPAIGN);
+    const me = s.meta.pc_id;
+    // Whoever this campaign has; the point is the SHAPE of the guesses, not the name.
+    const them = Object.values(s.entities).find((e) => e.id !== me && e.kind === "npc")!;
+    const first = them.name.toLowerCase().split(" ")[0]!;
+    const underscored = "npc_" + them.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    const ctx = { presentEntityIds: [me, them.id], locationId: s.entities[me]!.location_id };
+
+    for (const guess of [them.id, underscored, "npc_" + first, them.name, first]) {
+      const v = validateNarration(s, {
+        narration: "Something passes between you.",
+        facts: [], opinion_updates: [], proposals: [],
+        attitude_deltas: [{ subject: guess, object: "pc_jackson", dims: { trust: 4 }, reason: "the moment" }],
+        suggested_actions: [], scene_change: null, new_thread: null, settled_thread: null,
+      } as never, ctx);
+
+      expect(v.rejects, `"${guess}" should resolve`).toHaveLength(0);
+      expect(v.effects[0]).toMatchObject({ t: "adjust_attitude", subject: them.id, object: me });
+    }
   });
 
   it("includes the soft, narrative-only effects", () => {

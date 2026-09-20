@@ -420,7 +420,8 @@ export class GameService {
     const c = await this.context(saveId);
     const q = classify(text);
     if (!q) return { lines: ["Ask about your surroundings, who is here, what you can reach, how hurt something is, what you know, what you are carrying, or the time."], understood: false };
-    const a = answer(c.state, q.kind, q.subject);
+    // The player's own words, so an answer can be about what they asked.
+    const a = answer(c.state, q.kind, q.subject, text);
     return { lines: a.lines, understood: true };
   }
 

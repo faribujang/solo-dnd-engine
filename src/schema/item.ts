@@ -45,6 +45,15 @@ export const ItemDef = z.object({
   desc: z.string().default(""),
   weight: z.number().nonnegative().default(0),
   value_cp: z.number().int().nonnegative().default(0),   // copper pieces, the base unit
+  /**
+   * Whether a character may simply hand this over in a scene.
+   *
+   * True by default, because a DM giving you gear the campaign already defines is
+   * ordinary play and the stats were written by a person either way. Set it false on
+   * the thing that is supposed to be fought for, stolen, or earned — the decision
+   * belongs to whoever authored the item, not to a blanket rule about kinds.
+   */
+  gift_ok: z.boolean().default(true),
   damage: Damage.nullable().default(null),
   ac_base: z.number().int().nullable().default(null),    // for armor
   ac_bonus: z.number().int().default(0),                 // for shields

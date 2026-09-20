@@ -64,7 +64,12 @@ export function woundDescriptor(fraction: number): string {
   return "down";
 }
 
-export function answer(s: GameState, kind: QuestionKind, subject?: string): Answer {
+/**
+ * `asked` is the player's own sentence. Without it an answer can only be a dump of
+ * everything on the subject, which is how "did we get any gear from Cotter" came back
+ * as a biography.
+ */
+export function answer(s: GameState, kind: QuestionKind, subject?: string, asked?: string): Answer {
   const player = pc(s);
   const loc = s.locations[player.location_id]!;
   const lines: string[] = [];
@@ -141,21 +146,83 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string): Answ
       return { kind, lines, brief: `Describe how ${target.name} looks. Do not give a number.` };
     }
 
+    /**
+     * Asking about somebody returned EVERY fact naming them, newest last, in a wall.
+     * "Did we get any gear from Cotter" came back as a biography — technically all true
+     * and not an answer to anything. So: rank by what the question was about, keep the
+     * handful that match, and tell the narrator to ANSWER rather than recite.
+     */
     case "know": {
       const about = subject ?? "";
+      const name = (s.entities[about]?.name ?? about).toLowerCase();
       const facts = factsKnownToPc(s).filter(
-        (f) => f.subjects.includes(about) ||
-               f.text.toLowerCase().includes((s.entities[about]?.name ?? about).toLowerCase()),
+        (f) => f.subjects.includes(about) || f.text.toLowerCase().includes(name),
       );
       if (facts.length === 0) {
         return { kind, lines: ["Nothing you can call to mind."], brief: "They know nothing about this. Say so; do not invent." };
       }
-      lines.push(...facts.map((f) => f.text));
-      return { kind, lines, brief: "Recall these, in their own words. Add nothing." };
+
+      // Words from the question itself, minus the person it is about.
+      const words = (asked ?? "")
+        .toLowerCase()
+        .split(/[^a-z0-9']+/)
+        .filter((w: string) => w.length > 3 && !name.includes(w));
+
+      const scored = facts
+        .map((f) => {
+          const hay = f.text.toLowerCase();
+          const hits = words.filter((w: string) => hay.includes(w)).length;
+          return { f, score: hits * 10 + f.importance };
+        })
+        .sort((a, b) => b.score - a.score || b.f.turn - a.f.turn);
+
+      /**
+       * Anything that actually matched the wording wins. When nothing does, RECENCY beats
+       * importance: somebody asking "did we get any gear from Cotter" means the last ten
+       * minutes, and leading with the most historically significant thing you know about
+       * him is how the answer became a biography.
+       */
+      const relevant = scored.filter((x) => x.score >= 10);
+      const keep = (relevant.length
+        ? relevant
+        : scored.slice().sort((a, b) => b.f.turn - a.f.turn)
+      ).slice(0, 3);
+
+      lines.push(...keep.map((x) => x.f.text));
+      return {
+        kind, lines,
+        brief: "ANSWER the question in a sentence or two using only these. Do not list them, "
+          + "and do not recite everything you know about the subject. If they do not answer it, say so plainly.",
+      };
     }
 
+    /**
+     * "What am I carrying" and "does Cotter have anything for us" are the same question
+     * asked about different people, and the second was being answered with the first
+     * person's pack — the player asked about the smith and was shown their own sword.
+     */
     case "carrying": {
-      const held = itemsOwnedBy(s, player.id);
+      const who = subject && s.entities[subject] ? s.entities[subject]! : player;
+      const mine = who.id === player.id;
+      const held = itemsOwnedBy(s, who.id);
+
+      if (!mine) {
+        // Somebody else's pack is not an open book. You can see what they are holding or
+        // wearing; the rest is theirs, and guessing at it would be the map bug again.
+        const visible = held.filter((i) => Object.values(who.equipped).includes(i.id));
+        if (visible.length === 0) {
+          return {
+            kind,
+            lines: [`Nothing ${who.name} is showing you.`],
+            brief: `Answer what ${who.name} has on them that can be SEEN, and no more. If they are keeping something back, that is theirs to offer.`,
+          };
+        }
+        for (const i of visible) {
+          lines.push(`${s.item_defs[i.def_id]?.name ?? i.def_id} — ${who.name} has it on them`);
+        }
+        return { kind, lines, brief: `Only what is visible on ${who.name}.` };
+      }
+
       if (held.length === 0) return { kind, lines: ["Nothing but what you stand up in."], brief: "" };
       for (const i of held) {
         const def = s.item_defs[i.def_id];

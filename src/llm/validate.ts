@@ -13,8 +13,17 @@ const MAX_NAMED_IN_ONE_PLACE = 14;
 /** Things one scene may put into somebody's hands. */
 const MAX_GIFTS_PER_TURN = 2;
 
-/** Kinds the narrator may never hand over, because they move numbers. */
-const GIFT_FORBIDDEN = new Set(["weapon", "armor", "shield"]);
+/** An item definition by id, or by the id a model guessed from its name. */
+function findDef(s: GameState, guess: string): string | null {
+  const raw = (guess || "").toLowerCase().trim();
+  if (!raw) return null;
+  const words = raw.replace(/^item_def_/, "").replace(/_/g, " ");
+  const hits = Object.values(s.item_defs).filter((d) => {
+    const name = d.name.toLowerCase();
+    return d.id.toLowerCase() === raw || name === words || name.includes(words) || words.includes(name);
+  });
+  return hits.length === 1 ? hits[0]!.id : null;
+}
 import { ATTITUDE_CLAMP_PER_TURN } from "../schema/relationship.js";
 import { NarratorProposal } from "./contracts.js";
 import type { Narration } from "./contracts.js";
@@ -67,19 +76,50 @@ export function validateNarration(
     rejects.push({ turn, kind, reason, payload });
 
   /** Resolve whatever the model called something into a real entity id, or nothing. */
+  /**
+   * Who did the narrator mean?
+   *
+   * Models guess ids from names, constantly and reasonably: `npc_jory_finch` for
+   * `cmp_jory`, `pc_jackson` for `pc_main`. Every one of those was rejected, which meant
+   * attitude and opinion updates were silently failing for dozens of turns in a row — the
+   * prose said somebody warmed to you and the ledger never moved.
+   *
+   * A guessed id is a NAME with a prefix and underscores, so it is read as one. This is
+   * not the model being sloppy; it is us having asked for the one thing it cannot know.
+   */
   const entityId = (name: string): string | null => {
     if (!name) return null;
     if (s.entities[name]) return name;
-    const n = name.toLowerCase().trim();
-    if (n === "you" || n === "the player" || n === "pc") return s.meta.pc_id;
-    const hit = Object.values(s.entities).find(
-      (e) =>
-        e.name.toLowerCase() === n ||
-        e.aliases.some((a) => a.toLowerCase() === n) ||
-        e.name.toLowerCase().split(" ")[0] === n,
-    );
-    if (hit) resolved[name] = hit.id;
-    return hit?.id ?? null;
+
+    const raw = name.toLowerCase().trim();
+    if (raw === "you" || raw === "the player" || raw === "pc") return s.meta.pc_id;
+
+    // `npc_jory_finch` and `pc_jackson` are names wearing an id's clothes.
+    const asWords = raw.replace(/^(npc|pc|cmp|mon|ent)_/, "").replace(/_/g, " ").trim();
+    // Any `pc_*` is the lead, whatever the model called them.
+    if (raw.startsWith("pc_")) return s.meta.pc_id;
+
+    const forms = (e: { name: string; aliases: string[] }) => [
+      e.name.toLowerCase(),
+      ...e.aliases.map((a) => a.toLowerCase()),
+      e.name.toLowerCase().split(" ")[0] ?? "",
+    ];
+
+    for (const candidate of [raw, asWords]) {
+      if (!candidate) continue;
+      const hit = Object.values(s.entities).find((e) => forms(e).includes(candidate));
+      if (hit) { resolved[name] = hit.id; return hit.id; }
+    }
+
+    // Last resort: a surname or a partial, as long as it is unambiguous. Ambiguity is a
+    // refusal, because guessing between two people is worse than asking again.
+    for (const candidate of [raw, asWords]) {
+      if (!candidate || candidate.length < 3) continue;
+      const hits = Object.values(s.entities).filter((e) =>
+        forms(e).some((f) => f.length >= 3 && (f.includes(candidate) || candidate.includes(f))));
+      if (hits.length === 1) { resolved[name] = hits[0]!.id; return hits[0]!.id; }
+    }
+    return null;
   };
 
   // ------------------------------------------------------------- narration
@@ -312,12 +352,22 @@ export function validateNarration(
        */
       case "give_item": {
         if (gifts >= MAX_GIFTS_PER_TURN) { reject("proposal", "two handed-over items per turn is the limit", p); break; }
-        const def = s.item_defs[p.item_def_id];
-        if (!def) { reject("proposal", `no such item as ${p.item_def_id}`, p); break; }
-        // A sword or a breastplate changes what the dice do, and that belongs to the
-        // engine. Everything else is a prop and the story may hand it over.
-        if (GIFT_FORBIDDEN.has(def.kind)) {
-          reject("proposal", `${def.name} is ${def.kind} — the engine hands out gear, not the narrator`, p);
+        // The item must already exist. Resolve a guessed id the same way people are
+        // resolved, because "item_def_bow" for "item_def_hunting_bow" is the same mistake.
+        const defId = s.item_defs[p.item_def_id] ? p.item_def_id : findDef(s, p.item_def_id);
+        const def = defId ? s.item_defs[defId] : undefined;
+        if (!def || !defId) { reject("proposal", `no such item as ${p.item_def_id}`, p); break; }
+        /**
+         * Banning weapons was the wrong line, and it banned the exact scene that exposed
+         * the problem: a smith unwrapping eleven-year-old Accord steel and putting a bow
+         * in your hands. A DM handing over gear the campaign already defines is not
+         * inventing a mechanical outcome — the stats were authored by a person.
+         *
+         * What an author does control is `gift_ok`: set it false on the artefact that is
+         * supposed to be fought for.
+         */
+        if (def.gift_ok === false) {
+          reject("proposal", `${def.name} is not something to be handed over`, p);
           break;
         }
         if (!ctx.presentEntityIds.includes(p.entity_id)) { reject("proposal", `${p.entity_id} is not here to receive anything`, p); break; }
