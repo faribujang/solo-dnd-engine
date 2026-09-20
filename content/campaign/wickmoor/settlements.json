@@ -7,7 +7,8 @@
       "loc_forge",
       "loc_green",
       "loc_bakehouse",
-      "loc_moot_hall"
+      "loc_moot_hall",
+      "loc_wickmoor_after"
     ],
     "population": 210,
     "reputation_with_pc": 35,
@@ -49,7 +50,11 @@
       "loc_assay_row",
       "loc_fetterlock",
       "loc_pensioners_hall",
-      "loc_the_cut"
+      "loc_the_cut",
+      "loc_undercroft_row",
+      "loc_waterline",
+      "loc_lamp_house",
+      "loc_counting_house"
     ],
     "population": 4100,
     "reputation_with_pc": 0,

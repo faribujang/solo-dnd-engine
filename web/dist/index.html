@@ -73,32 +73,41 @@ button{cursor:pointer;background:none;border:0}
    same click handling — only where it is mounted changes. */
 #app{display:flex;flex-direction:column;height:100dvh;max-width:720px;margin:0 auto;position:relative}
 .side{display:none}
+/* True at every width, and stated once. The media queries below only decide how wide it
+   is — never whether it is a column, because that is what makes the feed scroll. */
+#center{display:flex;flex-direction:column;min-width:0;min-height:0;height:100dvh}
 
+/*
+ * Columns by FLEX, not grid, and not through custom properties.
+ *
+ * This was `grid-template-columns: var(--lw) minmax(0,1fr) var(--rw)`. When a var() in a
+ * track list fails to resolve, the whole declaration is invalid at computed-value time and
+ * the grid falls back to ONE implicit column — so the three panels stacked vertically at
+ * content width and the map went full-bleed across the top. A layout with one hard
+ * dependency that can silently delete it is not worth the elegance.
+ *
+ * `#app` is already a flex column on a phone; a desk only turns it sideways. Hiding a
+ * panel is `display:none`, which flex absorbs with no track list to keep in step.
+ */
 @media (min-width:1100px){
-  #app{
-    max-width:none;display:grid;grid-template-columns:var(--lw) minmax(0,1fr) var(--rw);
-    --lw:320px; --rw:400px;
-  }
-  #app.no-left{--lw:0px}
-  #app.no-right{--rw:0px}
-  #app.no-left .side.left, #app.no-right .side.right{display:none}
+  #app{max-width:none;flex-direction:row;overflow:hidden}
   .side{
     display:flex;flex-direction:column;min-width:0;background:var(--surface);
     border-right:1px solid var(--line);overflow:hidden;
   }
-  .side.right{border-right:0;border-left:1px solid var(--line)}
+  .side.left{flex:0 0 320px}
+  .side.right{flex:0 0 400px;border-right:0;border-left:1px solid var(--line)}
+  #app.no-left .side.left{display:none}
+  #app.no-right .side.right{display:none}
+  /* The centre takes what is left and is allowed to be narrower than its content. */
+  #center{flex:1 1 0}
   .panel{flex:1 1 0;min-height:0;overflow-y:auto;padding:12px 14px}
   .panel + .panel{border-top:1px solid var(--line)}
   .panel h2{font-family:var(--serif);font-size:17px;margin:0 0 8px;font-weight:600}
   .panel h3{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px;font-weight:600}
   .side.right .panel{padding:0}
-  /* The centre column owns the scroll; the shell must not. */
-  #center{display:flex;flex-direction:column;min-width:0;height:100dvh}
-  .tabs{grid-template-columns:repeat(6,1fr)}
 }
-@media (max-width:1099px){
-  #center{display:flex;flex-direction:column;height:100dvh}
-}
+
 
 /* ── scene header: where you are, when, who is here. Sticky because it is the
       one thing you re-read constantly on a phone. */
@@ -156,7 +165,9 @@ header{
 .tag.hurt{border-color:#5a2f27;color:#e0a196}
 
 /* ── the feed */
-main{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:18px var(--pad) 8px;-webkit-overflow-scrolling:touch}
+/* `min-height:0` is load-bearing: without it a flex child refuses to shrink below its
+   content, so the feed grows instead of scrolling and pushes the composer off-screen. */
+main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px var(--pad) 8px;-webkit-overflow-scrolling:touch}
 .entry{margin:0 0 20px}
 .said{
   font-size:14px;color:var(--ember);border-left:2px solid var(--ember);
@@ -1039,8 +1050,31 @@ VIEWS.map = (() => mapHtml());
  */
 const MAPV = { x: 0, y: 0, k: 1, ready: false, level: null, focus: undefined };
 
-/** World units to plane pixels. Generous, so zooming in reveals room rather than blur. */
-const MAP_UNIT = 78;
+/**
+ * The plane every scale draws onto, in pixels.
+ *
+ * Positions are NORMALISED to this box rather than multiplied out of world coordinates.
+ * Geography decides where things are relative to each other; it should not decide how
+ * legible they are. A town spanning six coordinate units used to draw six times wider
+ * than one spanning one, and then get shrunk to fit — same map, illegible for no reason.
+ */
+const MAP_CANVAS = 360;
+const MAP_PAD = 36;
+
+/** Place a set of marks on the canvas, keeping their shape. */
+function mapPlacer(points) {
+  const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  // Preserve the aspect: scale both axes by the SAME factor, or a town in a line becomes
+  // a town in a square and the map stops meaning anything.
+  const span = Math.max(x1 - x0, y1 - y0, 0.001);
+  const k = MAP_CANVAS / span;
+  return (p) => ({
+    left: MAP_PAD + (p.x - x0) * k + (span - (x1 - x0)) * k / 2,
+    top: MAP_PAD + (p.y - y0) * k + (span - (y1 - y0)) * k / 2,
+  });
+}
 
 /**
  * Three scales, because they answer different questions.
@@ -1085,8 +1119,8 @@ function mapHtml() {
     }
     marks = zones.map((z, i) => {
       const cols = Math.ceil(Math.sqrt(zones.length));
-      const x = (i % cols) * 190 + 100;
-      const y = Math.floor(i / cols) * 130 + 80;
+      const x = (i % cols) * 200 + MAP_PAD + 60;
+      const y = Math.floor(i / cols) * 140 + MAP_PAD;
       const who = z.people || [];
       return '<div class="mnodewrap" style="left:' + x + "px;top:" + y + 'px">'
         + '<button class="mnode ' + (z.you ? "here" : "seen") + '" disabled title="'
@@ -1105,23 +1139,27 @@ function mapHtml() {
     const nodes = m.nodes.filter((n) => inside.has(n.id));
     crumb = '<button class="crumb" data-mapup="world">‹ the world</button>'
       + (st ? '<span class="crumbnow">' + esc(st.name) + "</span>" : "");
-    marks = nodes.map((n) => markFor(n, hereId, true));
+    const place = mapPlacer(nodes.length ? nodes : [{ x: 0, y: 0 }]);
+    marks = nodes.map((n) => markFor(n, hereId, place(n)));
     legend = "Buildings in " + esc(st ? st.name : "town") + ". Tap one to go there; tap where you stand to look inside.";
 
   } else {
     // The world: towns as one mark each, plus anything standing on its own.
     const grouped = new Set(settlements.flatMap((st) => st.location_ids));
+    const loose = m.nodes.filter((n) => !grouped.has(n.id));
+    const place = mapPlacer([...settlements, ...loose].length ? [...settlements, ...loose] : [{ x: 0, y: 0 }]);
+
     marks = settlements.map((st) => {
       const who = st.people || [];
-      return '<div class="mnodewrap" style="left:' + ((st.x - mapOrigin(m).x) * MAP_UNIT) + "px;top:"
-        + ((st.y - mapOrigin(m).y) * MAP_UNIT) + 'px">'
+      const at = place(st);
+      return '<div class="mnodewrap" style="left:' + at.left.toFixed(0) + "px;top:" + at.top.toFixed(0) + 'px">'
         + '<button class="mnode town ' + (st.here ? "here" : "seen") + '" data-mapdown="' + esc(st.id) + '"'
         + ' title="' + esc(who.length ? st.name + " — " + who.join(", ") : st.name) + '">'
         + (st.here ? '<span class="youdot"></span>' : "") + esc(st.name)
         + '<span class="mm">' + st.location_ids.length + "</span></button>"
         + (who.length ? '<span class="mppl" title="' + esc(who.join(", ")) + '">' + who.slice(0, 6).map(() => "●").join("") + "</span>" : "")
         + "</div>";
-    }).concat(m.nodes.filter((n) => !grouped.has(n.id)).map((n) => markFor(n, hereId, false)));
+    }).concat(loose.map((n) => markFor(n, hereId, place(n))));
     legend = "Towns and open country. Tap a town to go inside it.";
   }
 
@@ -1142,26 +1180,17 @@ function mapHtml() {
     + " <b>★</b> a quest wants you, <b>•</b> a lead points.</div>";
 }
 
-/** Top-left of the drawn world, so every scale shares one origin. */
-function mapOrigin(m) {
-  const xs = m.nodes.map((n) => n.x), ys = m.nodes.map((n) => n.y);
-  return { x: Math.min(...xs), y: Math.min(...ys) };
-}
-
-function markFor(n, hereId, dense) {
-  const m = S.screen.map;
-  const o = mapOrigin(m);
+function markFor(n, hereId, at) {
   const here = n.id === hereId;
   const cls = here ? "here" : n.state === "visited" ? "seen" : n.state === "seen" ? "found" : "unknown";
   const pin = (n.pins || []).includes("quest") ? "★ " : (n.pins || []).includes("lead") ? "• " : "";
   const go = !here && n.travel_minutes != null;
   const people = n.people || [];
-  const spread = dense ? MAP_UNIT * 1.6 : MAP_UNIT;
 
   // Standing here with rooms inside? Tapping looks in rather than walking on the spot.
   const down = here && (n.zones || []).length > 1 ? ' data-mapinto="' + esc(n.id) + '"' : "";
 
-  return '<div class="mnodewrap" style="left:' + ((n.x - o.x) * spread) + "px;top:" + ((n.y - o.y) * spread) + 'px">'
+  return '<div class="mnodewrap" style="left:' + at.left.toFixed(0) + "px;top:" + at.top.toFixed(0) + 'px">'
     + '<button class="mnode ' + cls + '"'
     + (go ? ' data-go="' + esc(n.id) + '" data-name="' + esc(n.name) + '"' : down ? down : " disabled")
     + ' title="' + esc(people.length ? n.name + " — " + people.join(", ") : n.name) + '">'
@@ -1193,18 +1222,58 @@ function mapApply() {
   plane.style.transform = "translate(" + MAPV.x + "px," + MAPV.y + "px) scale(" + MAPV.k + ")";
 }
 
-/** Centre the view on the player, at a readable scale. */
+/**
+ * Fit what is being shown, then centre it.
+ *
+ * This used to centre on the player at a fixed scale, which is fine on a wide screen and
+ * useless in a 384px column: the rest of the town sat several hundred pixels outside the
+ * viewport and the map looked like one lonely building. A map's first job is to show you
+ * the shape of the thing, so it frames the marks it has and only then worries about zoom.
+ */
 function mapCentre() {
   const wrap = document.getElementById("mapwrap");
-  const you = document.querySelector("#mapplane .mnode.here");
-  if (!wrap || !you) return;
+  const plane = document.getElementById("mapplane");
+  if (!wrap || !plane) return;
   const w = wrap.clientWidth, h = wrap.clientHeight;
   if (!w || !h) return;
-  const px = you.parentElement.offsetLeft + you.offsetWidth / 2;
-  const py = you.parentElement.offsetTop + you.offsetHeight / 2;
-  MAPV.k = wide() ? 1 : 0.85;
-  MAPV.x = w / 2 - px * MAPV.k;
-  MAPV.y = h / 2 - py * MAPV.k;
+
+  const marks = [...plane.querySelectorAll(".mnodewrap")];
+  if (!marks.length) return;
+
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const m of marks) {
+    // Marks are centred on their point, so half the width sits either side.
+    const cx = m.offsetLeft, cy = m.offsetTop;
+    const hw = m.offsetWidth / 2, hh = m.offsetHeight / 2;
+    x0 = Math.min(x0, cx - hw); x1 = Math.max(x1, cx + hw);
+    y0 = Math.min(y0, cy - hh); y1 = Math.max(y1, cy + hh);
+  }
+
+  const pad = 26;
+  const cw = Math.max(1, x1 - x0), ch = Math.max(1, y1 - y0);
+  const fits = Math.min(1, (w - pad * 2) / cw, (h - pad * 2) / ch);
+
+  /**
+   * Readable first, complete second.
+   *
+   * Scaling to fit whatever is on the plane sounds right and reads terribly: a town with
+   * places spread across it shrinks to forty per cent and every label becomes a smudge.
+   * So the default is 1:1 on the player — everything near you is legible — and seeing the
+   * whole town is one press of the zoom-out button away. Fitting only wins when the
+   * content is already small enough to be read at that size.
+   */
+  const you = plane.querySelector(".mnode.here");
+  if (fits >= 0.92 || !you) {
+    MAPV.k = Math.max(0.35, fits);
+    MAPV.x = w / 2 - ((x0 + x1) / 2) * MAPV.k;
+    MAPV.y = h / 2 - ((y0 + y1) / 2) * MAPV.k;
+  } else {
+    MAPV.k = 1;
+    const px = you.parentElement.offsetLeft;
+    const py = you.parentElement.offsetTop;
+    MAPV.x = w / 2 - px;
+    MAPV.y = h / 2 - py;
+  }
   mapApply();
 }
 
