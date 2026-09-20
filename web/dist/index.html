@@ -221,7 +221,9 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
 /* ── the map. Drag to pan, wheel or pinch to zoom. The viewport clips; the plane
       inside it is transformed. Nothing re-lays-out while you drag. */
 .mapwrap{position:relative;overflow:hidden;touch-action:none;background:#11100e;
-  border:1px solid var(--line);border-radius:var(--r);cursor:grab}
+  border:1px solid var(--line);border-radius:var(--r);cursor:grab;
+  /* An absolutely-positioned plane gives its parent no height, so the parent states one. */
+  height:52dvh;min-height:240px}
 .mapwrap.dragging{cursor:grabbing}
 .side.right .mapwrap{border:0;border-radius:0;height:100%}
 .mapplane{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
@@ -303,6 +305,11 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
   max-width:720px;margin:0 auto;
 }
 .grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 14px}
+.paneclose{
+  position:absolute;top:8px;right:10px;width:32px;height:32px;border-radius:8px;
+  border:1px solid var(--line);background:var(--raised);color:var(--muted);
+  font-size:13px;display:grid;place-items:center;z-index:2;
+}
 .sheetpane h2{font-family:var(--serif);font-size:20px;margin:0 0 2px;font-weight:600}
 .sheetpane h3{
   font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
@@ -804,13 +811,21 @@ function done() {
 }
 
 // ─────────────────────────────────────────────────────────────── drawers
+/** The furniture every bottom sheet has. One definition, so a rebuild cannot lose it. */
+function sheetChrome(html) {
+  return '<div class="grab"></div>'
+    + '<button class="paneclose" data-close="1" aria-label="Close">✕</button>'
+    + html;
+}
+
 function openPane(html) {
   closePane();
   const scrim = document.createElement("div");
   scrim.className = "scrim";
   const pane = document.createElement("div");
   pane.className = "sheetpane";
-  pane.innerHTML = '<div class="grab"></div>' + html;
+  pane.style.position = "fixed";
+  pane.innerHTML = sheetChrome(html);
   document.body.append(scrim, pane);
   scrim.addEventListener("click", closePane);
   // A map only knows where to centre once it has a size.
@@ -1124,7 +1139,7 @@ function remountMap() {
   const panel = document.getElementById("panelMap");
   if (panel && panel.offsetParent !== null) { panel.innerHTML = mapHtml(); panel.dataset.stamp = "scale"; }
   const sheet = document.querySelector(".sheetpane");
-  if (sheet && sheet.querySelector("#mapwrap")) sheet.innerHTML = '<div class="grab"></div>' + mapHtml();
+  if (sheet && sheet.querySelector("#mapwrap")) sheet.innerHTML = sheetChrome(mapHtml());
   requestAnimationFrame(mapCentre);
 }
 
@@ -1447,7 +1462,11 @@ document.addEventListener("click", (e) => {
   if (zoom) {
     const wrap = zoom.closest(".mapwrap");
     const r = wrap.getBoundingClientRect();
-    if (zoom.dataset.zoom === "0") mapCentre();
+    if (zoom.dataset.zoom === "0") {
+      // Recentre means "show me where I am", which includes undoing a drill-down.
+      MAPV.level = null; MAPV.focus = undefined;
+      remountMap();
+    }
     else mapZoom(zoom.dataset.zoom === "1" ? 1.25 : 1 / 1.25, r.width / 2, r.height / 2);
     return;
   }
@@ -1474,6 +1493,8 @@ document.addEventListener("click", (e) => {
 
   const rw = t.closest("[data-rewind]");
   if (rw) { confirmRewind(Number(rw.dataset.rewind), rw.dataset.what, LATEST_TURN); return; }
+
+  if (t.closest("[data-close]")) { closePane(); return; }
 
   const nav = t.closest("[data-nav]");
   if (nav) { closePane(); NAV[nav.dataset.nav] && NAV[nav.dataset.nav](); return; }
@@ -1530,6 +1551,23 @@ const NAV = {
   home: () => showHome(),
   saves: () => pickSave(),
   settings: () => openSettings(),
+  resetlayout: () => {
+    const app = document.getElementById("app");
+    app.classList.remove("no-left", "no-right");
+    try {
+      localStorage.removeItem("dnd.no-left");
+      localStorage.removeItem("dnd.no-right");
+    } catch {}
+    $("toggleLeft").classList.add("on");
+    $("toggleRight").classList.add("on");
+    MAPV.level = null; MAPV.focus = undefined;
+    MAPV.x = 0; MAPV.y = 0; MAPV.k = 1;
+    const panel = document.getElementById("panelMap");
+    if (panel) panel.dataset.stamp = "";
+    closePane();
+    paintSides();
+    addSys("Layout reset.");
+  },
   forget: () => {
     try { localStorage.removeItem("dnd.token"); } catch {}
     S.token = "";
@@ -1560,6 +1598,9 @@ function openSettings() {
         + '<div class="d">' + d + "</div></button>").join("")
     + "</div>"
     + "<h3>Sound</h3><div class=\"note\">Nothing to hear yet. When there is, it will be switched off by default.</div>"
+    + "<h3>Layout</h3>"
+    + '<button class="act" data-nav="resetlayout"><div class="t">Reset layout</div>'
+    + '<div class="d">bring back any panel you have hidden, and reset the map</div></button>'
     + '<h3>This device</h3>'
     + '<button class="act" data-nav="forget"><div class="t">Forget the secret</div>'
     + '<div class="d">you will be asked for it next time</div></button>');
