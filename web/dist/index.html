@@ -35,6 +35,37 @@ button{cursor:pointer;background:none;border:0}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .hide{display:none !important}
 
+/* ── the landing screen */
+#home{
+  position:fixed;inset:0;z-index:40;overflow-y:auto;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #2a1d14 0%, transparent 60%),
+    var(--ground);
+  display:grid;place-items:center;padding:28px 18px calc(env(safe-area-inset-bottom) + 28px);
+}
+#home[hidden]{display:none}
+.homecard{width:100%;max-width:440px}
+#home h1{
+  font-family:var(--serif);font-size:clamp(38px,11vw,58px);font-weight:600;
+  margin:0 0 10px;letter-spacing:.01em;line-height:1;
+  background:linear-gradient(180deg,var(--ink),var(--ember));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+#home .tagline{
+  font-family:var(--serif);font-size:16.5px;line-height:1.55;color:var(--muted);
+  margin:0 0 26px;text-wrap:balance;
+}
+#home .homefoot{font-size:11.5px;color:var(--faint);margin:20px 0 0;letter-spacing:.03em}
+.homebtn{
+  display:block;width:100%;text-align:left;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--surface);padding:14px 15px;margin-bottom:9px;
+}
+.homebtn:active{background:var(--raised)}
+.homebtn.primary{border-color:var(--ember);background:#241a12}
+.homebtn .t{font-family:var(--serif);font-size:18px}
+.homebtn.primary .t{color:var(--ember)}
+.homebtn .d{font-size:12.5px;color:var(--muted);margin-top:3px}
+
 /* ─────────────────────────────────────────────────── shell */
 /* ── the shell.
    Phone: one column, panels as bottom sheets. Desk: three, because there is room and
@@ -353,6 +384,18 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
 </style>
 </head>
 <body>
+<!-- The landing screen. A full cover rather than a sheet: opening the link should put
+     you somewhere you chose to be, not back inside whatever panel was open last time. -->
+<div id="home" hidden>
+  <div class="homecard">
+    <h1>Cinderhold</h1>
+    <p class="tagline">The Meridian Syndicate did not fight the war. It supplied both sides,
+      and when the empires bled out the supplier was the only thing left standing.</p>
+    <div id="homeActions"></div>
+    <p class="homefoot" id="homeFoot"></p>
+  </div>
+</div>
+
 <div id="app">
   <aside class="side left">
     <div class="panel" id="panelActions"></div>
@@ -1548,7 +1591,7 @@ $("toggleRight").addEventListener("click", () => togglePanel("right"));
 
 // ─────────────────────────────────────────────────── settings and home
 const NAV = {
-  home: () => showHome(),
+  home: () => { closePane(); showHome(); },
   saves: () => pickSave(),
   settings: () => openSettings(),
   resetlayout: () => {
@@ -1639,25 +1682,43 @@ document.addEventListener("click", (e) => {
 });
 
 /**
- * The title screen. Somewhere to land that is not the middle of a scene — and the only
- * place "switch save" was reachable from used to be the bottom of the character sheet.
+ * The landing screen.
+ *
+ * Opening the link goes HERE, always — not back into whatever panel happened to be open
+ * when the tab was last closed. Resuming is a choice you make on this screen, and the
+ * screen says what you would be resuming.
  */
 function showHome() {
-  const title = S.screen && S.screen.scene ? S.screen.scene.location.name : "";
-  openPane('<h2 style="font-size:26px">Cinderhold</h2>'
-    + '<div class="note" style="font-family:var(--serif);font-size:15px;line-height:1.55;margin-bottom:14px">'
-    + "The Meridian Syndicate did not fight the war. It supplied both sides, and when the "
-    + "empires bled out the supplier was the only thing left standing.</div>"
-    + (S.saveId
-        ? '<button class="act" id="homeBack" style="border-color:var(--ember)"><div class="t">Continue</div>'
-          + '<div class="d">' + esc(S.saveId) + (title ? " · " + esc(title) : "") + "</div></button>"
-        : "")
-    + '<button class="act" data-nav="saves"><div class="t">Your games</div>'
+  closePane();
+  const place = S.screen && S.screen.scene ? S.screen.scene.location.name : "";
+  const turn = S.screen ? (S.screen.sheet && S.screen.sheet.name) : "";
+
+  document.getElementById("homeActions").innerHTML =
+    (S.saveId && S.screen
+      ? '<button class="homebtn primary" data-home="continue"><div class="t">Continue</div>'
+        + '<div class="d">' + esc(turn || S.saveId) + (place ? " · " + esc(place) : "") + "</div></button>"
+      : "")
+    + '<button class="homebtn" data-home="saves"><div class="t">Your games</div>'
     + '<div class="d">open another save, or begin a new one</div></button>'
-    + '<button class="act" data-nav="settings"><div class="t">Settings</div></button>');
-  const back = document.getElementById("homeBack");
-  if (back) back.addEventListener("click", closePane);
+    + '<button class="homebtn" data-home="settings"><div class="t">Settings</div>'
+    + '<div class="d">how lively the world is, text size, layout</div></button>';
+
+  document.getElementById("homeFoot").textContent = S.saveId && S.screen
+    ? "turn " + (S.screen.scene ? "" : "") + S.version + " · " + S.saveId
+    : "";
+  document.getElementById("home").hidden = false;
 }
+
+function hideHome() { document.getElementById("home").hidden = true; }
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-home]");
+  if (!b) return;
+  const what = b.dataset.home;
+  if (what === "continue") { hideHome(); return; }
+  if (what === "saves") { hideHome(); pickSave(); return; }
+  if (what === "settings") { hideHome(); openSettings(); return; }
+});
 
 $("openSettings").addEventListener("click", openSettings);
 
@@ -1909,10 +1970,23 @@ async function boot() {
     addErr("The game server is not answering. Is `npm run serve` running?");
     return;
   }
+  /**
+   * The link lands on HOME, every time.
+   *
+   * The last save is still loaded first, quietly, so "Continue" is instant and the screen
+   * can say what you would be continuing — but resuming is a choice made here rather than
+   * something that happens to you. Opening the link used to drop you back inside whatever
+   * panel was open when the tab was last closed, which is not a place anybody chose.
+   */
   if (S.saveId) {
-    try { return await load(S.saveId); } catch { /* it is gone; fall through */ }
+    try { await load(S.saveId); } catch { S.saveId = ""; }
   }
-  pickSave();
+  showHome();
+  if (!S.saveId) {
+    // Nothing to continue: the games list is the only useful thing on offer.
+    hideHome();
+    pickSave();
+  }
 }
 boot();
 </script>
