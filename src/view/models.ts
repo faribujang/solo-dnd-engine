@@ -170,9 +170,32 @@ export interface MapNode {
    * people you have actually met, in places you have actually been.
    */
   people: string[];
+  /** The ground inside, for the scale where you are standing in it. */
+  zones: Array<{ id: string; name: string; terrain: string[]; people: string[]; you: boolean }>;
+}
+
+/**
+ * A town, as one thing.
+ *
+ * The map has three honest scales and they answer different questions. A region asks
+ * "where in the world"; a town asks "which building"; a building asks "which room, and
+ * who is in it". Drawing all three at once produces a map that answers none of them,
+ * which is what a single flat grid of every location was doing.
+ */
+export interface MapSettlement {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  location_ids: string[];
+  /** Everyone the player knows is anywhere inside. */
+  people: string[];
+  /** True when the player is standing somewhere in it. */
+  here: boolean;
 }
 
 export interface MapModel {
+  settlements: MapSettlement[];
   nodes: MapNode[];
   edges: Array<{ from: string; to: string; locked: boolean }>;
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
@@ -184,32 +207,71 @@ export interface MapModel {
  * client cannot leak the shape of the map by drawing greyed nodes in the right places.
  */
 /**
- * Who the player can reasonably be said to know is standing in a place.
+ * WHO THE PLAYER KNOWS IS WHERE.
  *
- * The room you are in is free — you can see it. Anywhere else costs two things: you have
- * been there, and you have met them. Knowledge in this engine is a ledger, and the map is
- * not allowed to be the one surface that ignores it.
+ * Two separate jobs, and conflating them is how a map either lies or becomes unreadable.
+ *
+ * KNOWLEDGE. A dot on a map is an assertion that you know where somebody is. You know it
+ * if you can see them, or if somebody told you — and "somebody told you" is a real thing
+ * in this engine, not a guess: a fact you know whose subjects name both the person and the
+ * place IS being told where to find them. Anything else would hand you Saveri Crole
+ * before a single person has been willing to say her name.
+ *
+ * CLUTTER. Two hundred and fifty named locals are the texture of a living town and they
+ * are not map furniture. A local shows only in the room you are standing in — which is
+ * exactly when they matter, because that is when you can talk to them. The barkeep with
+ * the rumour is still there; he is just not a pin on a regional map.
  */
 function peopleKnownAt(
   s: GameState,
   locationId: string,
   here: string,
   met: ReadonlySet<string>,
+  told: ReadonlyMap<string, ReadonlySet<string>>,
 ): string[] {
   const loc = s.locations[locationId];
   if (!loc) return [];
-  const visible = locationId === here || loc.visited_count > 0;
-  if (!visible) return [];
 
   return Object.values(s.entities)
-    .filter((e) =>
-      e.alive
-      && e.location_id === locationId
-      && e.id !== s.meta.pc_id
-      && e.kind !== "monster"
-      && (locationId === here || met.has(e.id)))
+    .filter((e) => {
+      if (!e.alive || e.id === s.meta.pc_id || e.kind === "monster") return false;
+      if (e.location_id !== locationId) return false;
+      // In the room with you: you can see them, whoever they are.
+      if (locationId === here) return true;
+      // Extras stay off the regional map. They are texture, not landmarks.
+      if (e.tier === "local") return false;
+      // Somewhere you have been, and somebody you have met.
+      if (loc.visited_count > 0 && met.has(e.id)) return true;
+      // Or somebody told you exactly where to find them.
+      return told.get(e.id)?.has(locationId) === true;
+    })
     .map((e) => e.name)
     .sort();
+}
+
+/**
+ * Whereabouts the player has been TOLD, from the fact ledger.
+ *
+ * A fact the player knows that names a person and a place in its subjects is directions.
+ * That is the whole mechanism — no new schema, no flags to remember to set, and it means
+ * an author who writes "Saveri Crole assays contracts on Assay Row" into a fact has
+ * already made the map work.
+ */
+function whereaboutsTold(s: GameState): Map<string, Set<string>> {
+  const me = s.meta.pc_id;
+  const out = new Map<string, Set<string>>();
+  for (const f of s.facts) {
+    if (!f.known_by.includes(me)) continue;
+    const people = f.subjects.filter((id) => s.entities[id]);
+    const places = f.subjects.filter((id) => s.locations[id]);
+    if (!people.length || !places.length) continue;
+    for (const p of people) {
+      const set = out.get(p) ?? new Set<string>();
+      for (const l of places) set.add(l);
+      out.set(p, set);
+    }
+  }
+  return out;
 }
 
 export function mapModel(s: GameState): MapModel {
@@ -222,6 +284,7 @@ export function mapModel(s: GameState): MapModel {
     if (a === s.meta.pc_id && b) met.add(b);
     if (b === s.meta.pc_id && a) met.add(a);
   }
+  const told = whereaboutsTold(s);
   const routes = new Map(reachable(s, here).map((r) => [r.id, r.path.minutes]));
 
   const questTargets = new Set<string>();
@@ -248,7 +311,19 @@ export function mapModel(s: GameState): MapModel {
     nodes.push({
       id: l.id, name: l.name, x: l.coords.x, y: l.coords.y,
       state: l.visited_count > 0 ? "visited" : l.discovered ? "seen" : "known",
-      people: peopleKnownAt(s, l.id, here, met),
+      people: peopleKnownAt(s, l.id, here, met, told),
+      // Zones only matter at the scale where you are standing in the building.
+      zones: l.zones.map((z) => ({
+        id: z.id,
+        name: z.name,
+        terrain: z.terrain,
+        people: l.id === here
+          ? Object.values(s.entities)
+              .filter((e) => e.alive && e.location_id === l.id && e.zone_id === z.id && e.id !== s.meta.pc_id)
+              .map((e) => e.name).sort()
+          : [],
+        you: l.id === here && pc(s).zone_id === z.id,
+      })),
       danger: l.danger_level, settlement_id: l.settlement_id, pins,
       travel_minutes: l.id === here ? 0 : (routes.get(l.id) ?? null),
     });
@@ -269,7 +344,25 @@ export function mapModel(s: GameState): MapModel {
   }
 
   const xs = nodes.map((n) => n.x); const ys = nodes.map((n) => n.y);
+  // Towns are the middle scale: the centre of mass of their locations, and everybody the
+  // player knows is inside any of them.
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const settlements: MapSettlement[] = Object.values(s.settlements).map((st) => {
+    const mine = st.location_ids.map((id) => byId.get(id)).filter((n): n is MapNode => !!n);
+    const n = Math.max(1, mine.length);
+    return {
+      id: st.id,
+      name: st.name,
+      x: mine.reduce((a, m) => a + m.x, 0) / n,
+      y: mine.reduce((a, m) => a + m.y, 0) / n,
+      location_ids: mine.map((m) => m.id),
+      people: [...new Set(mine.flatMap((m) => m.people))].sort(),
+      here: st.location_ids.includes(here),
+    };
+  }).filter((st) => st.location_ids.length > 0);
+
   return {
+    settlements,
     nodes, edges, player_at: here,
     bounds: {
       minX: Math.min(...xs, 0), minY: Math.min(...ys, 0),

@@ -474,6 +474,33 @@ export class GameService {
     };
   }
 
+  /**
+   * Turn one of the table's dials, mid-game.
+   *
+   * Session zero is the agreement about HOW this group plays — tone, dice, how often the
+   * world interrupts — and a group is allowed to change its mind about that at turn forty
+   * without starting again. It is explicitly exempt from replay for exactly this reason:
+   * `rebuild` reads the CURRENT agreement rather than the one in the journal, because the
+   * dice and the beats were already rolled and journaled under whatever was true then.
+   *
+   * Nothing here can change an outcome that has happened.
+   */
+  async setDials(saveId: string, raw: unknown): Promise<Snapshot> {
+    const req = z.object({
+      liveliness: z.enum(["quiet", "normal", "lively"]).optional(),
+      tone: z.enum(["grim", "heroic", "comic", "blend"]).optional(),
+    }).parse(raw);
+
+    return this.locked(saveId, async () => {
+      const c = await this.context(saveId);
+      const next = { ...c.state.meta.session_zero, ...req };
+      c.state.meta.session_zero = next;
+      await this.store.commit(saveId, [], c.state);
+      this.ctx.set(saveId, { ...c, state: c.state });
+      return this.snapshotOf(saveId, this.ctx.get(saveId)!);
+    });
+  }
+
   async rewind(saveId: string, raw: unknown): Promise<Snapshot | VersionConflict> {
     const req = RewindRequest.parse({ ...(raw as object), save_id: saveId });
     return this.locked(saveId, async () => {

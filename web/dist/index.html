@@ -249,6 +249,16 @@ textarea#say::placeholder{color:var(--faint);font-family:var(--ui);font-size:14p
   display:inline-block;width:7px;height:7px;border-radius:50%;background:#7ee08a;
   margin-right:5px;box-shadow:0 0 0 2px #7ee08a33;vertical-align:middle;
 }
+.mnode.town{font-weight:600;border-color:#5a4632}
+.crumbs{display:flex;gap:8px;align-items:center;margin:0 0 8px}
+.crumb{
+  font-size:12px;color:var(--muted);border:1px solid var(--line);
+  border-radius:999px;padding:4px 10px;background:var(--raised);
+}
+.crumbnow{font-size:12px;color:var(--ember);letter-spacing:.04em}
+.side.right .crumbs{padding:10px 12px 0;margin:0}
+.side.right h2{padding:12px 12px 0}
+.side.right .mlegend{padding:0 12px 12px}
 .mnode.seen{color:var(--ink);border-color:#4a3a2c}
 .mnode.found{color:var(--muted);border-color:#3d3128}
 .mnode.here{background:var(--ember);color:#180f08;border-color:var(--ember);font-weight:600}
@@ -395,6 +405,8 @@ const S = {
   /** The chip last tapped, and what it meant. Cleared on every submit. */
   chipText: "",
   chipAction: null,
+  /** The table's agreement for this save: tone, dice, how lively the world is. */
+  sessionZero: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -967,50 +979,98 @@ VIEWS.map = (() => mapHtml());
  * So: a fixed viewport, an absolutely-positioned plane inside it, and one transform.
  * Dragging and zooming move the plane; nothing re-lays-out, so it stays smooth on a phone.
  */
-const MAPV = { x: 0, y: 0, k: 1, ready: false };
+const MAPV = { x: 0, y: 0, k: 1, ready: false, level: null, focus: undefined };
 
 /** World units to plane pixels. Generous, so zooming in reveals room rather than blur. */
 const MAP_UNIT = 78;
+
+/**
+ * Three scales, because they answer different questions.
+ *
+ *   world       where in the world — towns as single marks, and the open country between
+ *   settlement  which building — the places inside one town
+ *   place       which room, and who is in it — the zones of where you are standing
+ *
+ * Drawing all of them at once is what a flat grid of every location was doing, and it
+ * answered none of them. The scale follows you by default and can be steered.
+ */
+function mapScope() {
+  const m = S.screen && S.screen.map;
+  const hereId = S.screen && S.screen.scene && S.screen.scene.location.id;
+  if (!m) return { level: "world", focus: null };
+  if (MAPV.level && MAPV.focus !== undefined) return { level: MAPV.level, focus: MAPV.focus };
+  // Default: the town you are standing in, or the world if you are out on the road.
+  const mine = (m.settlements || []).find((st) => st.here);
+  return mine ? { level: "settlement", focus: mine.id } : { level: "world", focus: null };
+}
 
 function mapHtml() {
   const m = S.screen && S.screen.map;
   if (!m || !m.nodes.length) return '<h2>Map</h2><div class="note">Nowhere charted yet.</div>';
 
   const hereId = S.screen.scene && S.screen.scene.location.id;
-  const xs = m.nodes.map((n) => n.x), ys = m.nodes.map((n) => n.y);
-  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  const scope = mapScope();
+  const settlements = m.settlements || [];
 
-  const nodes = m.nodes.map((n) => {
-    const here = n.id === hereId;
-    // Three states, three looks. Drawing "found but not entered" and "only heard of" the
-    // same way is what makes a map lie about how much of the world you actually have.
-    const cls = here ? "here" : n.state === "visited" ? "seen" : n.state === "seen" ? "found" : "unknown";
-    const left = (n.x - x0) * MAP_UNIT;
-    const top = (n.y - y0) * MAP_UNIT;
-    const pin = (n.pins || []).includes("quest") ? "★ " : (n.pins || []).includes("lead") ? "• " : "";
-    const go = !here && n.travel_minutes != null;
-    const people = n.people || [];
+  let marks = [];
+  let crumb = "";
+  let legend = "";
 
-    // Who is there, as dots under the name. Hovering names them; the server only sends
-    // people the player could actually know about, so this cannot leak a location.
-    const dots = people.length
-      ? '<span class="mppl" title="' + esc(people.join(", ")) + '">'
-        + people.slice(0, 6).map(() => "●").join("")
-        + (people.length > 6 ? "+" : "") + "</span>"
-      : "";
+  if (scope.level === "place") {
+    // Inside a building: the rooms, and who is in each.
+    const node = m.nodes.find((n) => n.id === scope.focus) || m.nodes.find((n) => n.id === hereId);
+    const zones = (node && node.zones) || [];
+    crumb = '<button class="crumb" data-mapup="settlement">‹ ' + esc(node ? node.name : "back") + "</button>";
+    if (!zones.length) {
+      return "<h2>Map</h2>" + crumb
+        + '<div class="note" style="margin-top:10px">Nothing inside worth drawing — one room, and you are in it.</div>';
+    }
+    marks = zones.map((z, i) => {
+      const cols = Math.ceil(Math.sqrt(zones.length));
+      const x = (i % cols) * 190 + 100;
+      const y = Math.floor(i / cols) * 130 + 80;
+      const who = z.people || [];
+      return '<div class="mnodewrap" style="left:' + x + "px;top:" + y + 'px">'
+        + '<button class="mnode ' + (z.you ? "here" : "seen") + '" disabled title="'
+        + esc(who.length ? z.name + " — " + who.join(", ") : z.name) + '">'
+        + (z.you ? '<span class="youdot"></span>' : "") + esc(z.name)
+        + ((z.terrain || []).length ? '<span class="mm">' + esc(z.terrain.join(", ")) + "</span>" : "")
+        + "</button>"
+        + (who.length ? '<span class="mppl" title="' + esc(who.join(", ")) + '">' + who.map(() => "●").join("") + "</span>" : "")
+        + "</div>";
+    });
+    legend = "You are the green mark. Names under a room are what the ground does there.";
 
-    return '<div class="mnodewrap" style="left:' + left + "px;top:" + top + 'px">'
-      + '<button class="mnode ' + cls + '"'
-      + (go ? ' data-go="' + esc(n.id) + '" data-name="' + esc(n.name) + '"' : " disabled")
-      + ' title="' + esc(people.length ? n.name + " — " + people.join(", ") : n.name) + '">'
-      + (here ? '<span class="youdot"></span>' : "") + pin + esc(n.name)
-      + (n.travel_minutes != null && !here ? '<span class="mm">' + n.travel_minutes + "m</span>" : "")
-      + "</button>" + dots + "</div>";
-  }).join("");
+  } else if (scope.level === "settlement") {
+    const st = settlements.find((x) => x.id === scope.focus);
+    const inside = new Set(st ? st.location_ids : []);
+    const nodes = m.nodes.filter((n) => inside.has(n.id));
+    crumb = '<button class="crumb" data-mapup="world">‹ the world</button>'
+      + (st ? '<span class="crumbnow">' + esc(st.name) + "</span>" : "");
+    marks = nodes.map((n) => markFor(n, hereId, true));
+    legend = "Buildings in " + esc(st ? st.name : "town") + ". Tap one to go there; tap where you stand to look inside.";
+
+  } else {
+    // The world: towns as one mark each, plus anything standing on its own.
+    const grouped = new Set(settlements.flatMap((st) => st.location_ids));
+    marks = settlements.map((st) => {
+      const who = st.people || [];
+      return '<div class="mnodewrap" style="left:' + ((st.x - mapOrigin(m).x) * MAP_UNIT) + "px;top:"
+        + ((st.y - mapOrigin(m).y) * MAP_UNIT) + 'px">'
+        + '<button class="mnode town ' + (st.here ? "here" : "seen") + '" data-mapdown="' + esc(st.id) + '"'
+        + ' title="' + esc(who.length ? st.name + " — " + who.join(", ") : st.name) + '">'
+        + (st.here ? '<span class="youdot"></span>' : "") + esc(st.name)
+        + '<span class="mm">' + st.location_ids.length + "</span></button>"
+        + (who.length ? '<span class="mppl" title="' + esc(who.join(", ")) + '">' + who.slice(0, 6).map(() => "●").join("") + "</span>" : "")
+        + "</div>";
+    }).concat(m.nodes.filter((n) => !grouped.has(n.id)).map((n) => markFor(n, hereId, false)));
+    legend = "Towns and open country. Tap a town to go inside it.";
+  }
 
   return "<h2>Map</h2>"
+    + (crumb ? '<div class="crumbs">' + crumb + "</div>" : "")
     + '<div class="mapwrap" id="mapwrap">'
-    + '<div class="mapplane" id="mapplane">' + nodes + "</div>"
+    + '<div class="mapplane" id="mapplane">' + marks.join("") + "</div>"
     + '<div class="maptools">'
     + '<button data-zoom="-1" aria-label="Zoom out">−</button>'
     + '<button data-zoom="1" aria-label="Zoom in">+</button>'
@@ -1018,11 +1078,54 @@ function mapHtml() {
     + "</div>"
     + '<div class="maphint">drag to pan · pinch or scroll to zoom</div>'
     + "</div>"
-    + '<div class="mlegend">'
-    + "The green dot is you. Bright is somewhere you have walked — tap it to travel, and the "
-    + "minutes are real: clocks run while you walk. Dimmer is found but not entered; faded "
-    + "italic is a name you have only heard. <b>★</b> a quest wants you, <b>•</b> a lead points. "
-    + "Dots under a name are people there.</div>";
+    + '<div class="mlegend">' + legend
+    + " The green dot is you; dots are people you know are there. Bright is somewhere you have walked,"
+    + " dimmer is found but not entered, faded italic is a name you have only heard."
+    + " <b>★</b> a quest wants you, <b>•</b> a lead points.</div>";
+}
+
+/** Top-left of the drawn world, so every scale shares one origin. */
+function mapOrigin(m) {
+  const xs = m.nodes.map((n) => n.x), ys = m.nodes.map((n) => n.y);
+  return { x: Math.min(...xs), y: Math.min(...ys) };
+}
+
+function markFor(n, hereId, dense) {
+  const m = S.screen.map;
+  const o = mapOrigin(m);
+  const here = n.id === hereId;
+  const cls = here ? "here" : n.state === "visited" ? "seen" : n.state === "seen" ? "found" : "unknown";
+  const pin = (n.pins || []).includes("quest") ? "★ " : (n.pins || []).includes("lead") ? "• " : "";
+  const go = !here && n.travel_minutes != null;
+  const people = n.people || [];
+  const spread = dense ? MAP_UNIT * 1.6 : MAP_UNIT;
+
+  // Standing here with rooms inside? Tapping looks in rather than walking on the spot.
+  const down = here && (n.zones || []).length > 1 ? ' data-mapinto="' + esc(n.id) + '"' : "";
+
+  return '<div class="mnodewrap" style="left:' + ((n.x - o.x) * spread) + "px;top:" + ((n.y - o.y) * spread) + 'px">'
+    + '<button class="mnode ' + cls + '"'
+    + (go ? ' data-go="' + esc(n.id) + '" data-name="' + esc(n.name) + '"' : down ? down : " disabled")
+    + ' title="' + esc(people.length ? n.name + " — " + people.join(", ") : n.name) + '">'
+    + (here ? '<span class="youdot"></span>' : "") + pin + esc(n.name)
+    + (n.travel_minutes != null && !here ? '<span class="mm">' + n.travel_minutes + "m</span>" : "")
+    + (down ? '<span class="mm">look inside</span>' : "")
+    + "</button>"
+    + (people.length
+        ? '<span class="mppl" title="' + esc(people.join(", ")) + '">'
+          + people.slice(0, 6).map(() => "●").join("") + (people.length > 6 ? "+" : "") + "</span>"
+        : "")
+    + "</div>";
+}
+
+/** Redraw the map wherever it currently lives, and forget the old pan. */
+function remountMap() {
+  MAPV.x = 0; MAPV.y = 0; MAPV.k = 1;
+  const panel = document.getElementById("panelMap");
+  if (panel && panel.offsetParent !== null) { panel.innerHTML = mapHtml(); panel.dataset.stamp = "scale"; }
+  const sheet = document.querySelector(".sheetpane");
+  if (sheet && sheet.querySelector("#mapwrap")) sheet.innerHTML = '<div class="grab"></div>' + mapHtml();
+  requestAnimationFrame(mapCentre);
 }
 
 /** Put the plane where the transform says, in one write. */
@@ -1326,6 +1429,20 @@ document.addEventListener("click", (e) => {
     return;
   }
 
+  // Changing scale. The transform resets, because a view of a town and a view of the
+  // world share no coordinates worth preserving.
+  const down = t.closest("[data-mapdown]");
+  if (down) { MAPV.level = "settlement"; MAPV.focus = down.dataset.mapdown; remountMap(); return; }
+  const into = t.closest("[data-mapinto]");
+  if (into) { MAPV.level = "place"; MAPV.focus = into.dataset.mapinto; remountMap(); return; }
+  const up = t.closest("[data-mapup]");
+  if (up) {
+    if (up.dataset.mapup === "world") { MAPV.level = "world"; MAPV.focus = null; }
+    else { MAPV.level = null; MAPV.focus = undefined; }
+    remountMap();
+    return;
+  }
+
   const zoom = t.closest("[data-zoom]");
   if (zoom) {
     const wrap = zoom.closest(".mapwrap");
@@ -1434,11 +1551,36 @@ function openSettings() {
         '<button class="act" data-size="' + n + '" style="margin:0'
         + (n === size ? ";border-color:var(--ember)" : "") + '"><div class="t">' + n + "</div></button>").join("")
     + "</div>"
+    + "<h3>How lively is the world</h3>"
+    + '<div class="note" style="margin-bottom:6px">How often something unplanned happens — a pedlar on the road, a camp off the causeway, somebody who wants a word. It changes no dice and no difficulty.</div>'
+    + '<div class="stats">'
+    + [["quiet", "the road is a road"], ["normal", "now and then"], ["lively", "constantly"]].map(([n, d]) =>
+        '<button class="act" data-dial="' + n + '" style="margin:0'
+        + (n === liveliness() ? ";border-color:var(--ember)" : "") + '"><div class="t">' + n + "</div>"
+        + '<div class="d">' + d + "</div></button>").join("")
+    + "</div>"
     + "<h3>Sound</h3><div class=\"note\">Nothing to hear yet. When there is, it will be switched off by default.</div>"
     + '<h3>This device</h3>'
     + '<button class="act" data-nav="forget"><div class="t">Forget the secret</div>'
     + '<div class="d">you will be asked for it next time</div></button>');
 }
+
+function liveliness() {
+  return (S.sessionZero && S.sessionZero.liveliness) || "normal";
+}
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest && e.target.closest("[data-dial]");
+  if (!b || b.disabled) return;
+  b.disabled = true;
+  try {
+    const snap = await api("/api/saves/" + encodeURIComponent(S.saveId) + "/dials", {
+      method: "POST", body: JSON.stringify({ liveliness: b.dataset.dial }),
+    });
+    S.sessionZero = snap.session_zero || S.sessionZero;
+    openSettings();
+  } catch (err) { addErr(err.message); closePane(); }
+});
 
 function readTextSize() {
   try { return localStorage.getItem("dnd.textsize") || "normal"; } catch { return "normal"; }
@@ -1676,6 +1818,7 @@ async function load(id) {
   S.saveId = id;
   S.version = snap.version;
   S.screen = snap.screen;
+  S.sessionZero = snap.session_zero || null;
   localStorage.setItem("dnd.save", id);
 
   feed.innerHTML = "";

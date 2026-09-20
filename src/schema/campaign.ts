@@ -78,6 +78,19 @@ export const SessionZero = z.object({
    * Every mode journals the roll, so replay is exact in all three.
    */
   dice: z.enum(["true", "karmic", "committed"]).default("karmic"),
+  /**
+   * How much happens that nobody planned.
+   *
+   * Not a difficulty setting — it does not change a single DC. It changes how often the
+   * world interrupts: a pedlar on the road, a faction camp off the causeway, somebody
+   * who wants a word. The stuff between the plot points, which is most of what people
+   * remember about a campaign and the first thing a story-shaped engine cuts.
+   *
+   *   quiet   — the road is a road. Travel is a transition.
+   *   normal  — something happens on a long journey, now and then.
+   *   lively  — the world keeps having opinions at you.
+   */
+  liveliness: z.enum(["quiet", "normal", "lively"]).default("normal"),
 });
 export type SessionZero = z.infer<typeof SessionZero>;
 

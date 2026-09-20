@@ -149,7 +149,8 @@
           "hours": [],
           "once": false
         }
-      ]
+      ],
+      "chance_per_hour": 0.5
     },
     "enc_the_cut": {
       "id": "enc_the_cut",
@@ -214,6 +215,281 @@
           "brief": "Nobody stops you, which in the Cut is a decision somebody made about you.",
           "then": [],
           "hours": [],
+          "once": false
+        }
+      ],
+      "chance_per_hour": 0.55
+    },
+    "enc_high_moor": {
+      "id": "enc_high_moor",
+      "name": "The high moor",
+      "chance_per_hour": 0.55,
+      "entries": [
+        {
+          "id": "enc_moor_pedlar",
+          "kind": "social",
+          "weight": 4,
+          "brief": "A pedlar with a hand-cart coming the other way, who has been walking since dawn and would rather talk than sell. He has news from three villages and is wrong about one of them.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "A pedlar on the moor says two more villages have stopped paying the lamp-tithe.",
+              "subjects": [],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_moor_camp",
+          "kind": "discovery",
+          "weight": 3,
+          "brief": "Off the causeway, in the heather: a cold camp. Six sleeping places, no fire pit, and the heather pressed flat in a line facing the road. Somebody watched this road for a night.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "Somebody camped off the high moor causeway and watched the road all night.",
+              "subjects": [],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_moor_accord",
+          "kind": "social",
+          "weight": 2,
+          "brief": "Two of the Radiant Accord, walking openly, which nobody does any more. The older one nods. The younger one does not stop looking at you until you are past.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "The Accord still walks the high moor openly, in twos.",
+              "subjects": [],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_moor_weather",
+          "kind": "environment",
+          "weight": 3,
+          "brief": "Weather coming across the moor with nothing to slow it. Twenty minutes of being very wet, and the causeway stones turn slick enough to matter.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_moor_stone",
+          "kind": "discovery",
+          "weight": 2,
+          "brief": "An Arcanate waystone, face down and half sunk. The inscription is upside down in the peat and perfectly legible: a distance, and the name of a town nobody uses any more.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "The Arcanate waystones on the moor name a town nobody uses the name of any more.",
+              "subjects": [],
+              "importance": 2,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_moor_riders",
+          "kind": "combat",
+          "weight": 1,
+          "brief": "Three riders who slow when they see you, and then do not speak.",
+          "then": [],
+          "hours": [],
+          "min_danger": 2,
+          "once": false
+        },
+        {
+          "id": "enc_moor_quiet",
+          "kind": "quiet",
+          "weight": 6,
+          "brief": "Heather, wind, and twenty minutes where you can see anyone coming and nobody is.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        }
+      ]
+    },
+    "enc_harrowmoot": {
+      "id": "enc_harrowmoot",
+      "name": "Harrowmoot streets",
+      "chance_per_hour": 0.5,
+      "entries": [
+        {
+          "id": "enc_hm_clerk",
+          "kind": "social",
+          "weight": 4,
+          "brief": "A Row clerk two steps ahead of you, dropping papers, who does not want help and takes it anyway. One of the sheets is a bond schedule and you read a line of it before he has it back.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "The Row's bond schedules list a keeping against the Wickmoor lamp-tithe.",
+              "subjects": [],
+              "importance": 4,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_hm_queue",
+          "kind": "social",
+          "weight": 3,
+          "brief": "A queue outside the Bonding House that is not moving, and a man at the front explaining very calmly to a closed door that he was told to come today.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_hm_child",
+          "kind": "social",
+          "weight": 3,
+          "brief": "A child running a message who stops dead when she sees you, decides something, and runs a different way.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_hm_lamp",
+          "kind": "discovery",
+          "weight": 2,
+          "brief": "A Syndicate lamp lit in daylight, which means it was not put out, which means nobody walked this street last night.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "A street in Harrowmoot was not walked last night — the lamps were left burning.",
+              "subjects": [],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_hm_collector",
+          "kind": "social",
+          "weight": 2,
+          "brief": "A collection man on the corner who is not collecting from anyone, and is very obviously waiting.",
+          "then": [
+            {
+              "t": "set_flag",
+              "key": "saw_a_collector",
+              "value": true
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_hm_quiet",
+          "kind": "quiet",
+          "weight": 5,
+          "brief": "The Row at its most ordinary: wax, paper, and people who are late.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        }
+      ]
+    },
+    "enc_waterline": {
+      "id": "enc_waterline",
+      "name": "The Waterline",
+      "chance_per_hour": 0.45,
+      "entries": [
+        {
+          "id": "enc_wl_load",
+          "kind": "discovery",
+          "weight": 3,
+          "brief": "A barge loading in a hurry with no tally clerk anywhere on the quay.",
+          "then": [
+            {
+              "t": "add_fact",
+              "text": "Barges leave the Waterline unweighed when nobody senior is watching.",
+              "subjects": [],
+              "importance": 3,
+              "secret": false,
+              "known_by": [
+                "pc_main"
+              ]
+            }
+          ],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_wl_gil",
+          "kind": "social",
+          "weight": 3,
+          "brief": "Gil Ashworth, shouting at the crane about a load he has not seen weighed, to nobody, on principle.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_wl_rope",
+          "kind": "environment",
+          "weight": 2,
+          "brief": "A rope parts somewhere above and the whole quay stops moving for four seconds to find out where.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
+          "once": false
+        },
+        {
+          "id": "enc_wl_quiet",
+          "kind": "quiet",
+          "weight": 4,
+          "brief": "Oil on the water, a crane not turning, and the particular quiet of somewhere that is only busy twice a day.",
+          "then": [],
+          "hours": [],
+          "min_danger": 0,
           "once": false
         }
       ]

@@ -598,6 +598,26 @@
         "hidden_until_flag": null,
         "requires_check": null,
         "revealed": false
+      },
+      {
+        "dir": "moor",
+        "to": "loc_high_moor",
+        "desc": "",
+        "travel_minutes": 35,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "village",
+        "to": "loc_wickmoor_after",
+        "desc": "",
+        "travel_minutes": 30,
+        "locked_by": null,
+        "hidden_until_flag": "wickmoor_burned",
+        "requires_check": null,
+        "revealed": false
       }
     ],
     "features": [],
@@ -750,6 +770,36 @@
         "hidden_until_flag": null,
         "requires_check": null,
         "revealed": false
+      },
+      {
+        "dir": "quay",
+        "to": "loc_waterline",
+        "desc": "",
+        "travel_minutes": 9,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "bonding",
+        "to": "loc_lamp_house",
+        "desc": "",
+        "travel_minutes": 7,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "moor",
+        "to": "loc_high_moor",
+        "desc": "",
+        "travel_minutes": 40,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
       }
     ],
     "features": [],
@@ -826,7 +876,7 @@
     "discovered": false,
     "visited_count": 0,
     "danger_level": 0,
-    "encounter_table_id": null,
+    "encounter_table_id": "enc_harrowmoot",
     "flags": {}
   },
   "loc_assay_row": {
@@ -881,6 +931,36 @@
         "hidden_until_flag": null,
         "requires_check": null,
         "revealed": false
+      },
+      {
+        "dir": "undercroft",
+        "to": "loc_undercroft_row",
+        "desc": "",
+        "travel_minutes": 3,
+        "locked_by": null,
+        "hidden_until_flag": "knows_ledger",
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "bonding",
+        "to": "loc_lamp_house",
+        "desc": "",
+        "travel_minutes": 6,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "counting",
+        "to": "loc_counting_house",
+        "desc": "",
+        "travel_minutes": 4,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
       }
     ],
     "features": [],
@@ -915,7 +995,7 @@
     "discovered": false,
     "visited_count": 0,
     "danger_level": 0,
-    "encounter_table_id": null,
+    "encounter_table_id": "enc_harrowmoot",
     "flags": {
       "syndicate_office": true
     }
@@ -983,7 +1063,7 @@
     "discovered": false,
     "visited_count": 0,
     "danger_level": 0,
-    "encounter_table_id": null,
+    "encounter_table_id": "enc_harrowmoot",
     "flags": {}
   },
   "loc_pensioners_hall": {
@@ -1039,7 +1119,7 @@
     "discovered": false,
     "visited_count": 0,
     "danger_level": 0,
-    "encounter_table_id": null,
+    "encounter_table_id": "enc_harrowmoot",
     "flags": {}
   },
   "loc_the_cut": {
@@ -1070,6 +1150,16 @@
         "to": "loc_fetterlock",
         "desc": "",
         "travel_minutes": 5,
+        "locked_by": null,
+        "hidden_until_flag": null,
+        "requires_check": null,
+        "revealed": false
+      },
+      {
+        "dir": "quay",
+        "to": "loc_waterline",
+        "desc": "",
+        "travel_minutes": 4,
         "locked_by": null,
         "hidden_until_flag": null,
         "requires_check": null,
@@ -1252,7 +1342,8 @@
     "discovered": false,
     "visited_count": 0,
     "danger": 0,
-    "flags": {}
+    "flags": {},
+    "encounter_table_id": "enc_waterline"
   },
   "loc_lamp_house": {
     "id": "loc_lamp_house",
@@ -1329,7 +1420,8 @@
     "discovered": false,
     "visited_count": 0,
     "danger": 0,
-    "flags": {}
+    "flags": {},
+    "encounter_table_id": "enc_harrowmoot"
   },
   "loc_wickmoor_after": {
     "id": "loc_wickmoor_after",
@@ -1406,7 +1498,8 @@
     "discovered": false,
     "visited_count": 0,
     "danger": 0,
-    "flags": {}
+    "flags": {},
+    "encounter_table_id": "enc_north_road"
   },
   "loc_counting_house": {
     "id": "loc_counting_house",
@@ -1461,7 +1554,8 @@
     "discovered": false,
     "visited_count": 0,
     "danger": 0,
-    "flags": {}
+    "flags": {},
+    "encounter_table_id": "enc_harrowmoot"
   },
   "loc_high_moor": {
     "id": "loc_high_moor",
@@ -1541,6 +1635,7 @@
     "discovered": false,
     "visited_count": 0,
     "danger": 0,
-    "flags": {}
+    "flags": {},
+    "encounter_table_id": "enc_high_moor"
   }
 }

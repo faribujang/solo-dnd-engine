@@ -11,6 +11,9 @@ import { hourOfDay } from "../state/selectors.js";
  * that touches dice.
  */
 
+/** What each setting does to the chance of anything happening. See SessionZero. */
+const LIVELINESS: Record<string, number> = { quiet: 0.35, normal: 1, lively: 2.2 };
+
 export interface RolledEncounter {
   entry: EncounterEntry;
   /** Where along the journey it interrupted, for the narrator. */
@@ -37,8 +40,12 @@ export function rollEncounters(
   const hour = hourOfDay(s);
   const out: RolledEncounter[] = [];
 
+  // The table's own rate, the difficulty's budget, and the table's appetite for being
+  // interrupted. Three dials, and only the last one is the player's.
+  const appetite = LIVELINESS[s.meta.session_zero.liveliness] ?? 1;
+
   for (let h = 0; h < hours; h++) {
-    if (!rng.chance(table.chance_per_hour * levers.encounter_budget)) continue;
+    if (!rng.chance(table.chance_per_hour * levers.encounter_budget * appetite)) continue;
 
     const eligible = table.entries.filter((e) => {
       if (e.min_danger > opts.danger) return false;

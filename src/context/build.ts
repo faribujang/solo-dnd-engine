@@ -384,6 +384,14 @@ function renderSystem(s: GameState): string {
     "   character cannot mention what they never saw and nobody told them.",
     "5. Second person, present tense. One or two paragraphs. End on the situation, not on a",
     "   question, and never on a list of options.",
+    ...(s.meta.session_zero.liveliness === "quiet" ? [] : [
+      s.meta.session_zero.liveliness === "lively"
+        ? "5z. THE WORLD HAS OPINIONS. Let somebody interrupt: a pedlar, a child with a"
+          + " question, an argument two doors down, weather that changes the plan. One small"
+          + " unplanned thing per scene, and it should cost the player nothing to ignore."
+        : "5z. Let something small and unplanned happen now and then — a passer-by, a noise,"
+          + " a bit of business somebody is in the middle of. It should cost nothing to ignore.",
+    ]),
     "5a. A JOURNEY IS A SCENE, NOT A CUT. When the mechanics say minutes passed or ground",
     "   was covered, play the crossing before you play the arrival: who said what on the",
     "   way, what the weather did, what somebody was carrying. Two or three sentences is",
