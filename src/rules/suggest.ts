@@ -221,6 +221,65 @@ export function renderSuggestionsForPrompt(list: readonly Suggestion[]): string 
     .join("\n");
 }
 
+/**
+ * A chip, with the thing it would actually DO attached.
+ *
+ * Chips used to travel as bare strings. The ranking picked an affordance, the narrator
+ * rephrased it, and the action was dropped on the floor — so "Remind them who I am and
+ * take the lead" reached the player as a sentence with nothing behind it, and tapping it
+ * sent free text back through the parser to be guessed at from scratch. It guessed
+ * "conversation", nothing happened, and the player learned that chips do not work.
+ *
+ * `mechanic` is the other half of the same fix: a chip that is going to cost a roll should
+ * SAY so before it is tapped. Players at a real table ask "is this a Persuasion check?"
+ * constantly; the answer is knowable here, so it should be printed.
+ */
+export interface SuggestionOut {
+  /** What the chip says — the narrator's phrasing where there is one. */
+  text: string;
+  /** The exact Action, so tapping an unedited chip does precisely what it advertised. */
+  action: unknown;
+  /** "Persuasion", "Attack", "" — shown as a prefix so the cost is never a surprise. */
+  mechanic: string;
+  /** The arithmetic, where there is any: "d20 +2 · DC 13". */
+  detail: string;
+}
+
+const SKILL_LABEL: Record<string, string> = {
+  animal_handling: "Animal Handling", sleight_of_hand: "Sleight of Hand",
+};
+
+function mechanicOf(a: Affordance): string {
+  const act = a.action;
+  switch (act.type) {
+    case "skill_check":
+      return SKILL_LABEL[act.skill] ?? act.skill.charAt(0).toUpperCase() + act.skill.slice(1);
+    case "attack": return "Attack";
+    case "montage": return "Hours";
+    case "travel": return "Travel";
+    case "cast": return "Cast";
+    case "rest": return "Rest";
+    default: return "";
+  }
+}
+
+/**
+ * Pair the narrator's phrasings with the actions they were phrased FROM.
+ *
+ * By position, because that is the only correspondence the model is given — and when the
+ * counts disagree the ranked labels win, since a chip that does the wrong thing is worse
+ * than one that reads plainly.
+ */
+export function chipsFrom(shortlist: readonly Suggestion[], phrased: readonly string[]): SuggestionOut[] {
+  const usePhrased = phrased.length === shortlist.length;
+  return shortlist.map((sg, i) => ({
+    text: (usePhrased ? phrased[i] : undefined) ?? sg.fallback,
+    action: sg.affordance.action,
+    mechanic: mechanicOf(sg.affordance),
+    detail: sg.affordance.detail ?? "",
+  }));
+}
+
 /** Everyone worth naming in a chip, for the client. */
 export function presentNames(s: GameState): string[] {
   return npcsPresent(s, pc(s).location_id).map((e) => e.name);

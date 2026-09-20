@@ -86,7 +86,12 @@ export type TurnFrame =
    */
   | { t: "prose_reset" }
   /** After narration: chips, and anything the narrator's proposals changed. */
-  | { t: "done"; suggestions: string[]; version: number; rejects: number }
+  /**
+   * Chips carry the action they were ranked FROM, and the mechanic they will cost.
+   * A chip that reaches the client as a bare sentence has to be re-guessed from text
+   * when it is tapped, and the guess is frequently "have a conversation".
+   */
+  | { t: "done"; suggestions: unknown[]; version: number; rejects: number }
   /**
    * What the turn actually moved, computed by diffing the world before and after.
    *

@@ -9,7 +9,7 @@ import { parseIntent } from "../llm/intent.js";
 import { validateNarration, type Reject } from "../llm/validate.js";
 import { npcsPresent, pc } from "../state/selectors.js";
 import { answer } from "./questions.js";
-import { renderSuggestionsForPrompt, suggest } from "../rules/suggest.js";
+import { chipsFrom, renderSuggestionsForPrompt, suggest, type SuggestionOut } from "../rules/suggest.js";
 import { reduce } from "./reduce.js";
 import { type Action } from "./turn.js";
 import { takeTurn } from "./session.js";
@@ -74,7 +74,7 @@ export interface LLMTurnOutcome {
   state: GameState;
   journal: GameEvent[];
   rejects: Reject[];
-  suggestedActions: string[];
+  suggestedActions: SuggestionOut[];
   /** Everything the turn touched, for the debug view and the test suite. */
   debug: {
     intent: Intent | null;
@@ -302,9 +302,9 @@ export async function takeLLMTurn(
     rejects: validated.rejects,
     // The model phrases the shortlist; if it declined or invented, fall back to the
     // ranked labels so the chips never go missing.
-    suggestedActions: validated.suggestedActions.length >= Math.min(2, shortlist.length)
-      ? validated.suggestedActions
-      : shortlist.map((x) => x.fallback),
+    // The narrator phrases; the ranking decides what the chip DOES. Both travel together
+    // now, so tapping one cannot mean something other than what it said.
+    suggestedActions: chipsFrom(shortlist, validated.suggestedActions),
     debug: {
       intent: parsed.intent,
       action: parsed.action,

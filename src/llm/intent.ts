@@ -201,6 +201,39 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
           clarify: here.length ? `Speak to whom? Here: ${here.join(", ")}.` : "There is nobody here to talk to.",
         };
       }
+      /**
+       * LEANING ON SOMEBODY IS A CHECK, NOT A CHAT.
+       *
+       * `dialogue_intent` was parsed and then thrown away, so "persuade Sibby to take the
+       * high ridge" produced an ordinary conversation with no roll — ever. The player
+       * types the name of a skill, watches nothing happen, and reasonably concludes the
+       * game does not have one.
+       *
+       * Persuading, lying and threatening are attempts that can FAIL, and an attempt that
+       * cannot fail is not an attempt. Asking and chatting are not: those stay talk.
+       */
+      const SOCIAL_SKILL = {
+        persuade: "persuasion",
+        deceive: "deception",
+        intimidate: "intimidation",
+      } as const;
+      const leaning = intent.dialogue_intent
+        ? SOCIAL_SKILL[intent.dialogue_intent as keyof typeof SOCIAL_SKILL]
+        : undefined;
+
+      if (leaning) {
+        return {
+          ok: true, intent,
+          action: {
+            type: "skill_check",
+            skill: leaning,
+            band: intent.difficulty_band ?? "medium",
+            target_id: id,
+            ...(intent.topic ? { tag: intent.topic.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40) } : {}),
+          },
+        };
+      }
+
       return {
         ok: true, intent,
         action: { type: "talk", target_id: id, ...(intent.topic ? { topic: intent.topic } : {}) },
@@ -358,6 +391,12 @@ const SYSTEM = [
   "- `move_zone` is ONLY for crossing a zone inside a fight. If no fight is happening it is",
   "  always wrong; use `move`.",
   "- `end_turn`, `dash`, `disengage`, `dodge` and `flee` are also combat-only.",
+  "- TRYING TO MOVE SOMEBODY is a check, and you mark it with `dialogue_intent`:",
+  "    persuade / deceive / intimidate — talking them into something they were not going",
+  "    to do. These ROLL. Set `difficulty_band` from how hard a sell it is.",
+  "    inquire / chat — asking, listening, passing the time. These do not roll.",
+  "  \"persuade Sibby to take the ridge\", \"lie about where we were\", \"threaten him\" are",
+  "  all the first kind. \"ask Sibby what she sees\" is the second.",
   "- SPENDING HOURS on something open-ended is `montage`, not a single check. Use it",
   "  whenever the player describes a stretch of time or a plural target rather than one",
   "  act on one person: \"ask around about the surveyor\", \"spend the morning searching\",",

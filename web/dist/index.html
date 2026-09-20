@@ -139,6 +139,10 @@ footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);
   max-width:78vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .chip:active{background:var(--line)}
+.chip .m{
+  color:var(--brass);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  margin-right:5px;font-weight:600;
+}
 .bar{display:flex;gap:8px;align-items:flex-end}
 .icon{
   flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);border:1px solid var(--line);
@@ -312,6 +316,9 @@ const S = {
   version: 0,
   screen: null,
   busy: false,
+  /** The chip last tapped, and what it meant. Cleared on every submit. */
+  chipText: "",
+  chipAction: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -455,10 +462,23 @@ function paintFight() {
     + obj + ground + rows + "</div>";
 }
 
+// Chips carry the action they were ranked from, so tapping one and sending it unedited
+// does exactly what the chip advertised instead of being re-guessed from its wording.
+let CHIP_ACTIONS = new Map();
+
 function paintChips(list) {
-  $("chips").innerHTML = (list || []).map((s) =>
-    '<button class="chip" data-say="' + esc(s) + '">' + esc(s) + "</button>"
-  ).join("");
+  CHIP_ACTIONS = new Map();
+  $("chips").innerHTML = (list || []).map((c, i) => {
+    // Tolerate the old shape (plain strings) so a stale server cannot blank the bar.
+    const text = typeof c === "string" ? c : c.text;
+    if (typeof c !== "string" && c.action) CHIP_ACTIONS.set(text, c.action);
+    // Say what it will cost BEFORE it is tapped. Players at a table ask "is this a
+    // Persuasion check?" constantly; here the answer is knowable, so it is printed.
+    const m = typeof c === "string" || !c.mechanic ? "" : '<span class="m">' + esc(c.mechanic) + "</span>";
+    const title = typeof c === "string" || !c.detail ? "" : ' title="' + esc(c.detail) + '"';
+    return '<button class="chip" data-say="' + esc(text) + '"' + title + " data-i=\"" + i + "\">"
+      + m + esc(text) + "</button>";
+  }).join("");
 }
 // Tapping a chip FILLS the box; it does not send. That is the whole reason chips exist —
 // you read the phrasing, edit it, and learn what this game will understand. Submitting on
@@ -467,6 +487,11 @@ $("chips").addEventListener("click", (e) => {
   const b = e.target.closest(".chip");
   if (!b || S.busy) return;
   const say = $("say");
+  // Remember what this chip meant. If it is sent unedited, that exact action is used; if
+  // it is edited, the text goes through the parser like anything else. Both halves matter:
+  // the chip teaches phrasing, and it still does what it said it would.
+  S.chipText = b.dataset.say;
+  S.chipAction = CHIP_ACTIONS.get(b.dataset.say) || null;
   say.value = b.dataset.say;
   say.focus();
   say.setSelectionRange(say.value.length, say.value.length);
@@ -489,6 +514,11 @@ async function submit(text, actionHint) {
 
   // Rewinding is not a turn — it is a thing you do TO the turns. Caught here so it never
   // reaches the intent parser, which would earnestly try to act it out in the fiction.
+  // A chip sent back untouched carries its own action.
+  if (!actionHint && S.chipAction && text === S.chipText) actionHint = S.chipAction;
+  S.chipAction = null;
+  S.chipText = "";
+
   if (!actionHint && REWIND_PHRASE.test(text)) {
     $("say").value = "";
     addSaid(text);

@@ -16,13 +16,32 @@
         "preconditions": [],
         "completion_triggers": [
           {
-            "id": "t_went_fishing",
-            "on": "enter_location",
+            "id": "t_fished_talked",
+            "on": "dialogue",
             "then": [],
             "once": true,
-            "match": {
-              "actor_id": "pc_main"
-            },
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_riverbend"
+            }
+          },
+          {
+            "id": "t_fished_waited",
+            "on": "time_pass",
+            "then": [],
+            "once": true,
+            "when": {
+              "t": "entity_at",
+              "entity_id": "pc_main",
+              "location_id": "loc_riverbend"
+            }
+          },
+          {
+            "id": "t_fished_did",
+            "on": "skill_check",
+            "then": [],
+            "once": true,
             "when": {
               "t": "entity_at",
               "entity_id": "pc_main",

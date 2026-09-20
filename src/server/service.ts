@@ -60,7 +60,7 @@ export type Frame =
   | Exclude<TurnFrame, { t: "done" }>
   | {
       t: "done";
-      suggestions: string[];
+      suggestions: unknown[];
       version: number;
       rejects: number;
       /** `mechanics_only` when the narrator was skipped or failed. The turn still happened. */
