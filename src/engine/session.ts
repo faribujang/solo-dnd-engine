@@ -98,10 +98,20 @@ export function takeTurn(state: GameState, action: Action, opts: { actorId?: str
 }
 
 /** A root event carrying only effects, for engine-initiated turns like ending a fight. */
+/**
+ * A root the ENGINE raised rather than the player: a fight ending, mostly.
+ *
+ * The `evt_e` prefix is load-bearing. These are minted from `meta.turn + 1` exactly like
+ * the player's own root, so both used to come out as `evt_r0107` in the same turn — and
+ * cascades name their parent by id (`derived_from`), which made the causality of every
+ * derived event in that turn ambiguous. One save has such a pair in it. Replay survived
+ * it, because replay is positional, but the cascade inspector and anything reconstructing
+ * why something happened could not tell the two apart.
+ */
 function rootFor(s: GameState, type: Ev["type"], effects: Ev["direct_effects"]): Ev {
   const turn = s.meta.turn + 1;
   return {
-    id: `evt_r${String(turn).padStart(4, "0")}`, turn, world_minute: s.world.world_minute, type,
+    id: `evt_e${String(turn).padStart(4, "0")}`, turn, world_minute: s.world.world_minute, type,
     actor_id: null, target_ids: [], location_id: s.combat?.location_id ?? null, payload: {},
     rolls: [], direct_effects: effects, attitude_impact: [], witnesses: [], fact_ids: [],
     duration_minutes: 0, rng_nonce: "", derived_from: null, trigger_id: null,
