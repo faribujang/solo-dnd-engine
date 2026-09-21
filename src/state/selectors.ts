@@ -138,3 +138,28 @@ export function visibleExits(s: GameState, loc: Location) {
     (x) => x.revealed || x.hidden_until_flag === null || s.world.flags[x.hidden_until_flag] === true,
   );
 }
+
+/**
+ * Whereabouts the player has been TOLD, from the fact ledger.
+ *
+ * A fact the player knows that names a person and a place in its subjects is directions.
+ * That is the whole mechanism — no new schema, no flags to remember to set, and it means
+ * an author who writes "Saveri Crole assays contracts on Assay Row" into a fact has
+ * already made the map work.
+ */
+export function whereaboutsTold(s: GameState): Map<string, Set<string>> {
+  const me = s.meta.pc_id;
+  const out = new Map<string, Set<string>>();
+  for (const f of s.facts) {
+    if (!f.known_by.includes(me)) continue;
+    const people = f.subjects.filter((id) => s.entities[id]);
+    const places = f.subjects.filter((id) => s.locations[id]);
+    if (!people.length || !places.length) continue;
+    for (const p of people) {
+      const set = out.get(p) ?? new Set<string>();
+      for (const l of places) set.add(l);
+      out.set(p, set);
+    }
+  }
+  return out;
+}

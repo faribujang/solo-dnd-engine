@@ -5,7 +5,7 @@ import { adjacentZones, combatantOf, currentCombatant } from "./combat.js";
 import { suggest } from "../rules/suggest.js";
 import {
   factsKnownToPc, hourOfDay, itemsAt, itemsOwnedBy, npcsPresent, pc,
-  timeOfDayLabel, visibleExits,
+  timeOfDayLabel, visibleExits, whereaboutsTold,
 } from "../state/selectors.js";
 
 /**
@@ -35,6 +35,7 @@ export type QuestionKind =
   | "condition"        // how hurt is that / how hurt am I
   | "know"             // what do I know about X
   | "carrying"         // what is in my pack
+  | "where"            // where is a particular person
   | "doing"            // what was I in the middle of
   | "time"             // how long have I got
   | "options";         // what can I do right now
@@ -233,6 +234,57 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
       return { kind, lines, brief: "" };
     }
 
+    /**
+     * "Where is Jory?" — the most common question there is, and until now there was no
+     * kind for it, so it fell through to `who` and got answered with a roll-call of the
+     * room. In the first playthrough that produced "I do not know where Jory is" about
+     * the companion standing next to the player, twice.
+     *
+     * Answered from KNOWLEDGE, never from the entity table: here, or somewhere a fact the
+     * player knows put them, or honestly not known.
+     */
+    case "where": {
+      const who = subject ? s.entities[subject] : undefined;
+      if (!who) {
+        return {
+          kind,
+          lines: ["Who are you looking for?"],
+          brief: "Ask which person they mean. Do not guess.",
+        };
+      }
+      if (!who.alive) {
+        return { kind, lines: [`${who.name} is dead.`], brief: `Say plainly that ${who.name} is dead. Do not soften it into a location.` };
+      }
+      if (who.location_id === player.location_id) {
+        return {
+          kind,
+          lines: [`${who.name} is here, with you.`],
+          brief: `${who.name} is standing right here. Say so in one line.`,
+        };
+      }
+      // Somewhere else. You only know it if something told you.
+      const told = whereaboutsTold(s).get(who.id);
+      const where = s.locations[who.location_id];
+      const known = told?.has(who.location_id) && where;
+      if (known) {
+        return {
+          kind,
+          lines: [`${who.name} is at ${where.name}, as far as you know.`],
+          brief: `Say where ${who.name} was last known to be, and that it is second-hand.`,
+        };
+      }
+      const lastSeen = told && told.size
+        ? [...told].map((l) => s.locations[l]?.name).filter(Boolean)
+        : [];
+      return {
+        kind,
+        lines: lastSeen.length
+          ? [`You do not know where ${who.name} is now. You last knew of them at ${lastSeen.join(", ")}.`]
+          : [`You do not know where ${who.name} is.`],
+        brief: `The player does not know where ${who.name} is. Do not invent a location.`,
+      };
+    }
+
     case "doing": {
       const active = Object.values(s.quests).filter((q) => q.status === "active");
       if (active.length === 0) return { kind, lines: ["Nothing anyone has asked of you."], brief: "" };
@@ -322,6 +374,14 @@ export function classify(text: string): { kind: QuestionKind; subject?: string }
   }
 
   if (/surroundings?|around me|the room|this place|look like|see here/.test(t)) return { kind: "surroundings" };
+  // "Where is Jory" has to be caught before the generic who/anyone sweep, or it comes
+  // back as a roll-call of the room rather than an answer about the person named. That
+  // is how "where is Jory" was answered with "I do not know where Jory is" about the
+  // companion standing next to the player.
+  const whereAbout = t.match(/^where(?:'s|s| is| are)\s+(?:the\s+)?(.+?)\s*\??$/);
+  if (whereAbout?.[1] && !/^(i|we|me|us|here|this|that|it|am i|are we)\b/.test(whereAbout[1])) {
+    return { kind: "where", subject: whereAbout[1].trim() };
+  }
   if (/\bwho\b|\banyone\b/.test(t)) return { kind: "who" };
   if (/reach|adjacent|next to me|how far|get to|move to|exits?|ways? out/.test(t)) return { kind: "reach" };
   if (/hurt|health|\bhp\b|wounded|bloodied|how badly|holding up/.test(t)) return { kind: "condition" };

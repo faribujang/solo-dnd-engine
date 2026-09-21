@@ -2,7 +2,7 @@ import type { DifficultyBand, Roll, Skill } from "../schema/common.js";
 import type { Effect } from "../schema/dsl.js";
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
-import { rollD20, rollDamage } from "../rules/dice.js";
+import { rollD20, rollDamage, rollDice } from "../rules/dice.js";
 import { abilityModOf, dcForBand, skillModifier, skillParts, DEGREE_LABEL } from "../rules/checks.js";
 void abilityModOf; void combatOver;
 import { collectSkillModifiers, combineModifiers } from "../rules/modifiers.js";
@@ -73,6 +73,8 @@ export type Action =
   | { type: "rest"; kind: "short" | "long" }
   | { type: "death_save" }
   | { type: "equip"; item_instance_id: string; slot: "main_hand" | "off_hand" | "armor" | "trinket" | null }
+  /** Drink it, eat it, apply it. What it does is on the definition, not decided here. */
+  | { type: "use_item"; item_instance_id: string; target_id?: string }
   | { type: "travel"; location_id: string }
   | { type: "buy"; merchant_id: string; item_def_id: string; qty?: number }
   | { type: "sell"; merchant_id: string; item_instance_id: string }
@@ -866,6 +868,79 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
       );
     }
 
+    // ------------------------------------------------------------ use_item
+    case "use_item": {
+      const inst = s.items[action.item_instance_id];
+      if (!inst || inst.owner.t !== "entity" || inst.owner.id !== actor.id) {
+        return { ok: false, reason: "You are not carrying that." };
+      }
+      const def = s.item_defs[inst.def_id];
+      const name = def?.name ?? inst.def_id;
+      const use = def?.on_use ?? null;
+
+      // A thing with no written effect is not a failure — you can still eat the bread.
+      // Saying so plainly beats inventing a benefit the author never wrote.
+      if (!use) {
+        return finish(
+          {
+            type: "effect",
+            target_ids: [],
+            payload: { used: inst.id, def_id: inst.def_id, inert: true },
+            rolls: [],
+            direct_effects: [],
+            duration_minutes: s.combat ? 0 : DURATION.take,
+            witnesses: witnessIds(s, loc.id, actor.id),
+          },
+          `Use ${name}. Nothing comes of it beyond the moment.`,
+        );
+      }
+
+      // The target may be someone else — pouring a draught into a downed companion is
+      // the whole point of carrying one.
+      const patient = action.target_id ? s.entities[action.target_id] : actor;
+      if (!patient || patient.location_id !== loc.id) return { ok: false, reason: "They are not here." };
+
+      const effects: Effect[] = [];
+      const parts: string[] = [];
+      const rolls: Roll[] = [];
+
+      if (use.heal) {
+        // Rolled HERE, at resolution, and baked into the event — never re-rolled on replay.
+        const rolled = rollDice(rng, use.heal);
+        const missing = Math.max(0, patient.hp.max - patient.hp.current);
+        const healed = Math.min(rolled, missing);
+        effects.push({ t: "heal", entity_id: patient.id, amount: rolled });
+        rolls.push({
+          purpose: "heal", die: use.heal, raw: rolled, raw_second: null, mods: 0, total: rolled,
+          target: null, success: null, critical: false, fumble: false, advantage: "none",
+          degree: null,
+          parts: [{ label: name, value: rolled }],
+        });
+        parts.push(
+          patient.id === actor.id
+            ? `Heal ${healed} (${use.heal} → ${rolled}).`
+            : `${patient.name} heals ${healed} (${use.heal} → ${rolled}).`,
+        );
+      }
+      if (use.consumed) {
+        effects.push({ t: "remove_item", entity_id: actor.id, item_def_id: inst.def_id, qty: 1 });
+        parts.push("Used up.");
+      }
+
+      return finish(
+        {
+          type: "effect",
+          target_ids: patient.id === actor.id ? [] : [patient.id],
+          payload: { used: inst.id, def_id: inst.def_id, target: patient.id },
+          rolls,
+          direct_effects: effects,
+          duration_minutes: s.combat ? 0 : use.minutes,
+          witnesses: witnessIds(s, loc.id, actor.id),
+        },
+        [`Use ${name}.`, use.text, ...parts].filter(Boolean).join(" "),
+      );
+    }
+
     // ---------------------------------------------------------------- give
     case "give": {
       const inst = s.items[action.item_instance_id];
@@ -1135,6 +1210,7 @@ function actionKey(a: Action): string {
     case "rest": return `rest:${a.kind}`;
     case "death_save": return "death_save";
     case "equip": return `equip:${a.item_instance_id}:${a.slot ?? "none"}`;
+    case "use_item": return `use:${a.item_instance_id}:${a.target_id ?? "self"}`;
     case "travel": return `travel:${a.location_id}`;
     case "buy": return `buy:${a.merchant_id}:${a.item_def_id}`;
     case "sell": return `sell:${a.merchant_id}:${a.item_instance_id}`;

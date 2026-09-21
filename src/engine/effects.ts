@@ -20,6 +20,7 @@ import { Clock, vowComplete } from "../schema/clock.js";
 import { Entity } from "../schema/entity.js";
 import { Relationship } from "../schema/relationship.js";
 import { Thread, THREAD_FADE_MINUTES } from "../schema/thread.js";
+import { Location } from "../schema/location.js";
 
 /**
  * Effects are the ONLY way state changes. Each one mutates the draft in place and may
@@ -459,6 +460,39 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
         object: s.meta.pc_id,
         dims: { affinity: 0, trust: 0, fear: 0, respect: 0 },
       });
+      break;
+    }
+
+    case "introduce_place": {
+      const here = s.locations[s.entities[s.meta.pc_id]!.location_id]!;
+      // Never mint a second copy of a room the campaign already has under that name; the
+      // narrator describing "the winch house" twice must arrive at the same winch house.
+      const existing = Object.values(s.locations).find(
+        (l) => l.name.toLowerCase().trim() === eff.name.toLowerCase().trim(),
+      );
+      if (existing) {
+        existing.discovered = true;
+        if (!here.exits.some((x) => x.to === existing.id)) {
+          here.exits.push({ dir: eff.dir, to: existing.id, desc: "", travel_minutes: 1, locked_by: null, hidden_until_flag: null, requires_check: null, revealed: true });
+        }
+        break;
+      }
+      const id = nextId(s, "loc");
+      s.locations[id] = Location.parse({
+        id,
+        name: eff.name,
+        short_desc: eff.short_desc,
+        // It hangs off where you are standing, so it inherits the map it belongs on.
+        region_id: here.region_id,
+        settlement_id: here.settlement_id,
+        coords: { x: here.coords.x, y: here.coords.y },
+        map_visibility: "discoverable",
+        // You are being shown it, so you know it is there.
+        discovered: true,
+        ambient: { light: eff.light, sound: "", smell: "" },
+        exits: [{ dir: eff.back, to: here.id, desc: "", travel_minutes: 1, locked_by: null, hidden_until_flag: null, requires_check: null, revealed: true }],
+      });
+      here.exits.push({ dir: eff.dir, to: id, desc: "", travel_minutes: 1, locked_by: null, hidden_until_flag: null, requires_check: null, revealed: true });
       break;
     }
 
@@ -1028,12 +1062,27 @@ function expireConditions(s: GameState): void {
   }
 }
 
-/** NPCs walk their schedule when the clock moves. Cheap, and the world feels alive. */
+/**
+ * NPCs walk their schedule when the clock moves. Cheap, and the world feels alive.
+ *
+ * A schedule is a DEFAULT, and the story overrides it. This is not a nicety: in the first
+ * full playthrough the raid on Wickmoor fired exactly as authored — it flagged the
+ * player's parents dead and moved their abducted sister to the north road — and then this
+ * function walked all three of them back onto the village green, because their schedule
+ * said "the green, every hour of the day". The player spent sixty turns hunting a sister
+ * who was, as far as the world was concerned, standing behind them the whole time.
+ *
+ * So anyone the story has taken off the board stays off it. `story_locked` is a reserved
+ * entity flag that content sets to mean exactly that.
+ */
+export const STORY_LOCK_FLAG = "story_locked";
+
 function relocateOnSchedule(s: GameState): void {
   for (const id of Object.keys(s.entities).sort()) {
     const e = s.entities[id]!;
     if (!e.alive || e.id === s.meta.pc_id || e.schedule.length === 0) continue;
     if (e.flags["is_template"] === true) continue;
+    if (e.flags[STORY_LOCK_FLAG] === true) continue;
     const want = scheduledLocation(s, e);
     if (want && s.locations[want] && e.location_id !== want) {
       e.location_id = want;

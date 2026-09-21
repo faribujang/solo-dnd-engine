@@ -95,7 +95,13 @@
       "tags": [
         "potion"
       ],
-      "stackable": true
+      "stackable": true,
+      "on_use": {
+        "heal": "2d4+2",
+        "minutes": 1,
+        "consumed": true,
+        "text": "Iron filings and mint."
+      }
     },
     "item_def_silver_bell": {
       "id": "item_def_silver_bell",

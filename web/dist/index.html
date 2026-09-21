@@ -213,6 +213,18 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);padding:8px var(--pad) calc(env(safe-area-inset-bottom) + 8px)}
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+/*
+ * On a phone you swipe the chips. With a mouse there is nothing to swipe, and a hidden
+ * scrollbar meant the only way to read past the third suggestion was to select the text
+ * and drag. So on a pointer device they WRAP instead: every suggestion is on screen at
+ * once, up to three rows, and then the row itself scrolls vertically like anything else.
+ */
+@media (pointer:fine){
+  .chips{flex-wrap:wrap;overflow-x:visible;overflow-y:auto;max-height:104px;scrollbar-width:thin}
+  .chips::-webkit-scrollbar{display:block;height:6px;width:6px}
+  .chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  .chip{max-width:min(46ch,100%)}
+}
 .chip{
   flex:0 0 auto;font-size:13.5px;padding:7px 13px;border-radius:999px;
   border:1px solid var(--line);background:var(--raised);color:var(--ink);
@@ -639,6 +651,19 @@ function paintChips(list) {
 // Tapping a chip FILLS the box; it does not send. That is the whole reason chips exist —
 // you read the phrasing, edit it, and learn what this game will understand. Submitting on
 // tap turns them into buttons and teaches nothing.
+/*
+ * Wheel over the strip scrolls it. Only matters where the chips are still a single row —
+ * a trackpad user can already swipe, a mouse user could not, and the difference was
+ * invisible until someone with a mouse tried to read the fourth suggestion.
+ */
+$("chips").addEventListener("wheel", (e) => {
+  const el = e.currentTarget;
+  if (el.scrollWidth <= el.clientWidth) return;   // wrapped; let the page have the wheel
+  if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  el.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
+
 $("chips").addEventListener("click", (e) => {
   const b = e.target.closest(".chip");
   if (!b || S.busy) return;

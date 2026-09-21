@@ -14,6 +14,8 @@ import { Ability } from "../schema/common.js";
 
 export const IntentAction = z.enum([
   "move", "skill_check", "attack", "cast", "talk", "use_item", "take", "give",
+  // Wearing and drawing gear. Split from use_item by the ITEM, in toAction.
+  "equip", "unequip",
   "trade", "rest", "wait", "look", "inventory", "meta", "unclear",
   // Hours rather than a moment: "ask around town", "spend the morning searching".
   "montage",
@@ -44,7 +46,7 @@ export const Intent = z.object({
   /** For `montage`: how the hours were spent. */
   montage_kind: z.enum(["ask_around", "search", "watch", "work"]).nullable().default(null),
   /** For `ask`: which question, and about what. */
-  question: z.enum(["surroundings", "who", "reach", "condition", "know", "carrying", "doing", "time", "options"]).nullable().default(null),
+  question: z.enum(["surroundings", "who", "reach", "condition", "know", "carrying", "where", "doing", "time", "options"]).nullable().default(null),
   rationale: z.string().default(""),
   confidence: z.number().min(0).max(1).default(0.5),
 });
@@ -95,6 +97,7 @@ export const NarratorProposal = z.discriminatedUnion("t", [
   z.object({ t: z.literal("move_entity"), entity_id: z.string(), location_id: z.string() }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string(), voice: z.string().default(""), trait: z.string().default("") }),
+  z.object({ t: z.literal("introduce_place"), name: z.string(), short_desc: z.string(), dir: z.string(), back: z.string().default("back"), light: z.enum(["bright", "dim", "dark"]).default("bright") }),
   z.object({ t: z.literal("give_item"), entity_id: z.string(), item_def_id: z.string(), qty: z.number().int().positive().default(1) }),
   z.object({ t: z.literal("open_thread"), text: z.string(), subject_ids: z.array(z.string()).default([]), location_id: z.string().nullable().default(null), from_entity_id: z.string().nullable().default(null) }),
   z.object({ t: z.literal("resolve_thread"), thread_id: z.string(), as: z.enum(["kept", "broken", "faded"]), outcome: z.string().default("") }),

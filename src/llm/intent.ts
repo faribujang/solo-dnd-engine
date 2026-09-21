@@ -119,7 +119,12 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
     case "ask": {
       // Asking is free. It never becomes an action, never advances the turn, and never
       // reaches the resolver.
-      const named = intent.target_name ? findEntity(intent.target_name) : null;
+      // "Where is Jory" is usually asked precisely because they are NOT in the room, so
+      // resolving the subject against the room alone answers "who are you looking for?"
+      // about somebody the player has known for the whole campaign.
+      const named = intent.target_name
+        ? (findEntity(intent.target_name) ?? findAnyone(s, intent.target_name))
+        : null;
       return { ok: false, intent, question: intent.question ?? "surroundings", subject: named };
     }
 
@@ -179,15 +184,30 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
           action: { type: "talk", target_id: person, ...(intent.topic ? { topic: intent.topic } : {}) },
         };
       }
-      // Named somebody real who is somewhere else: say where, rather than "no such place".
+      /**
+       * Named somebody real who is somewhere else.
+       *
+       * If you can get to where they are, GO. Answering "Teal is not here — you last knew
+       * them to be at the cellar" is the game naming a destination and then refusing to
+       * walk to it, which is exactly how a player gets stuck: they were TOLD to follow
+       * somebody, and following is not a verb the game accepted.
+       */
       if (person) {
         const them = s.entities[person]!;
         const where = s.locations[them.location_id];
         const known = where && (where.discovered || where.visited_count > 0);
+
+        if (where) {
+          const door = exits.find((x) => x.to === where.id);
+          if (door) return { ok: true, intent, action: { type: "move", dir: door.dir } };
+          if (known && gate.ok && reachable(s, loc.id).some((r) => r.id === where.id)) {
+            return { ok: true, intent, action: { type: "travel", location_id: where.id } };
+          }
+        }
         return {
           ok: false, intent,
           clarify: known
-            ? `${them.name} is not here — you last knew them to be at ${where.name}.`
+            ? `${them.name} is not here — you last knew them to be at ${where!.name}, and you cannot get there from here right now.`
             : `${them.name} is not here, and you do not know where they are.`,
         };
       }
@@ -355,8 +375,62 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
       // point, not just for text a model read. This only supplies a sensible default.
       return { ok: true, intent, action: { type: "wait", minutes: Math.max(1, intent.minutes ?? 10) } };
 
+    /**
+     * "equip the bow", "drink the draught", "put on the mail". One verb from the player's
+     * side; the split into the engine's `equip` and `use_item` is ours to make, not theirs.
+     *
+     * The old code refused all three of these as unimplemented, which is why a player who
+     * had just been handed Accord steel could not draw it.
+     */
+    case "equip":
+    case "unequip":
+    case "use_item": {
+      const n = (intent.item_name ?? intent.target_name ?? "").toLowerCase().trim();
+      const carried = itemsOwnedBy(s, player.id);
+      const named = (i: { id: string; def_id: string }) =>
+        i.id === intent.item_name ||
+        (n.length > 1 && (s.item_defs[i.def_id]?.name.toLowerCase().includes(n) ||
+          n.includes((s.item_defs[i.def_id]?.name ?? "").toLowerCase())));
+
+      const held = carried.find(named);
+      if (!held) {
+        // It may be lying right there — say so, rather than "you aren't carrying that",
+        // which reads as a refusal when the answer is "pick it up first".
+        const onFloor = itemsAt(s, loc.id).find(named);
+        if (onFloor) return { ok: true, intent, action: { type: "take", item_instance_id: onFloor.id } };
+        const pack = carried.map((i) => s.item_defs[i.def_id]?.name).filter(Boolean);
+        return {
+          ok: false, intent,
+          clarify: pack.length
+            ? `You are not carrying ${n || "that"}. In your pack: ${pack.join(", ")}.`
+            : "You are carrying nothing.",
+        };
+      }
+
+      const def = s.item_defs[held.def_id];
+      const kind = def?.kind;
+
+      if (intent.action === "unequip") {
+        return { ok: true, intent, action: { type: "equip", item_instance_id: held.id, slot: null } };
+      }
+
+      // Gear gets worn or drawn; everything else gets used. A player saying "use the bow"
+      // means draw it, and a player saying "equip the draught" means drink it — so the
+      // ITEM decides which verb this was, not the word they happened to pick.
+      if (kind === "armor" || kind === "shield" || kind === "weapon") {
+        const slot = kind === "armor" ? "armor" : kind === "shield" ? "off_hand" : "main_hand";
+        return { ok: true, intent, action: { type: "equip", item_instance_id: held.id, slot } };
+      }
+      const on = intent.target_name && intent.target_name !== intent.item_name
+        ? findEntity(intent.target_name)
+        : null;
+      return {
+        ok: true, intent,
+        action: { type: "use_item", item_instance_id: held.id, ...(on ? { target_id: on } : {}) },
+      };
+    }
+
     case "trade":
-    case "use_item":
     case "cast":
       // Honest about the boundary rather than silently doing something else. These arrive
       // in phase 4 with the combat and inventory systems.
@@ -392,8 +466,35 @@ const SYSTEM = [
   "You are a TRANSLATOR, not a referee:",
   "- Never decide whether an action succeeds. That is the engine's job.",
   "- Never invent a DC. Propose a difficulty BAND and nothing more.",
-  "- Choose the band from the fiction: routine is easy, contested is medium, long odds are",
-  "  hard. Do not soften a band because you want the player to succeed.",
+  /**
+   * Bands used to be described as "routine / contested / long odds", and the model read
+   * almost everything as contested. A player who tells a small lie and a player who talks
+   * their way past a sealed gate were both rolling against 15, and with a disposition
+   * shift against them that became 16-18 — so ordinary social play failed for hours.
+   *
+   * The fix is anchors, not adjectives. Each band names acts a person can recognise.
+   */
+  "- CHOOSE THE BAND FROM THE ANCHORS BELOW. The default is NOT medium. Most things a",
+  "  competent adult does in a normal day are trivial or easy, and you must say so:",
+  "    trivial  — a thing that would only fail on terrible luck. Small talk. A white lie",
+  "               nobody has reason to doubt. Climbing a ladder. Spotting the obvious.",
+  "               Haggling a copper off a loaf. Asking a friendly person for directions.",
+  "    easy     — ordinary competence under no pressure. Lying to someone with no reason",
+  "               to suspect you. Persuading someone who already likes you and loses",
+  "               nothing by agreeing. Picking out a face in a small crowd. Climbing a",
+  "               low wall. Getting a talkative person to keep talking.",
+  "    medium   — a real contest with something at stake. Convincing a stranger to change",
+  "               their plan. A lie that costs them if believed. Reading a room that is",
+  "               guarding itself. Sneaking past someone who is awake but not alert.",
+  "    hard     — against someone's interest, training, or orders. Talking past a guard",
+  "               posted to stop you. Deceiving a professional whose job is spotting liars.",
+  "               Intimidating an armed soldier. Picking a good lock in a hurry.",
+  "    very_hard— against a hostile expert who is expecting exactly this.",
+  "    near_impossible — only when the fiction says it should almost certainly fail.",
+  "  Two questions decide it: does the other person LOSE something by going along, and do",
+  "  they have a REASON to be suspicious? Neither -> trivial or easy. Both -> hard.",
+  "  Do not soften a band because you want the player to succeed, and do not harden one",
+  "  because the scene feels dramatic. A tense scene is still full of easy actions.",
   "- If the player names a target, put their exact words in target_name. Do not guess ids.",
   "- `tag` names what the attempt is FOR in one snake_case word: search, listen, sneak,",
   "  read_ledger. Use an existing tag from the scene if one fits.",
@@ -410,6 +511,8 @@ const SYSTEM = [
   "    \"who is here\"                                                          -> ask, who",
   "    \"where can I go\" / \"what are the exits\"                               -> ask, reach",
   "    \"what am I carrying\" / \"what's in my pack\"                            -> ask, carrying",
+  "    \"where is Jory\" / \"where's Cotter\"                                     -> ask, where",
+  "      (put the person's name in target_name; `where` is about a PERSON, never a place)",
   "    \"how hurt am I\"                                                        -> ask, condition",
   "    \"what was I doing\" / \"what am I meant to be doing\"                    -> ask, doing",
   "  `inventory` is NOT how you answer a question. Use ask/carrying.",
@@ -432,6 +535,15 @@ const SYSTEM = [
   "  after in `topic`, and set `montage_kind` to ask_around, search, watch or work.",
   "  A montage takes hours of game time, so do NOT use it for a single question to a",
   "  single person — that is `talk`.",
+  "- GEAR. `equip` is drawing, wearing or holding something you carry: \"draw the axe\",",
+  "  \"put on the mail\", \"ready the shield\", \"equip the bow\". `unequip` is stowing it.",
+  "  `use_item` is drinking, eating or applying: \"drink the draught\", \"eat the bread\".",
+  "  Put the thing's name in `item_name` exactly as the player said it. If they are using",
+  "  something ON somebody — \"give Sibby the draught\" as first aid — also set target_name.",
+  "  Do not worry which of the two verbs is right: name the item and the engine decides.",
+  "  \"take\"/\"pick up\"/\"grab\" something lying in the room is `take`.",
+  "- FOLLOWING SOMEBODY — \"follow Teal\", \"go after her\", \"stay with him\" — is `move`, with",
+  "  the person's name in `direction`. The engine walks you to where they are.",
 ].join("\n");
 
 /**

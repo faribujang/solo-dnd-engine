@@ -228,7 +228,7 @@ describe("the cast budget", () => {
     expect(v.narration).toBe("Somebody new is behind the counter.");
   });
 
-  it("invents at most one person per turn", async () => {
+  it("invents at most two people per turn", async () => {
     const s = await world();
     const here = s.entities[s.meta.pc_id]!.location_id;
     const v = validateNarration(s, narration([
@@ -240,8 +240,12 @@ describe("the cast budget", () => {
     // A narrator minting three a turn reaches the global cap in eighty-four turns, by
     // which point a village green holds two hundred and fifty-four people. The cap alone
     // does not save the world; it only stops it getting worse.
-    expect(v.effects).toHaveLength(1);
-    expect(v.rejects).toHaveLength(2);
+    //
+    // Two, not one: a tollhouse with a guard on the door and a clerk behind the counter
+    // is one ordinary beat, and under a cap of one the clerk was rejected — so the prose
+    // described somebody the player then could not speak to.
+    expect(v.effects).toHaveLength(2);
+    expect(v.rejects).toHaveLength(1);
     expect(v.rejects[0]!.reason).toMatch(/per turn/);
   });
 

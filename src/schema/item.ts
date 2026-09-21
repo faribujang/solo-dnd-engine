@@ -62,6 +62,23 @@ export const ItemDef = z.object({
   tags: z.array(z.string()).default([]),
   stackable: z.boolean().default(false),
   grants: z.array(ItemGrant).default([]),
+  /**
+   * What happens when a character drinks/eats/applies it. The heal is DICE, not a number,
+   * because it is rolled at resolution like everything else and baked into the event.
+   * A consumable with no `on_use` is flavour — you can still eat it, it just does nothing
+   * but pass the time, and the engine says so rather than pretending.
+   */
+  on_use: z
+    .object({
+      heal: z.string().nullable().default(null),   // "2d4+2"
+      minutes: z.number().int().nonnegative().default(1),
+      /** False for a tool you use without spending it. */
+      consumed: z.boolean().default(true),
+      /** Said back to the player when code, not the DM, is describing the act. */
+      text: z.string().default(""),
+    })
+    .nullable()
+    .default(null),
 });
 export type ItemDef = z.infer<typeof ItemDef>;
 

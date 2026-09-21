@@ -4,8 +4,22 @@ import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
 import { canAdmit } from "../rules/cast.js";
 import { MAX_NEW_THREADS_PER_TURN, MAX_OPEN_THREADS } from "../schema/thread.js";
 
-/** New named people one turn may invent. A scene introduces someone; it does not cast. */
-const MAX_NEW_LOCALS_PER_TURN = 1;
+/**
+ * New named people one turn may invent. A scene introduces someone; it does not cast.
+ *
+ * One was too tight in practice. A tollhouse with a syndicate guard on the door AND a
+ * clerk behind the counter is one ordinary beat, and under a cap of one the second of
+ * them was rejected — so the prose described two people and the player could only speak
+ * to one. Two per turn still reaches the 250 cap slowly, and the crowd check below is
+ * what actually keeps a green from filling up.
+ */
+const MAX_NEW_LOCALS_PER_TURN = 2;
+
+/** New places one turn may invent. A scene opens a door; it does not draw a county. */
+const MAX_NEW_PLACES_PER_TURN = 1;
+
+/** Past this, a room is a junction rather than a room, and the map stops reading. */
+const MAX_EXITS_FROM_ONE_PLACE = 10;
 
 /** Named people one place can hold before it stops being a place and becomes a crowd. */
 const MAX_NAMED_IN_ONE_PLACE = 14;
@@ -200,6 +214,8 @@ export function validateNarration(
     effects.push({ t: "set_opinion", subject, object, opinion: o.opinion.trim() });
   }
 
+  // How many places this turn has already invented. See the `introduce_place` case.
+  let newPlaces = 0;
   // How many people this turn has already invented. See the `introduce_local` case.
   let newLocals = 0;
   let newThreads = 0;
@@ -279,7 +295,7 @@ export function validateNarration(
          * behaving.
          */
         if (newLocals >= MAX_NEW_LOCALS_PER_TURN) {
-          reject("proposal", `only ${MAX_NEW_LOCALS_PER_TURN} new person per turn; ${p.name} can wait for the next scene`, p);
+          reject("proposal", `only ${MAX_NEW_LOCALS_PER_TURN} new people per turn; ${p.name} can wait for the next scene`, p);
           break;
         }
         const crowdHere = Object.values(s.entities).filter(
@@ -307,6 +323,36 @@ export function validateNarration(
           trait: (p.trait ?? "").trim().slice(0, 200),
         });
         newLocals += 1;
+        break;
+      }
+
+      /**
+       * A new place, hung off the room the player is standing in.
+       *
+       * Capped at one per turn for the same reason as people: a narrator that can mint
+       * geography will, and a map with a hundred invented rooms is not a map. The caller
+       * counts them in `newPlaces`.
+       */
+      case "introduce_place": {
+        if (newPlaces >= MAX_NEW_PLACES_PER_TURN) {
+          reject("proposal", `only ${MAX_NEW_PLACES_PER_TURN} new place per turn; ${p.name} can wait`, p);
+          break;
+        }
+        const here = s.locations[s.entities[s.meta.pc_id]!.location_id];
+        if (!here) { reject("proposal", "nowhere to hang it off", p); break; }
+        if (here.exits.length >= MAX_EXITS_FROM_ONE_PLACE) {
+          reject("proposal", `${here.name} already has ${here.exits.length} ways out of it`, p);
+          break;
+        }
+        effects.push({
+          t: "introduce_place",
+          name: p.name.trim(),
+          short_desc: p.short_desc.trim(),
+          dir: p.dir.trim(),
+          back: (p.back ?? "back").trim(),
+          light: p.light,
+        });
+        newPlaces += 1;
         break;
       }
 

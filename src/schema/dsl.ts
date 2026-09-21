@@ -104,6 +104,29 @@ export const Effect = z.discriminatedUnion("t", [
     voice: z.string().max(200).default(""),
     trait: z.string().max(200).default(""),
   }),
+  /**
+   * The same problem as `introduce_local`, one level up: a place the narrator describes
+   * but the world does not contain.
+   *
+   * A player was told to follow somebody down into a cellar. The cellar was prose. It had
+   * no id, so it was on no map, and "go to the cellar" could not resolve — the scene had
+   * named a destination the engine could not offer. This mints it: a real location, joined
+   * to where the player is standing by a two-way exit, discovered, and therefore drawable
+   * and walkable like anywhere else.
+   *
+   * Deliberately NOT a way to invent geography at large. It hangs the new place off the
+   * CURRENT one, inherits its region and settlement, and the validator caps it hard.
+   */
+  z.object({
+    t: z.literal("introduce_place"),
+    name: z.string().min(1).max(60),
+    short_desc: z.string().min(1).max(300),
+    /** How you get there from where you are: "down the stair", "through the back door". */
+    dir: z.string().min(1).max(40),
+    /** The way back, so nobody is ever sealed in by a narrator's turn of phrase. */
+    back: z.string().min(1).max(40).default("back"),
+    light: z.enum(["bright", "dim", "dark"]).default("bright"),
+  }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   /**
    * Pick up an obligation. The narrator is trusted with these precisely because they
@@ -204,7 +227,7 @@ export type Effect = z.infer<typeof Effect>;
 export const NARRATOR_ALLOWED_EFFECTS = [
   "set_flag", "add_lead", "reveal_location", "reveal_exit",
   "add_fact", "teach_fact", "adjust_attitude", "move_entity", "advance_time",
-  "set_opinion", "grant_inspiration", "tick_clock", "introduce_local",
+  "set_opinion", "grant_inspiration", "tick_clock", "introduce_local", "introduce_place",
   "open_thread", "resolve_thread",
   /**
    * Handing something over — and ONLY things that cannot change a roll.

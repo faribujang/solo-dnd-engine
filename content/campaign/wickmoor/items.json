@@ -83,7 +83,13 @@
         "supplied"
       ],
       "stackable": true,
-      "gift_ok": true
+      "gift_ok": true,
+      "on_use": {
+        "heal": "2d4+2",
+        "minutes": 1,
+        "consumed": true,
+        "text": "Iron filings and mint."
+      }
     },
     "item_def_crowbar": {
       "id": "item_def_crowbar",
@@ -278,7 +284,13 @@
       ],
       "stackable": true,
       "grants": [],
-      "gift_ok": true
+      "gift_ok": true,
+      "on_use": {
+        "heal": "1d4",
+        "minutes": 10,
+        "consumed": true,
+        "text": "Food, and a moment off your feet."
+      }
     },
     "item_def_fishing_line": {
       "id": "item_def_fishing_line",

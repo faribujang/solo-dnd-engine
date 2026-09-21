@@ -172,9 +172,33 @@
             "value": true
           },
           {
+            "t": "damage",
+            "entity_id": "npc_halla",
+            "amount": 999,
+            "damage_type": "fire"
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_halla",
+            "key": "story_locked",
+            "value": true
+          },
+          {
             "t": "set_entity_flag",
             "entity_id": "npc_dunn",
             "key": "killed_in_raid",
+            "value": true
+          },
+          {
+            "t": "damage",
+            "entity_id": "npc_dunn",
+            "amount": 999,
+            "damage_type": "fire"
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_dunn",
+            "key": "story_locked",
             "value": true
           },
           {
@@ -186,6 +210,12 @@
             "t": "set_entity_flag",
             "entity_id": "npc_bryn",
             "key": "taken",
+            "value": true
+          },
+          {
+            "t": "set_entity_flag",
+            "entity_id": "npc_bryn",
+            "key": "story_locked",
             "value": true
           },
           {

@@ -113,7 +113,13 @@ for await (const raw of rl) {
   }
 
   if (out.suggestedActions.length) {
-    console.log(`  \x1b[2mYou might: ${out.suggestedActions.join(" · ")}\x1b[0m\n`);
+    // Suggestions are objects — label, mechanic, and the arithmetic. Joining them straight
+    // printed "[object Object]" four times, throwing away the one part of a suggestion
+    // that tells you what it will cost you.
+    const chips = out.suggestedActions.map((c) =>
+      [c.mechanic ? `[${c.mechanic}]` : "", c.text, c.detail ? `(${c.detail})` : ""]
+        .filter(Boolean).join(" "));
+    console.log(chips.map((c) => `  \x1b[2m· ${c}\x1b[0m`).join("\n") + "\n");
   }
 
   recent.push(`> ${line}\n${out.text}`);

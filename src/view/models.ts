@@ -6,6 +6,7 @@ import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
 import type { Affordance, Cost } from "../rules/affordances.js";
 import { affordances } from "../rules/affordances.js";
+import { whereaboutsTold } from "../state/selectors.js";
 import { computeAC } from "../rules/equipment.js";
 import { skillModifier, SKILL_ABILITY, abilityMod, DEGREE_LABEL } from "../rules/checks.js";
 import { xpToNext, XP_THRESHOLDS } from "../rules/progression.js";
@@ -249,30 +250,6 @@ function peopleKnownAt(
     .sort();
 }
 
-/**
- * Whereabouts the player has been TOLD, from the fact ledger.
- *
- * A fact the player knows that names a person and a place in its subjects is directions.
- * That is the whole mechanism — no new schema, no flags to remember to set, and it means
- * an author who writes "Saveri Crole assays contracts on Assay Row" into a fact has
- * already made the map work.
- */
-function whereaboutsTold(s: GameState): Map<string, Set<string>> {
-  const me = s.meta.pc_id;
-  const out = new Map<string, Set<string>>();
-  for (const f of s.facts) {
-    if (!f.known_by.includes(me)) continue;
-    const people = f.subjects.filter((id) => s.entities[id]);
-    const places = f.subjects.filter((id) => s.locations[id]);
-    if (!people.length || !places.length) continue;
-    for (const p of people) {
-      const set = out.get(p) ?? new Set<string>();
-      for (const l of places) set.add(l);
-      out.set(p, set);
-    }
-  }
-  return out;
-}
 
 export function mapModel(s: GameState): MapModel {
   const here = pc(s).location_id;
