@@ -20,7 +20,9 @@ import { Clock, vowComplete } from "../schema/clock.js";
 import { Entity } from "../schema/entity.js";
 import { Relationship } from "../schema/relationship.js";
 import { Thread, THREAD_FADE_MINUTES } from "../schema/thread.js";
-import { Location } from "../schema/location.js";
+import { EXTRA_FADE_MINUTES, canAdmit, hasEdges } from "../rules/cast.js";
+import { Feature, Location } from "../schema/location.js";
+import type { ProposedFeature } from "../schema/dsl.js";
 
 /**
  * Effects are the ONLY way state changes. Each one mutates the draft in place and may
@@ -57,11 +59,76 @@ export function newEffectCtx(
   return { root, trigger_id, attitudeSpent: new Map(), clampAttitude };
 }
 
+/**
+ * An extra just became somebody.
+ *
+ * Called wherever an edge forms. Promotion is what spends budget, and it is driven by
+ * what the PLAYER did rather than by what the narrator claimed — the narrator can fill a
+ * tollhouse for free, and only the clerk you actually dealt with costs anything.
+ *
+ * If the local tier is full they stay an extra. They keep working; they are simply not
+ * counted among the names the player is asked to hold, which is the honest outcome when
+ * a world already holds two hundred and fifty of them.
+ */
+export function promoteToLocal(s: GameState, id: string): void {
+  const e = s.entities[id];
+  if (!e || e.tier !== "extra") return;
+  if (!canAdmit(s, "local").ok) return;
+  e.tier = "local";
+}
+
+/**
+ * Forget the faces nobody touched.
+ *
+ * Only ever reaches an extra with no edges at all, who is not in the room, and who has
+ * been around longer than the fade window. Every one of those is required: the edge test
+ * is what makes this incapable of deleting somebody the player remembers, because
+ * remembering them in any way the engine can see IS an edge, and an edge promotes them
+ * out of reach of this function before it ever runs.
+ */
+function retireExtras(s: GameState): void {
+  const here = s.entities[s.meta.pc_id]?.location_id;
+  const now = s.world.world_minute;
+  for (const id of Object.keys(s.entities).sort()) {
+    const e = s.entities[id]!;
+    if (e.tier !== "extra" || e.id === s.meta.pc_id) continue;
+    if (e.location_id === here) continue;
+    const minted = e.flags["minted_world_minute"];
+    if (typeof minted !== "number" || now - minted < EXTRA_FADE_MINUTES) continue;
+    if (hasEdges(s, id)) { promoteToLocal(s, id); continue; }
+    delete s.entities[id];
+  }
+}
+
 /** Deterministic id allocation, counted in state so replay produces identical ids. */
 export function nextId(s: GameState, prefix: string): string {
   const n = (s.meta.next_ids[prefix] ?? 0) + 1;
   s.meta.next_ids[prefix] = n;
   return `${prefix}_${String(n).padStart(4, "0")}`;
+}
+
+/**
+ * Turn a narrator's described thing into a real Feature.
+ *
+ * Ids are allocated from the state counter like everything else, so a replay produces the
+ * same ids in the same order. No effects, no tool gates, no hidden flags \u2014 see
+ * ProposedFeature for why those stay authored-only.
+ */
+function featureFrom(s: GameState, p: ProposedFeature): Feature {
+  return Feature.parse({
+    id: nextId(s, "feat"),
+    name: p.name,
+    desc: p.desc,
+    aliases: p.aliases,
+    state: {},
+    interactions: p.verbs.map((v) => ({
+      verb: v.verb,
+      label: v.label,
+      skill: v.skill,
+      band: v.band,
+      minutes: 2,
+    })),
+  });
 }
 
 export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEvent[] {
@@ -340,6 +407,8 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "adjust_attitude": {
+      promoteToLocal(s, eff.subject);
+      promoteToLocal(s, eff.object);
       adjustAttitude(s, ctx, eff.subject, eff.object, eff.dims, eff.reason);
       break;
     }
@@ -432,7 +501,9 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       s.entities[id] = Entity.parse({
         id,
         kind: "npc",
-        tier: "local",
+        // Minted as an EXTRA: free, edgeless, and promoted the moment anyone touches
+        // them. See rules/cast.ts for why mattering is what costs budget, not existing.
+        tier: "extra",
         name: eff.name,
         pronouns: eff.pronouns,
         descriptor: eff.descriptor,
@@ -452,14 +523,23 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
           ideal: "", bond: "", flaw: "",
         },
       });
-      // A relationship row from the start: the whole point of keeping them is that the
-      // next meeting remembers the last one.
-      const key = `${id}->${s.meta.pc_id}`;
-      s.relationships[key] = Relationship.parse({
-        subject: id,
-        object: s.meta.pc_id,
-        dims: { affinity: 0, trust: 0, fear: 0, respect: 0 },
-      });
+      // Stamped with the moment they appeared, so an edgeless face can be forgotten
+      // later without a rule that could ever reach somebody the player has touched.
+      s.entities[id]!.flags["minted_world_minute"] = s.world.world_minute;
+
+      // NO relationship row yet, deliberately. A row IS an edge, and handing one to every
+      // passer-by is exactly what made the budget bite on people nobody had spoken to.
+      // The row appears the first time an opinion actually moves, which is also the
+      // moment they stop being a face and start costing something. See promoteToLocal.
+      break;
+    }
+
+    case "introduce_feature": {
+      const where = s.locations[eff.location_id];
+      if (!where) break;
+      const named = eff.feature.name.toLowerCase().trim();
+      if (where.features.some((f) => f.name.toLowerCase().trim() === named)) break;
+      where.features.push(featureFrom(s, eff.feature));
       break;
     }
 
@@ -498,6 +578,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
         // You are being shown it, so you know it is there.
         discovered: true,
         ambient: { light: eff.light, sound: "", smell: "" },
+        features: eff.features.map((f) => featureFrom(s, f)),
         exits: [{ dir: eff.back, to: here.id, desc: "", travel_minutes: 1, locked_by: null, hidden_until_flag: null, requires_check: null, revealed: true }],
       });
       here.exits.push({ dir: eff.dir, to: id, desc: "", travel_minutes: 1, locked_by: null, hidden_until_flag: null, requires_check: null, revealed: true });
@@ -505,6 +586,8 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "open_thread": {
+      for (const sub of eff.subject_ids) promoteToLocal(s, sub);
+      if (eff.from_entity_id) promoteToLocal(s, eff.from_entity_id);
       const id = nextId(s, "thr");
       s.threads[id] = Thread.parse({
         id,
@@ -531,6 +614,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "add_fact": {
+      for (const sub of eff.subjects) promoteToLocal(s, sub);
       const id = nextId(s, "fact");
       /**
        * `known_by` is taken LITERALLY, empty included.
@@ -625,6 +709,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       }
       expireConditions(s);
       relocateOnSchedule(s);
+  retireExtras(s);
       // A night, or a day on the road. Long enough that what comes next is a new scene.
       emitted.push(...breakScene(s, ctx, { kind: eff.minutes >= 480 ? "rested" : "time_passed", minutes: eff.minutes }));
       break;
@@ -917,6 +1002,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "join_party": {
+      promoteToLocal(s, eff.entity_id);
       const e = s.entities[eff.entity_id];
       if (!e || !e.alive) break;
       if (s.meta.party_ids.includes(e.id)) break;

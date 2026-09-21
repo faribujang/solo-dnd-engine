@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tinyWorld } from "../helpers/world.js";
+import { tinyWorld, rootEvent } from "../helpers/world.js";
 import { resolve } from "../../src/engine/turn.js";
 import { reduce } from "../../src/engine/reduce.js";
 import { toAction } from "../../src/llm/intent.js";
@@ -146,5 +146,57 @@ describe("the room gets a seat on the suggestion bar", () => {
   it("does not manufacture one where the room has nothing to offer", () => {
     const chips = suggest(tinyWorld(), { limit: 4 });
     expect(chips.some((c) => c.affordance.action.type === "interact")).toBe(false);
+  });
+});
+
+/**
+ * A room the narrator opens must arrive with something in it.
+ *
+ * `introduce_place` fixed the cellar that was prose and had no id — and then created
+ * empty rooms, which is the same bug one level down: a place whose only move is talking
+ * to whoever followed you in.
+ */
+describe("rooms the narrator opens", () => {
+  it("arrives furnished, and the things in it can be reached at once", () => {
+    const s = tinyWorld();
+    const after = reduce(s, rootEvent("effect", [{
+      t: "introduce_place",
+      name: "The Winch House", short_desc: "Timber over the bilge.",
+      dir: "down the stair", back: "up the stair", light: "dim",
+      features: [{
+        name: "The winch", desc: "A drum wound with chain.", aliases: ["the drum"],
+        verbs: [{ verb: "turn", label: "Turn the winch", skill: "athletics", band: "medium" }],
+      }],
+    }])).state;
+
+    const made = Object.values(after.locations).find((l) => l.name === "The Winch House")!;
+    expect(made).toBeTruthy();
+    expect(made.features).toHaveLength(1);
+    // Reachable the same turn it was described, by the words the prose used.
+    const r = toAction(
+      { ...after, entities: { ...after.entities, [after.meta.pc_id]: { ...after.entities[after.meta.pc_id]!, location_id: made.id } } },
+      say({ feature_name: "the drum", verb: "turn" }),
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("gives a narrator's feature no consequences of its own", () => {
+    const s = tinyWorld();
+    const after = reduce(s, rootEvent("effect", [{
+      t: "introduce_feature",
+      location_id: "loc_1",
+      feature: {
+        name: "The grating", desc: "Rusted thin.", aliases: [],
+        verbs: [{ verb: "pry", label: "", skill: "athletics", band: "hard" }],
+      },
+    }])).state;
+
+    const feat = after.locations["loc_1"]!.features.find((f) => f.name === "The grating")!;
+    // The engine rolls it; the DM describes what happened. A narrator may put a winch in
+    // the room and may not decide that turning it opens the gate.
+    expect(feat.interactions[0]!.on_success).toEqual([]);
+    expect(feat.interactions[0]!.on_failure).toEqual([]);
+    expect(feat.interactions[0]!.skill).toBe("athletics");
+    expect(feat.interactions[0]!.band).toBe("hard");
   });
 });

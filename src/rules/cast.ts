@@ -19,12 +19,27 @@ import type { GameState } from "../schema/state.js";
  *   local      a name, a role, a line. They exist so the world has names in it and so the
  *              same innkeeper is the same innkeeper next week. The narrator may mint these.
  *
- * Extras are not in this table at all: "the tollgate clerk" is never persisted, and that
- * is correct. A person becomes a local the moment the story needs them to be the SAME
- * person twice.
+ *   extra      a face. The tollgate clerk, the cutters on the post, the woman in the
+ *              doorway. Minted freely by the narrator, no relationship row, no cross-
+ *              edges, and NOT counted against any design cap — because a DM that has to
+ *              ask permission before putting a clerk behind a counter will simply stop
+ *              putting clerks behind counters, and the world goes empty.
+ *
+ * Extras used to be "never persisted", which sounded right and played badly: the player
+ * could see the tollgate clerk and could not speak to them, because speaking requires
+ * somebody the engine knows about. So extras are real now, and the budget moved from
+ * "who may exist" to "who may have EDGES":
+ *
+ *   · an extra is PROMOTED to local the instant one forms — the player's opinion of them
+ *     shifts, a fact names them, a thread involves them, they join the party. Mattering is
+ *     what costs budget, and mattering is something the player does, not the narrator.
+ *   · an edgeless extra RETIRES once the scene has moved on. Nobody the player has
+ *     touched can ever be retired, because touching them promoted them first.
+ *
+ * That is what keeps the cast unbounded in feel and bounded in the only place it hurts.
  */
 
-export type CastTier = "principal" | "standing" | "local";
+export type CastTier = "principal" | "standing" | "local" | "extra";
 
 /**
  * The caps.
@@ -43,9 +58,25 @@ export const CAST_BUDGET: Record<CastTier, number> = {
   principal: 35,
   standing: 100,
   local: 250,
+  /**
+   * Not a design cap. A runaway guard, three times the rest of the cast, so a looping bug
+   * cannot mint forty thousand people into a save while nobody is watching. Reaching it
+   * legitimately is not a thing a story does; reaching it means something is broken.
+   */
+  extra: 1000,
 };
 
+/** What the player is asked to hold in their head. Extras are deliberately not in it. */
 export const CAST_TOTAL = CAST_BUDGET.principal + CAST_BUDGET.standing + CAST_BUDGET.local;
+
+/**
+ * How long an extra nobody has touched stays in the world before the scene forgets them.
+ *
+ * Two days. Long enough that walking out of a room and back in finds the same clerk;
+ * short enough that a week of play does not leave nine hundred nameless faces standing
+ * in rooms the player has left.
+ */
+export const EXTRA_FADE_MINUTES = 60 * 24 * 2;
 
 /** This world's caps: the defaults, unless the campaign raised them. */
 export function budgetOf(s: GameState): Record<CastTier, number> {
@@ -60,7 +91,7 @@ export function tierOf(s: GameState, entityId: string): CastTier | null {
 
 /** How many of each tier are alive in this world right now. */
 export function censusOf(s: GameState): Record<CastTier, number> {
-  const out: Record<CastTier, number> = { principal: 0, standing: 0, local: 0 };
+  const out: Record<CastTier, number> = { principal: 0, standing: 0, local: 0, extra: 0 };
   for (const e of Object.values(s.entities)) {
     // Monsters are not cast. A room of six raiders is one encounter, not six relationships.
     if (e.kind === "monster") continue;
@@ -85,4 +116,23 @@ export function canAdmit(s: GameState, tier: CastTier): { ok: true } | { ok: fal
     ok: false,
     reason: `this world already holds ${have} ${tier} characters, which is the cap`,
   };
+}
+
+/**
+ * Has anybody touched this person?
+ *
+ * An edge is the whole test for whether somebody is worth keeping: a relationship in
+ * either direction, a fact that names them, a thread that involves them, a place in the
+ * party. It is deliberately the same question the promotion rule asks, so an extra who
+ * survives retirement and an extra who earns a budget slot are never two different sets.
+ */
+export function hasEdges(s: GameState, id: string): boolean {
+  if (s.meta.party_ids.includes(id)) return true;
+  for (const key of Object.keys(s.relationships)) {
+    const [a, b] = key.split("->");
+    if (a === id || b === id) return true;
+  }
+  if (s.facts.some((f) => f.subjects.includes(id) || f.known_by.includes(id))) return true;
+  if (Object.values(s.threads).some((t) => t.subject_ids.includes(id) || t.from_entity_id === id)) return true;
+  return false;
 }

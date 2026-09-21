@@ -114,7 +114,7 @@ export const Entity = z.object({
    * default: somebody a human bothered to write down is at least a named local with a
    * relationship. `local` is what the narrator may mint mid-scene.
    */
-  tier: z.enum(["principal", "standing", "local"]).default("standing"),
+  tier: z.enum(["principal", "standing", "local", "extra"]).default("standing"),
 
   location_id: Id,
   zone_id: z.string().nullable().default(null), // abstract combat zone within the location

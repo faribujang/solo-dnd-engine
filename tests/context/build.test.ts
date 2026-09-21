@@ -36,9 +36,13 @@ describe("the context builder", () => {
   it("stays inside its token budget and reports what it shed", async () => {
     const s = await fresh();
     const huge = Array.from({ length: 200 }, (_, i) => `Turn ${i}: a long line of remembered prose about the room and everyone in it.`);
-    const ctx = buildContext(s, { recent: huge, maxTokens: 2500 });
+    // The budget trims SECTIONS; the system prompt is fixed overhead it cannot touch.
+    // So the stress budget has to leave room for it, or this asserts that a ~2,200-token
+    // instruction set fits in 2,500 tokens alongside a scene, which is not a real test.
+    // tests/context/prompt-size.test.ts is what guards the overhead itself.
+    const ctx = buildContext(s, { recent: huge, maxTokens: 4000 });
 
-    expect(ctx.totalTokens).toBeLessThanOrEqual(2600);
+    expect(ctx.totalTokens).toBeLessThanOrEqual(4100);
     expect(ctx.shed).toContain("recent");
   });
 

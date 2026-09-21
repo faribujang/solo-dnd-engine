@@ -2,21 +2,72 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameState } from "../schema/state.js";
 import { NARRATOR_ALLOWED_EFFECTS } from "../schema/dsl.js";
 import { canAdmit } from "../rules/cast.js";
+import type { ProposedFeature } from "../schema/dsl.js";
 import { MAX_NEW_THREADS_PER_TURN, MAX_OPEN_THREADS } from "../schema/thread.js";
 
 /**
- * New named people one turn may invent. A scene introduces someone; it does not cast.
+ * New people one turn may introduce.
  *
- * One was too tight in practice. A tollhouse with a syndicate guard on the door AND a
- * clerk behind the counter is one ordinary beat, and under a cap of one the second of
- * them was rejected — so the prose described two people and the player could only speak
- * to one. Two per turn still reaches the 250 cap slowly, and the crowd check below is
- * what actually keeps a green from filling up.
+ * This is no longer a budget rule — narrator-minted people arrive as extras and cost
+ * nothing until somebody touches them (rules/cast.ts). It is a SCENE rule: four new names
+ * dropped into one paragraph is a paragraph nobody can follow, whatever it costs to store
+ * them. Three lets a tollhouse have a guard, a clerk and somebody waiting in the queue.
  */
-const MAX_NEW_LOCALS_PER_TURN = 2;
+const MAX_NEW_LOCALS_PER_TURN = 3;
 
 /** New places one turn may invent. A scene opens a door; it does not draw a county. */
 const MAX_NEW_PLACES_PER_TURN = 1;
+
+/** New things-in-rooms one turn may invent, over and above a new place's own. */
+const MAX_NEW_FEATURES_PER_TURN = 2;
+
+/**
+ * Clean a feature the narrator described, or say why it is unusable.
+ *
+ * Narrator features are deliberately toothless: verbs, a skill and a difficulty, and no
+ * effects at all. The engine rolls them and the DM narrates the outcome on the following
+ * turn, which keeps the line where it has always been \u2014 a DM may put a winch in the room,
+ * and may not decide that turning it opens the gate.
+ *
+ * Only the CLAMPING happens here. Turning this into a real Feature is the reducer's job,
+ * because the reducer owns the shape of state.
+ */
+function cleanFeature(
+  p: { name?: string; desc?: string; aliases?: string[]; verbs?: { verb?: string; label?: string; skill?: string | null; band?: string }[] },
+): { ok: true; feature: ProposedFeature } | { ok: false; why: string } {
+  const name = (p.name ?? "").trim();
+  if (!name) return { ok: false, why: "a feature with no name" };
+
+  const verbs: ProposedFeature["verbs"] = [];
+  for (const v of (p.verbs ?? []).slice(0, 3)) {
+    const verb = String(v.verb ?? "").toLowerCase().trim().split(/\s+/)[0] ?? "";
+    if (!verb) continue;
+    verbs.push({
+      verb,
+      label: (v.label ?? "").slice(0, 80),
+      skill: (v.skill && SKILL_NAMES.has(v.skill) ? v.skill : null) as ProposedFeature["verbs"][number]["skill"],
+      band: (v.band && BAND_NAMES.has(v.band) ? v.band : "medium") as ProposedFeature["verbs"][number]["band"],
+    });
+  }
+  if (verbs.length === 0) return { ok: false, why: `${name} has nothing you can do to it` };
+
+  return {
+    ok: true,
+    feature: {
+      name,
+      desc: (p.desc ?? "").trim() || name,
+      aliases: (p.aliases ?? []).slice(0, 4).map((a) => a.trim()).filter(Boolean),
+      verbs,
+    },
+  };
+}
+
+const SKILL_NAMES = new Set([
+  "acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight",
+  "intimidation", "investigation", "medicine", "nature", "perception", "performance",
+  "persuasion", "religion", "sleight_of_hand", "stealth", "survival",
+]);
+const BAND_NAMES = new Set(["trivial", "easy", "medium", "hard", "very_hard", "near_impossible"]);
 
 /** Past this, a room is a junction rather than a room, and the map stops reading. */
 const MAX_EXITS_FROM_ONE_PLACE = 10;
@@ -216,6 +267,8 @@ export function validateNarration(
 
   // How many places this turn has already invented. See the `introduce_place` case.
   let newPlaces = 0;
+  // Things-in-rooms this turn has invented, and a counter for their ids.
+  let newFeatures = 0;
   // How many people this turn has already invented. See the `introduce_local` case.
   let newLocals = 0;
   let newThreads = 0;
@@ -298,14 +351,21 @@ export function validateNarration(
           reject("proposal", `only ${MAX_NEW_LOCALS_PER_TURN} new people per turn; ${p.name} can wait for the next scene`, p);
           break;
         }
+        // Counted among the named cast only. A market square may hold any number of
+        // faces; what makes a place illegible is fourteen people the player is expected
+        // to remember, and an extra is explicitly not one of those.
         const crowdHere = Object.values(s.entities).filter(
-          (e) => e.alive && e.location_id === p.location_id && e.kind !== "monster").length;
+          (e) => e.alive && e.location_id === p.location_id && e.kind !== "monster"
+            && e.tier !== "extra").length;
         if (crowdHere >= MAX_NAMED_IN_ONE_PLACE) {
           reject("proposal", `${s.locations[p.location_id]?.name ?? p.location_id} already has ${crowdHere} named people in it`, p);
           break;
         }
 
-        const admit = canAdmit(s, "local");
+        // Against the EXTRA ceiling, which is a runaway guard rather than a design cap:
+        // the narrator should be able to people a city without asking permission, and
+        // only the ones the player deals with are ever counted as cast.
+        const admit = canAdmit(s, "extra");
         if (!admit.ok) { reject("proposal", `cannot introduce ${p.name}: ${admit.reason}`, p); break; }
         if (!s.locations[p.location_id]) { reject("proposal", `unknown location ${p.location_id}`, p); break; }
         const wanted = p.name.trim().toLowerCase();
@@ -344,6 +404,14 @@ export function validateNarration(
           reject("proposal", `${here.name} already has ${here.exits.length} ways out of it`, p);
           break;
         }
+        // A new room with nothing in it is the bug this whole build exists to fix,
+        // reintroduced one level down. Whatever the narrator described, it can be touched.
+        const shaped = (p.features ?? [])
+          .slice(0, 3)
+          .map((f) => cleanFeature(f))
+          .filter((r): r is { ok: true; feature: ProposedFeature } => r.ok)
+          .map((r) => r.feature);
+
         effects.push({
           t: "introduce_place",
           name: p.name.trim(),
@@ -351,8 +419,32 @@ export function validateNarration(
           dir: p.dir.trim(),
           back: (p.back ?? "back").trim(),
           light: p.light,
+          features: shaped,
         });
         newPlaces += 1;
+        break;
+      }
+
+      /**
+       * Something in a room that already exists. The narrator names the winch it just
+       * wrote about, and the player can reach for it on the very next turn.
+       */
+      case "introduce_feature": {
+        if (newFeatures >= MAX_NEW_FEATURES_PER_TURN) {
+          reject("proposal", `only ${MAX_NEW_FEATURES_PER_TURN} new things per turn`, p);
+          break;
+        }
+        const where = s.locations[p.location_id] ?? s.locations[s.entities[s.meta.pc_id]!.location_id];
+        if (!where) { reject("proposal", `unknown location ${p.location_id}`, p); break; }
+        const named = p.feature?.name?.toLowerCase().trim() ?? "";
+        if (where.features.some((f) => f.name.toLowerCase().trim() === named)) {
+          reject("proposal", `${p.feature.name} is already in ${where.name}`, p);
+          break;
+        }
+        const made = cleanFeature(p.feature ?? {});
+        if (!made.ok) { reject("proposal", made.why, p); break; }
+        newFeatures += 1;
+        effects.push({ t: "introduce_feature", location_id: where.id, feature: made.feature });
         break;
       }
 

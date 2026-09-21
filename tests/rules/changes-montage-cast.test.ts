@@ -179,12 +179,17 @@ describe("the cast budget", () => {
 
     const made = Object.values(after.entities).find((e) => e.name === "Perrin Ashe");
     expect(made).toBeTruthy();
-    expect(made!.tier).toBe("local");
+    // An EXTRA on arrival, not a local. The narrator may fill a tollhouse for free;
+    // only the clerk the player actually deals with costs a budget slot, and the
+    // promotion happens on the edge, not on the introduction. See rules/cast.ts.
+    expect(made!.tier).toBe("extra");
     // Everything that exists speaks the same vocabulary — an entity that cannot be hurt,
     // feared or talked to is a prop, not a person.
     expect(made!.hp.max).toBeGreaterThan(0);
     expect(made!.abilities.cha).toBeGreaterThan(0);
-    expect(after.relationships[`${made!.id}->${after.meta.pc_id}`]).toBeTruthy();
+    // And no relationship row until somebody's opinion actually moves: a row IS an edge,
+    // and handing one to every passer-by is what made the budget bite on strangers.
+    expect(after.relationships[`${made!.id}->${after.meta.pc_id}`]).toBeFalsy();
   });
 
   it("refuses to introduce somebody who already exists", async () => {
@@ -198,14 +203,11 @@ describe("the cast budget", () => {
     expect(v.rejects[0]!.reason).toMatch(/already exists/);
   });
 
-  it("refuses past the cap rather than evicting somebody the player might remember", async () => {
+  it("lets the narrator fill a room even when the named cast is full", async () => {
     const s = await world();
     const here = s.entities[s.meta.pc_id]!.location_id;
 
-    // Fill the local tier to its cap, SPREAD OUT — packing them all into one room would
-    // trip the crowd limit first and prove nothing about the global cap.
-    // Everywhere except `here`, so the room we introduce into is empty and the GLOBAL cap
-    // is unambiguously the thing doing the refusing.
+    // Fill the LOCAL tier to its cap, spread out so the crowd limit is not what bites.
     const everywhere = Object.keys(s.locations).filter((id) => id !== here);
     for (let i = 0; i < CAST_BUDGET.local; i++) {
       const id = `npc_filler_${i}`;
@@ -215,36 +217,53 @@ describe("the cast budget", () => {
         location_id: everywhere[i % everywhere.length]!,
       };
     }
-    expect(censusOf(s).local).toBe(CAST_BUDGET.local);
     expect(canAdmit(s, "local").ok).toBe(false);
+
+    // And it STILL works, because a face is not cast. This is the whole point of the
+    // extra tier: a DM that must ask permission before putting a clerk behind a counter
+    // stops putting clerks behind counters, and the world goes empty.
+    const v = validateNarration(s, narration([
+      { t: "introduce_local", name: "One More Face", descriptor: "nobody in particular", pronouns: "they/them", location_id: here },
+    ]), ctxFor(s));
+    expect(v.effects).toHaveLength(1);
+  });
+
+  it("still refuses rather than evicting, once even the extra ceiling is reached", async () => {
+    const s = await world();
+    const here = s.entities[s.meta.pc_id]!.location_id;
+    const everywhere = Object.keys(s.locations).filter((id) => id !== here);
+    for (let i = 0; i < CAST_BUDGET.extra; i++) {
+      const id = `npc_face_${i}`;
+      s.entities[id] = {
+        ...structuredClone(s.entities[s.meta.pc_id]!),
+        id, name: `Face ${i}`, tier: "extra", kind: "npc",
+        location_id: everywhere[i % everywhere.length]!,
+      };
+    }
+    expect(canAdmit(s, "extra").ok).toBe(false);
 
     const v = validateNarration(s, narration([
       { t: "introduce_local", name: "One Too Many", descriptor: "nobody in particular", pronouns: "they/them", location_id: here },
     ]), ctxFor(s));
-
     expect(v.effects).toHaveLength(0);
     expect(v.rejects[0]!.reason).toMatch(/cap/);
     // And the prose survives, as every rejected proposal must.
     expect(v.narration).toBe("Somebody new is behind the counter.");
   });
 
-  it("invents at most two people per turn", async () => {
+  it("introduces at most three people in one turn, so a paragraph stays readable", async () => {
     const s = await world();
     const here = s.entities[s.meta.pc_id]!.location_id;
     const v = validateNarration(s, narration([
       { t: "introduce_local", name: "First Arrival", descriptor: "a carter", pronouns: "they/them", location_id: here },
       { t: "introduce_local", name: "Second Arrival", descriptor: "a carter's boy", pronouns: "he/him", location_id: here },
       { t: "introduce_local", name: "Third Arrival", descriptor: "another carter entirely", pronouns: "she/her", location_id: here },
+      { t: "introduce_local", name: "Fourth Arrival", descriptor: "one carter too many", pronouns: "they/them", location_id: here },
     ]), ctxFor(s));
 
-    // A narrator minting three a turn reaches the global cap in eighty-four turns, by
-    // which point a village green holds two hundred and fifty-four people. The cap alone
-    // does not save the world; it only stops it getting worse.
-    //
-    // Two, not one: a tollhouse with a guard on the door and a clerk behind the counter
-    // is one ordinary beat, and under a cap of one the clerk was rejected — so the prose
-    // described somebody the player then could not speak to.
-    expect(v.effects).toHaveLength(2);
+    // Not a budget rule any more — extras are free. A scene rule: four new names in one
+    // paragraph is a paragraph nobody can follow, whatever it costs to store them.
+    expect(v.effects).toHaveLength(3);
     expect(v.rejects).toHaveLength(1);
     expect(v.rejects[0]!.reason).toMatch(/per turn/);
   });

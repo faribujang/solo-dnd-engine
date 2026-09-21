@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Dim, Dims, Id, Json } from "./common.js";
+import { DifficultyBand, Dim, Dims, Id, Json } from "./common.js";
 import { ItemOwner } from "./item.js";
 import { CombatState } from "./combat.js";
 
@@ -55,6 +55,28 @@ export const Condition: z.ZodType<Condition> = z.lazy(() =>
     z.object({ t: z.literal("not"), of: z.array(Condition) }),
   ]) as z.ZodType<Condition>,
 );
+
+/**
+ * A thing in a room the narrator invented, and the verbs it takes.
+ *
+ * Deliberately weaker than an authored FeatureInteraction: no effects, no tool gates, no
+ * hidden flags. The narrator says what is there and what may be tried; the ENGINE rolls
+ * it, and the consequence comes back as prose and proposed facts on the following turn.
+ * That keeps the rule intact \u2014 a DM may put a winch in the room, and may not decide that
+ * turning it opens the gate.
+ */
+export const ProposedFeature = z.object({
+  name: z.string().min(1).max(60),
+  desc: z.string().min(1).max(200),
+  aliases: z.array(z.string().max(40)).max(4).default([]),
+  verbs: z.array(z.object({
+    verb: z.string().min(1).max(20),
+    label: z.string().max(80).default(""),
+    skill: z.enum(["acrobatics","animal_handling","arcana","athletics","deception","history","insight","intimidation","investigation","medicine","nature","perception","performance","persuasion","religion","sleight_of_hand","stealth","survival"]).nullable().default(null),
+    band: DifficultyBand.default("medium"),
+  })).min(1).max(3),
+});
+export type ProposedFeature = z.infer<typeof ProposedFeature>;
 
 /**
  * Effects are the only way state changes. Every one of these is applied by
@@ -126,6 +148,14 @@ export const Effect = z.discriminatedUnion("t", [
     /** The way back, so nobody is ever sealed in by a narrator's turn of phrase. */
     back: z.string().min(1).max(40).default("back"),
     light: z.enum(["bright", "dim", "dark"]).default("bright"),
+    /** What is IN it. A new room with nothing to touch is the old bug in a new place. */
+    features: z.array(ProposedFeature).max(3).default([]),
+  }),
+  /** The same thing for a room that already exists: name something and make it real. */
+  z.object({
+    t: z.literal("introduce_feature"),
+    location_id: Id,
+    feature: ProposedFeature,
   }),
   z.object({ t: z.literal("advance_time"), minutes: z.number().int().nonnegative() }),
   /**
@@ -240,6 +270,7 @@ export const NARRATOR_ALLOWED_EFFECTS = [
   "set_flag", "add_lead", "reveal_location", "reveal_exit",
   "add_fact", "teach_fact", "adjust_attitude", "move_entity", "advance_time",
   "set_opinion", "grant_inspiration", "tick_clock", "introduce_local", "introduce_place",
+  "introduce_feature",
   "open_thread", "resolve_thread",
   /**
    * Handing something over — and ONLY things that cannot change a roll.
