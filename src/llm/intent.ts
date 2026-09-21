@@ -612,6 +612,55 @@ const SYSTEM = [
  * "go to the bakehouse", "to The Bakehouse", "the bakehouse" and "bakehouse" are one
  * request. Stripping them here means every caller compares the same thing.
  */
+
+/**
+ * Verbs that can START a command.
+ *
+ * The whitelist is the whole safety of `splitCompound`. Splitting on "and" alone would
+ * cut "take the bread and cheese" in half and then fail to find a cheese; requiring the
+ * second half to begin with one of these means a split only happens where the player
+ * plainly started a new instruction.
+ */
+const COMMAND_VERBS = new Set([
+  "go", "head", "walk", "run", "travel", "leave", "return", "follow", "enter", "climb",
+  "ask", "tell", "talk", "speak", "say", "thank", "warn", "greet", "persuade", "lie",
+  "deceive", "intimidate", "threaten", "press", "question",
+  "take", "grab", "pick", "steal", "give", "hand", "drop", "equip", "draw", "wear",
+  "unequip", "stow", "sheathe", "drink", "eat", "use", "open", "close", "search", "look",
+  "listen", "watch", "wait", "rest", "sleep", "attack", "strike", "hit", "shoot", "cut",
+  "pry", "force", "read", "light", "hide", "sneak", "buy", "sell", "check", "examine",
+]);
+
+/**
+ * "Thank Severi and go to the Fetterlock" is two instructions, and the game used to do
+ * the first and silently drop the second \u2014 so the player typed the second one again,
+ * every time, having already said it.
+ *
+ * Deliberately narrow, in the same spirit as `looksLikeRewind`: both halves must be
+ * substantial, and the second must BEGIN with a verb that starts commands. Everything
+ * else stays one instruction, because a wrong split costs a turn and teaches the player
+ * that the parser guesses.
+ */
+export function splitCompound(text: string): [string, string] | null {
+  const t = text.trim();
+  if (t.length < 8) return null;
+  // A question is one thought however many clauses it has.
+  if (t.endsWith("?")) return null;
+
+  const seps = [" and then ", ", then ", " then ", " and after that ", " and "];
+  for (const sep of seps) {
+    const at = t.toLowerCase().indexOf(sep);
+    if (at < 0) continue;
+    const head = t.slice(0, at).trim();
+    const tail = t.slice(at + sep.length).trim();
+    if (head.split(/\s+/).length < 2 || tail.split(/\s+/).length < 2) continue;
+    const firstWord = tail.toLowerCase().split(/[^a-z']+/).filter(Boolean)[0] ?? "";
+    if (!COMMAND_VERBS.has(firstWord)) continue;
+    return [head, tail];
+  }
+  return null;
+}
+
 /**
  * Somebody by name, anywhere in the world the player could know about.
  *

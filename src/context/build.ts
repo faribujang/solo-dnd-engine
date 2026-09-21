@@ -11,7 +11,7 @@ import { factsKnownBy, selectFacts, type ScoredFact } from "./selectFacts.js";
 import { topicsFor } from "../engine/conversation.js";
 import { crowdAt, interjectionsFor } from "../engine/bystanders.js";
 import { BACKGROUND_SOCIAL, backgroundOf, insightsFor, socialTagsOf } from "../rules/backgrounds.js";
-import { renderPolitics, wingOf } from "../rules/factions.js";
+import { renderMood, renderPolitics, wingOf } from "../rules/factions.js";
 
 /**
  * Deterministic, pure, token-budgeted prompt assembly.
@@ -213,6 +213,9 @@ export function buildContext(s: GameState, opts: ContextOptions = {}): BuiltCont
   {
     const politics = renderPolitics(s, loc.id);
     if (politics) add("politics", 2, BUDGETS.politics, false, "WHO HOLDS THIS PLACE", politics);
+    // How the place feels, which is what the DM actually writes people out of.
+    const mood = renderMood(s, loc.id);
+    if (mood) add("mood", 2, 220, false, "HOW THIS PLACE FEELS RIGHT NOW", mood);
   }
 
   // 5b2 — lines this character has standing to say, and why.
@@ -560,7 +563,24 @@ function renderPc(s: GameState): string {
       .map((sk) => `${sk} ${fmtMod(skillModifier(p, sk as never))}`).join(", ")}`,
     held ? `Carrying: ${held}` : "Carrying nothing.",
   ];
-  if (p.conditions.length) lines.push(`Conditions: ${p.conditions.map((c) => c.id).join(", ")}`);
+  /**
+   * Conditions arrived as a bare list of ids and nothing asked the DM to do anything with
+   * them, so a player at one hit point with two levels of exhaustion read exactly like a
+   * fresh one until something killed them. We already describe WOUNDS in words rather than
+   * numbers (woundDescriptor); this is the same courtesy for everything else.
+   */
+  if (p.conditions.length) {
+    lines.push(`Conditions: ${p.conditions.map((c) => c.id).join(", ")}`);
+    lines.push(
+      "Write these INTO the action rather than announcing them: what the body does when it"
+      + " is this tired, this hurt, this afraid. Never name the condition as a label and"
+      + " never give a number.",
+    );
+  }
+  // Badly hurt is a condition too, and the most common one.
+  if (p.hp.current <= p.hp.max * 0.35) {
+    lines.push("They are badly hurt. It should cost them something in every physical sentence.");
+  }
   return lines.join("\n");
 }
 

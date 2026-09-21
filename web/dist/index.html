@@ -213,6 +213,14 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);padding:8px var(--pad) calc(env(safe-area-inset-bottom) + 8px)}
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+/* Buttons that act on one object in the pack. Small, quiet, and never wider than the row. */
+.itemacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.ibtn{
+  font-size:12.5px;padding:5px 10px;border-radius:7px;cursor:pointer;
+  border:1px solid var(--line);background:var(--raised);color:var(--ink);
+}
+.ibtn:hover{border-color:#4a3a2c;color:var(--ember)}
+.ibtn:disabled{opacity:.45;cursor:default}
 /*
  * One row, always, and no scrollbar. A phone swipes it; a mouse gets the wheel handler
  * below. Wrapping it into a scrolling block was worse than the problem it solved: a
@@ -481,6 +489,14 @@ const S = {
   chipAction: null,
   /** The table's agreement for this save: tone, dice, how lively the world is. */
   sessionZero: null,
+  /**
+   * The turn number as of the last painted screen.
+   *
+   * The journal marks what moved since you last looked, and "since you last looked" has
+   * to be a number somebody remembered. Null until the first screen arrives, so nothing
+   * is ever marked new on a fresh load.
+   */
+  lastTurn: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -775,6 +791,9 @@ function handleFrame(f, proseEl) {
     }
 
     case "state":
+      // Before the swap: the turn the player has already read. Everything at or past it
+      // in the incoming screen is what changed while they were looking away.
+      S.lastTurn = S.screen ? S.screen.turn : null;
       S.screen = f.screen;
       paintHeader();
       break;
@@ -1414,12 +1433,13 @@ VIEWS.journal = (() => {
 
   let h = "<h2>Journal</h2>"
     + '<div class="jtabs">'
-    + ["quests", "people", "pack"].map((t) =>
+    + ["quests", "people", "pack", "known"].map((t) =>
         '<button class="jtab' + (JOURNAL_TAB === t ? " on" : "") + '" data-jtab="' + t + '">' + t + "</button>").join("")
     + "</div>";
 
   if (JOURNAL_TAB === "people") return h + journalPeople(s);
   if (JOURNAL_TAB === "pack") return h + journalPack(s);
+  if (JOURNAL_TAB === "known") return h + journalKnown(s);
 
   // Threads first. A promise the player made themselves outranks an errand they were
   // handed, and it is the half of the story nobody authored.
@@ -1447,11 +1467,24 @@ VIEWS.journal = (() => {
     h += "<h3>" + esc(q.title) + "</h3>";
     if (q.summary) h += '<div class="note" style="font-family:var(--serif);font-size:14.5px;line-height:1.5">' + esc(q.summary) + "</div>";
     if (q.objective) h += '<div class="note" style="margin-top:6px">→ ' + esc(q.objective) + "</div>";
-    // A lead is a sentence you can act on. Tapping one puts it in the box so you can
-    // edit it into what you actually mean — same contract as the chips.
-    for (const l of q.leads || []) {
-      h += '<button class="lead" data-say="' + esc(l.text) + '">' + esc(l.text)
-        + (l.from ? ' <span class="note">— ' + esc(l.from) + "</span>" : "") + "</button>";
+    for (const c of q.clocks || []) {
+      h += '<div class="note" style="margin-top:4px">' + esc(c.name) + " — "
+        + "●".repeat(c.filled) + "○".repeat(Math.max(0, c.segments - c.filled)) + "</div>";
+    }
+    /*
+     * WHAT YOU COULD DO ABOUT IT, from where you are standing right now.
+     *
+     * The journal used to list the quest and its leads and stop there, which reads as a
+     * record of the past rather than a way into the next scene. These are derived from
+     * live state every turn: a place you can reach says how far away it is, a person
+     * says where you last knew them to be.
+     */
+    if ((q.next || []).length) {
+      h += '<div class="note" style="margin-top:8px">What you could do now</div>';
+      for (const n of q.next) {
+        h += '<button class="lead" data-say="' + esc(n.text) + '">' + esc(n.text)
+          + (n.detail ? ' <span class="note">· ' + esc(n.detail) + "</span>" : "") + "</button>";
+      }
     }
   }
 
@@ -1503,28 +1536,70 @@ VIEWS.journal = (() => {
  */
 function journalPack(s) {
   const sh = s.sheet || {};
-  const items = sh.inventory || [];
+  const pack = s.pack || [];
   let h = "";
 
-  if (sh.purse != null) {
-    h += '<div class="note">Purse: ' + esc(fmtPurse(sh.purse)) + "</div>";
-  }
-  if (!items.length) {
+  if (sh.purse != null) h += '<div class="note">Purse: ' + esc(fmtPurse(sh.purse)) + "</div>";
+  if (!pack.length) {
     return h + '<div class="note" style="margin-top:8px">Nothing but what you stand up in.</div>';
   }
 
-  const worn = items.filter((i) => i.equipped);
-  const carried = items.filter((i) => !i.equipped);
+  /*
+   * Every item carries the actions the ENGINE says are legal for it, so a button here can
+   * never offer something the resolver would refuse. Tapping one sends that exact action
+   * rather than a guess at the words for it. The pack tab used to be a list of names,
+   * which was fine while the item verbs were unimplemented and absurd once they worked.
+   */
+  const row = (i) => {
+    let r = '<div class="li"><div class="t">' + esc(i.name) + (i.qty > 1 ? " ×" + i.qty : "")
+      + (i.slot ? ' <span class="note">· ' + esc(i.slot.replace(/_/g, " ")) + "</span>" : "")
+      + (i.notable ? ' <span class="note" style="color:var(--brass)">· this matters</span>' : "")
+      + "</div>";
+    if (i.desc) r += '<div class="d serif">' + esc(i.desc) + "</div>";
+    if ((i.actions || []).length) {
+      r += '<div class="itemacts">' + i.actions.map((a, n) =>
+        '<button class="ibtn" data-item="' + esc(i.instance_id) + '" data-act="' + n + '"'
+        + (a.detail ? ' title="' + esc(a.detail) + '"' : "") + ">" + esc(a.label) + "</button>").join("") + "</div>";
+    }
+    return r + "</div>";
+  };
 
-  const row = (i) =>
-    '<div class="li"><div class="t">' + esc(i.name) + (i.qty > 1 ? " ×" + i.qty : "")
-    + (i.importance === "quest" ? ' <span class="note" style="color:var(--brass)">· this matters</span>' : "")
-    + "</div>"
-    + (i.nickname ? '<div class="d serif">' + esc(i.nickname) + "</div>" : "")
-    + "</div>";
-
+  const worn = pack.filter((i) => i.slot);
+  const carried = pack.filter((i) => !i.slot);
   if (worn.length) h += "<h3>In hand or worn</h3><div class=\"list\">" + worn.map(row).join("") + "</div>";
-  if (carried.length) h += "<h3>Carried</h3><div class=\"list\">" + carried.map(row).join("") + "</div>";
+  if (carried.length) h += "<h3>In the pack</h3><div class=\"list\">" + carried.map(row).join("") + "</div>";
+  return h;
+}
+
+/*
+ * What you have established as true.
+ *
+ * The fact ledger is the most interesting thing in a save and the player could not see any
+ * of it. Knowledge-gated on the server by the same test the prompt uses, so this can never
+ * show something the DM would not say out loud.
+ */
+function journalKnown(s) {
+  const known = s.known || [];
+  if (!known.length) return '<div class="note">You have not pinned anything down yet.</div>';
+
+  const groups = new Map();
+  for (const f of known) {
+    if (!groups.has(f.group)) groups.set(f.group, []);
+    groups.get(f.group).push(f);
+  }
+  let h = '<div class="note">' + known.length + " things you know to be true.</div>";
+  for (const [name, rows] of groups) {
+    h += "<h3>" + esc(name) + "</h3><div class=\"list\">";
+    for (const f of rows) {
+      const fresh = S.lastTurn != null && f.turn >= S.lastTurn;
+      h += '<div class="li"><div class="t serif">' + esc(f.text)
+        + (fresh ? ' <span class="note" style="color:var(--ember)">· new</span>' : "")
+        + "</div>"
+        + (f.about.length ? '<div class="d">' + esc(f.about.join(", ")) + "</div>" : "")
+        + "</div>";
+    }
+    h += "</div>";
+  }
   return h;
 }
 
@@ -1548,6 +1623,28 @@ function journalPeople(s) {
 }
 
 document.addEventListener("click", (e) => {
+  /*
+   * An item button does the thing, rather than filling the box.
+   *
+   * Chips fill the composer on purpose: you read the phrasing, edit it, and learn what
+   * the game understands. Equipping is not that — there is nothing to rephrase about
+   * drawing an axe, and making somebody type it after tapping it would be a worse game.
+   * So this sends the action the SERVER offered for that exact instance, which is why it
+   * cannot ask for something the resolver would refuse.
+   */
+  const ib = e.target.closest && e.target.closest("[data-act]");
+  if (ib) {
+    const pack = (S.screen && S.screen.pack) || [];
+    const item = pack.find((i) => i.instance_id === ib.dataset.item);
+    const act = item && item.actions[Number(ib.dataset.act)];
+    if (act && !S.busy) {
+      for (const btn of document.querySelectorAll(".ibtn")) btn.disabled = true;
+      closePane();
+      submit(act.label, act.action);
+    }
+    return;
+  }
+
   const b = e.target.closest && e.target.closest("[data-jtab]");
   if (!b) return;
   JOURNAL_TAB = b.dataset.jtab;

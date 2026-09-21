@@ -206,3 +206,57 @@ export function shiftPresence(
   if (patch.openness) row.openness = patch.openness;
   if (patch.strength !== undefined) row.strength = Math.max(0, Math.min(100, patch.strength));
 }
+
+/**
+ * How this place FEELS, derived rather than authored.
+ *
+ * `renderPolitics` tells the DM who holds a town and what that does to prices. It never
+ * said how people here behave, which mattered little while the cast was fixed and matters
+ * a great deal now the DM invents faces constantly: one line about the mood shapes every
+ * one of them, and a line that is DERIVED shifts when the player changes the place.
+ *
+ * Read off faction standing, the clocks that are running, and how well known the player
+ * is here — so burning a bridge with whoever runs this town visibly changes who the DM
+ * puts on the street, without anybody authoring a second version of the town.
+ */
+export function renderMood(s: GameState, locationId: string): string {
+  const st = settlementOf(s, locationId);
+  if (!st) return "";
+
+  const rows = presenceIn(s, st.id);
+  const holder = rows.find((p) => p.allegiance === "holds") ?? rows[0];
+  const lines: string[] = [];
+
+  if (holder) {
+    const rep = holder.faction.rep_with_pc;
+    if (rep <= -30) {
+      lines.push(`${holder.faction.name} runs this place and wants you gone: doors close as you pass, and the people who live here would rather not be seen talking to you.`);
+    } else if (rep <= -10) {
+      lines.push(`${holder.faction.name} runs this place and has no use for you. People here are careful about what they say in front of you.`);
+    } else if (rep >= 30) {
+      lines.push(`${holder.faction.name} runs this place and counts you a friend. Doors open, and people speak more freely to you than they would to a stranger.`);
+    } else if (rep >= 10) {
+      lines.push(`${holder.faction.name} runs this place and is content to let you be.`);
+    }
+  }
+
+  // A town where something is winding up behaves like one, without naming the clock.
+  const pressing = Object.values(s.clocks).filter(
+    (c) => !c.done && c.visible && c.filled >= Math.ceil(c.segments * 0.6),
+  );
+  if (pressing.length) {
+    lines.push("Something here is coming to a head, and the people who live with it know: they move quickly, finish conversations early, and look past you when they answer.");
+  }
+
+  // A place two hundred people have died in is not a place with a mood to describe.
+  const dead = Object.values(s.entities).filter(
+    (e) => !e.alive && e.kind !== "monster" && s.locations[e.location_id]?.settlement_id === st.id,
+  ).length;
+  if (dead >= 2) {
+    lines.push("There has been dying here recently, and it is in everything: what is not being rebuilt, what nobody mentions, who is not on the street.");
+  }
+
+  if (lines.length === 0) return "";
+  lines.push("Let this shape the people you invent here — who is on the street, what they are willing to say, and how they answer a stranger. Never state it outright.");
+  return lines.map((l) => `  ${l}`).join("\n");
+}

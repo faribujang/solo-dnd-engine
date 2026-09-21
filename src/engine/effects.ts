@@ -473,6 +473,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "set_quest_status": {
+      { const _q = s.quests[eff.quest_id]; if (_q) _q.updated_turn = s.meta.turn; }
       const q = s.quests[eff.quest_id];
       if (!q || q.status === eff.status) break;
       q.status = eff.status;
@@ -493,6 +494,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "advance_quest": {
+      { const _q = s.quests[eff.quest_id]; if (_q) _q.updated_turn = s.meta.turn; }
       const q = s.quests[eff.quest_id];
       if (!q) break;
       const prev = q.steps.find((st) => st.id === q.current_step_id);
@@ -503,6 +505,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "add_lead": {
+      { const _q = s.quests[eff.quest_id]; if (_q) _q.updated_turn = s.meta.turn; }
       const q = s.quests[eff.quest_id];
       if (!q) break;
       if (q.leads.some((l) => l.text === eff.text)) break;   // idempotent

@@ -39,6 +39,14 @@ export const Quest = z.object({
   id: Id,
   title: z.string(),
   giver_entity_id: Id.nullable().default(null),
+  /**
+   * The turn this quest last moved: a step advanced, a lead arrived, the status changed.
+   *
+   * Kept in state rather than inferred, because "what is new since I last looked" is a
+   * question the journal asks every turn and guessing at it from fact timestamps would
+   * be wrong the moment a lead arrives without a fact attached.
+   */
+  updated_turn: z.number().int().nonnegative().default(0),
   status: QuestStatus.default("unknown"),
   visibility: QuestVisibility.default("hidden"),
   summary: z.string(),                       // player-facing, shown in the quest log

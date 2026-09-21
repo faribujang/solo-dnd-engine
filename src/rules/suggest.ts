@@ -39,6 +39,8 @@ export interface SuggestContext {
   /** Ids revealed or acquired on the turn just resolved — the strongest signal there is. */
   newThisTurn?: readonly string[];
   limit?: number;
+  /** The kinds of thing the last few turns were, newest last. See groupOf. */
+  recentGroups?: readonly string[];
 }
 
 /** A stable key for "the same kind of thing", used for tried/repeat scoring. */
@@ -131,6 +133,18 @@ export function suggest(s: GameState, ctx: SuggestContext = {}): Suggestion[] {
     // A verb the player has not reached for this scene.
     if (!tried.has(key)) { score += 2; because.push("not tried yet"); }
     else { score -= 2; because.push("already tried this scene"); }
+
+    /**
+     * Variety across KINDS of thing, not just exact actions.
+     *
+     * The per-action penalty above stops the same chip appearing twice; it does nothing
+     * about four different ways to talk to four different people, which is how a scene
+     * turns into a receiving line. If the last several turns were all one kind of verb,
+     * that kind gets crowded out in favour of something else.
+     */
+    const kind = groupOf(a);
+    const recent = (ctx.recentGroups ?? []).filter((g) => g === kind).length;
+    if (recent >= 2) { score -= recent; because.push(`the last few turns were all ${kind}`); }
 
     // Things this character is actually good at — nudging the player toward their own sheet.
     if (a.action.type === "skill_check" && best.has(a.action.skill as never)) {
@@ -329,6 +343,22 @@ export function looksLikeAnAction(text: string): boolean {
   // "You have ...", "There is ..." — describing the world, not acting on it.
   if (/^(you|there|it|that|this|he|she|they|the)\b/i.test(t)) return false;
   return true;
+}
+
+/**
+ * The KIND of thing an action is, for variety purposes.
+ *
+ * Coarser than the affordance group on purpose: what matters is whether the player has
+ * been talking, moving, working on the room, or fighting — not which skill it used.
+ */
+export function groupOf(a: { action: { type: string } }): string {
+  const t = a.action.type;
+  if (t === "talk") return "talking";
+  if (t === "skill_check") return "talking";
+  if (t === "interact" || t === "take" || t === "use_item" || t === "equip") return "handling";
+  if (t === "move" || t === "travel" || t === "move_zone") return "moving";
+  if (t === "attack" || t === "shove") return "fighting";
+  return "other";
 }
 
 export function chipsFrom(shortlist: readonly Suggestion[], phrased: readonly string[]): SuggestionOut[] {

@@ -6,7 +6,6 @@ import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
 import type { Affordance, Cost } from "../rules/affordances.js";
 import { affordances } from "../rules/affordances.js";
-import { whereaboutsTold } from "../state/selectors.js";
 import { computeAC } from "../rules/equipment.js";
 import { skillModifier, SKILL_ABILITY, abilityMod, DEGREE_LABEL } from "../rules/checks.js";
 import { xpToNext, XP_THRESHOLDS } from "../rules/progression.js";
@@ -16,7 +15,10 @@ import { dispositionOf } from "../rules/social.js";
 import { filledBoxes } from "../schema/clock.js";
 import { timeline } from "../engine/rollback.js";
 import { reachable } from "../engine/pathfind.js";
-import { hourOfDay, itemsOwnedBy, npcsPresent, pc, timeOfDayLabel, visibleExits } from "../state/selectors.js";
+import {
+  factsKnownToPc, hourOfDay, itemsOwnedBy, npcsPresent, pc, timeOfDayLabel,
+  visibleExits, whereaboutsTold,
+} from "../state/selectors.js";
 import { formatCoin, purseOf } from "../rules/economy.js";
 import { linkText, type TextSpan } from "./link.js";
 import { topicsFor, type Topic } from "../engine/conversation.js";
@@ -403,6 +405,18 @@ export interface QuestModel {
   objective: string | null;
   leads: Array<{ text: string; from: string | null; points_to: string | null }>;
   clocks: Array<{ id: string; name: string; filled: number; segments: number }>;
+  /**
+   * What you could actually do about this, from where you are standing.
+   *
+   * The journal used to list the quest and its leads and stop there, which reads as a
+   * record of the past rather than a way into the next scene: the player knew they were
+   * looking for Bryn and had no idea what the game wanted from them next. These are
+   * derived from live state every turn — a lead that points somewhere you can reach says
+   * how far, a person who was named says where they were last seen.
+   */
+  next: Array<{ text: string; detail: string }>;
+  /** The turn this quest last moved, so the client can mark what is new. */
+  updated_turn: number;
 }
 
 export function questModel(s: GameState): QuestModel[] {
@@ -421,7 +435,198 @@ export function questModel(s: GameState): QuestModel[] {
       clocks: Object.values(s.clocks)
         .filter((c) => c.quest_id === q.id && c.visible && !c.done)
         .map((c) => ({ id: c.id, name: c.name, filled: c.filled, segments: c.segments })),
+      next: q.status === "active" ? nextMoves(s, q.id) : [],
+      updated_turn: q.updated_turn ?? 0,
     }));
+}
+
+/**
+ * Concrete next moves for an active quest, read off the world as it is right now.
+ *
+ * Deliberately code-derived rather than written by the narrator: a suggestion that says
+ * "go to the Waterline, 14 minutes" is only worth printing if the route is real, and the
+ * only thing that knows whether it is real is the pathfinder. Knowledge-gated throughout
+ * — a lead pointing at a place you have never heard of says so rather than naming it.
+ */
+function nextMoves(s: GameState, questId: string): Array<{ text: string; detail: string }> {
+  const q = s.quests[questId];
+  if (!q) return [];
+  const here = pc(s).location_id;
+  const routes = new Map(reachable(s, here).map((r) => [r.id, r.path.minutes]));
+  const told = whereaboutsTold(s);
+  const out: Array<{ text: string; detail: string; minutes?: number }> = [];
+  const seen = new Set<string>();
+  // Deduped on the TEXT: the same lead arrives twice often enough, and two identical rows
+  // in a list of five is a list of four that looks broken.
+  const push = (text: string, detail: string, minutes?: number) => {
+    const k = text.toLowerCase().trim();
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push({ text, detail, ...(minutes === undefined ? {} : { minutes }) });
+  };
+
+  /**
+   * Newest leads first, and not many of them.
+   *
+   * Leads accumulate for the whole campaign, so an untrimmed list offers the player
+   * something Sibby said two in-game days and one town ago as though it were the next
+   * move. That is the same failure the suggestion chips had, one screen over.
+   */
+  for (const l of [...q.leads].reverse().slice(0, 6)) {
+    const dest = l.points_to_location_id ? s.locations[l.points_to_location_id] : undefined;
+    if (dest && (dest.discovered || dest.visited_count > 0)) {
+      if (dest.id === here) { push(l.text, "you are here", 0); continue; }
+      const mins = routes.get(dest.id);
+      if (mins === undefined) { push(`Go to ${dest.name}`, "no way you know"); continue; }
+      // Somewhere a day's walk away is not a next move, it is a decision. Say the cost
+      // in units a person uses, and let the far ones sort to the bottom.
+      push(`Go to ${dest.name}`, travelWords(mins), mins);
+    } else {
+      push(l.text, l.source_entity_id ? `from ${s.entities[l.source_entity_id]?.name ?? "someone"}` : "");
+    }
+  }
+
+  // People the quest names, and where you last knew them to be. This is what turns
+  // "find out about the courier" into "Cotter Vane is at the forge".
+  const named = new Set<string>([
+    ...(q.giver_entity_id ? [q.giver_entity_id] : []),
+    ...s.facts.filter((f) => f.quest_ids.includes(q.id) && f.known_by.includes(s.meta.pc_id))
+      .flatMap((f) => f.subjects),
+  ]);
+  for (const id of named) {
+    const e = s.entities[id];
+    if (!e || !e.alive || id === s.meta.pc_id) continue;
+    if (e.location_id === here) { push(`Speak with ${e.name}`, "here with you", 0); continue; }
+    const where = s.locations[e.location_id];
+    if (!where) continue;
+    const known = told.get(id)?.has(e.location_id) || where.visited_count > 0;
+    if (!known) continue;
+    const mins = routes.get(where.id);
+    push(`Find ${e.name} at ${where.name}`, mins !== undefined ? travelWords(mins) : "", mins);
+  }
+
+  // Near things first. A player asking what to do next means what to do NEXT.
+  out.sort((a, b) => (a.minutes ?? 9999) - (b.minutes ?? 9999));
+  return out.slice(0, 5).map(({ text, detail }) => ({ text, detail }));
+}
+
+/** "40 min", "3 hours", "most of a day" - never "926 min". */
+function travelWords(mins: number): string {
+  if (mins < 90) return `${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 10) return `${hours} hours`;
+  if (hours < 20) return "most of a day";
+  return `${Math.round(hours / 24)} days`;
+}
+
+/**
+ * What you are carrying, and what you can do with it WITHOUT typing a sentence.
+ *
+ * The pack tab listed names and nothing else, which was reasonable while the item verbs
+ * were unimplemented and absurd afterwards: the player could see the Accord steel and
+ * still had to guess the words that would draw it. Every action here comes from the
+ * affordance engine, so a button can never offer something the resolver would refuse.
+ */
+export interface PackItemModel {
+  instance_id: string;
+  name: string;
+  qty: number;
+  kind: string;
+  desc: string;
+  /** "main_hand", "armor", ... when it is being worn or held. */
+  slot: string | null;
+  /** Things that matter to a quest are worth marking. */
+  notable: boolean;
+  actions: Array<{ label: string; action: unknown; detail: string }>;
+}
+
+export function packModel(s: GameState, actorId?: string): PackItemModel[] {
+  const who = actorId ?? s.meta.pc_id;
+  const actor = s.entities[who];
+  if (!actor) return [];
+  const bar = affordances(s, who).filter((a) => a.available);
+
+  return itemsOwnedBy(s, who).map((inst) => {
+    const def = s.item_defs[inst.def_id];
+    const slot = (["main_hand", "off_hand", "armor", "trinket"] as const)
+      .find((sl) => actor.equipped[sl] === inst.id) ?? null;
+
+    // Only the affordances that name THIS object, so the buttons cannot drift from
+    // what the engine would actually allow.
+    const actions = bar
+      .filter((a) => {
+        const act = a.action as { type?: string; item_instance_id?: string };
+        return (act.type === "equip" || act.type === "use_item") && act.item_instance_id === inst.id;
+      })
+      .map((a) => ({ label: a.label, action: a.action, detail: a.detail }));
+
+    // The bar already offers "Unequip X" for worn gear, so only add a way to take it off
+    // when it does not — two buttons that do the same thing under different words is
+    // worse than one, and the pack showed exactly that.
+    const canRemove = actions.some((a) => {
+      const act = a.action as { type?: string; slot?: string | null };
+      return act.type === "equip" && act.slot === null;
+    });
+    if (slot && !canRemove) {
+      actions.push({
+        label: `Stow ${def?.name ?? "it"}`,
+        action: { type: "equip", item_instance_id: inst.id, slot: null },
+        detail: "",
+      });
+    }
+
+    return {
+      instance_id: inst.id,
+      name: def?.name ?? inst.def_id,
+      qty: inst.qty,
+      kind: def?.kind ?? "misc",
+      desc: def?.desc ?? "",
+      slot,
+      notable: def?.tags.includes("quest") ?? false,
+      actions,
+    };
+  });
+}
+
+/**
+ * Everything you have established as true, for the journal.
+ *
+ * The fact ledger is the most interesting thing in a save and the player could not see
+ * any of it. Knowledge-gated by construction: `factsKnownToPc` is the same gate the
+ * prompt uses, so the journal can never show something the DM would not say out loud.
+ */
+export interface KnownFactModel {
+  id: string;
+  text: string;
+  kind: string;
+  turn: number;
+  importance: number;
+  /** Who or what it is about, in names rather than ids. */
+  about: string[];
+  /** Where it belongs on the shelf: a place name, a person, or "The world". */
+  group: string;
+}
+
+export function knownModel(s: GameState): KnownFactModel[] {
+  const nameOf = (id: string) =>
+    s.entities[id]?.name ?? s.locations[id]?.name ?? s.world.factions[id]?.name ?? null;
+
+  return factsKnownToPc(s)
+    .map((f) => {
+      const about = f.subjects.map(nameOf).filter((n): n is string => !!n);
+      const place = f.location_id ? s.locations[f.location_id]?.name : null;
+      return {
+        id: f.id,
+        text: f.text,
+        kind: f.kind,
+        turn: f.turn,
+        importance: f.importance,
+        about,
+        group: place ?? about[0] ?? "The world",
+      };
+    })
+    // Newest first: what you just learned is what you are most likely looking for.
+    .sort((a, b) => b.turn - a.turn || a.id.localeCompare(b.id));
 }
 
 export interface VowModel {
@@ -690,6 +895,17 @@ export interface ScreenModel {
   sheet: SheetModel;
   party: CompanionModel[];
   quests: QuestModel[];
+  /**
+   * The turn this screen describes.
+   *
+   * The journal marks what moved since you last looked, and that comparison needs a
+   * number the client can hold on to between paints.
+   */
+  turn: number;
+  /** What you carry, with the buttons that act on it. */
+  pack: PackItemModel[];
+  /** What you have established as true. */
+  known: KnownFactModel[];
   /** Promises, debts and errands the story picked up. See schema/thread.ts. */
   threads: ThreadModel[];
   /** Everyone the player has met. */
@@ -807,6 +1023,9 @@ export function screen(s: GameState): ScreenModel {
     sheet: sheetModel(s),
     party: partyModel(s),
     quests: questModel(s),
+    turn: s.meta.turn,
+    pack: packModel(s),
+    known: knownModel(s),
     threads: threadModel(s),
     people: peopleModel(s),
     vows: vowModel(s),

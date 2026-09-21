@@ -293,6 +293,29 @@ export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affor
     }
   }
 
+  /**
+   * Things you can eat, drink or apply.
+   *
+   * `use_item` reached the engine in this session and nothing ever offered it, so a
+   * healing draught sat in the pack looking exactly like a rock: the player could type
+   * "drink the draught" if they guessed, and the bar never said it was possible. A
+   * consumable with nothing written on it is deliberately absent — offering "eat the
+   * whetstone" teaches the bar cannot be trusted.
+   */
+  for (const i of itemsOwnedBy(s, actor.id)) {
+    const def = s.item_defs[i.def_id];
+    if (!def?.on_use) continue;
+    const verb = def.kind === "consumable" ? (def.on_use.heal ? "Drink" : "Use") : "Use";
+    out.push({
+      action: { type: "use_item", item_instance_id: i.id },
+      label: `${verb} ${def.name}`,
+      cost: "action",
+      detail: def.on_use.heal ? `heals ${def.on_use.heal}` : "",
+      available: true,
+      group: "item",
+    });
+  }
+
   // ---- gear
   for (const i of itemsOwnedBy(s, actor.id)) {
     const def = s.item_defs[i.def_id];

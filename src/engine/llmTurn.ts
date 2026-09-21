@@ -5,7 +5,7 @@ import type { LLMClient } from "../llm/client.js";
 import type { Intent } from "../llm/contracts.js";
 import { DMAnswer, Narration } from "../llm/contracts.js";
 import { buildContext, type BuiltContext } from "../context/build.js";
-import { parseIntent } from "../llm/intent.js";
+import { parseIntent, splitCompound } from "../llm/intent.js";
 import { validateNarration, type Reject } from "../llm/validate.js";
 import { npcsPresent, pc } from "../state/selectors.js";
 import { answer, type Answer } from "./questions.js";
@@ -63,6 +63,12 @@ export interface LLMTurnOptions {
   skipNarration?: boolean;
   /** Action keys already tried this scene, so chips do not repeat. */
   triedThisScene?: readonly string[];
+  /**
+   * The kinds of thing the last few turns were \u2014 "talking", "moving", "handling",
+   * "fighting". Supplied by the caller, which is the only layer that can see further
+   * back than the turn being played. Feeds the variety rule in rules/suggest.ts.
+   */
+  recentGroups?: readonly string[];
   hooks?: TurnHooks;
 }
 
@@ -130,6 +136,40 @@ async function sayIt(llm: LLMClient, question: string, a: Answer): Promise<strin
   }
 }
 
+
+/**
+ * The same question, asked twice, with nothing having happened in between.
+ *
+ * "Did we get any gear from Cotter" was asked three times in one scene and answered three
+ * different ways, the last of them "I cannot say" about gear the player was carrying. The
+ * FACTS were identical every time — they are selected from state by code — but the prose
+ * is written by a model at a non-zero temperature, so asking again rolled the dice on the
+ * wording, and a DM that contradicts itself under repetition is a DM nobody can trust.
+ *
+ * So an answer is remembered for exactly as long as it stays true. The key carries the
+ * turn and the clock, and a question costs neither, so repeats hit; anything that moves
+ * the world misses and the question is answered afresh.
+ *
+ * Prose only. Questions write no events, so none of this reaches a save or a replay.
+ */
+const ANSWER_CACHE = new Map<string, string>();
+const ANSWER_CACHE_MAX = 64;
+
+function answerKey(s: GameState, kind: string, subject: string | null, asked: string): string {
+  const norm = asked.toLowerCase().replace(/[^a-z0-9 ]+/g, "").replace(/\s+/g, " ").trim();
+  return [s.meta.id, s.meta.turn, s.world.world_minute, kind, subject ?? "-", norm].join("|");
+}
+
+function rememberAnswer(key: string, said: string): void {
+  // Oldest out first. A Map iterates in insertion order, which is all the eviction this
+  // needs: the cache exists to survive a scene, not a session.
+  if (ANSWER_CACHE.size >= ANSWER_CACHE_MAX) {
+    const oldest = ANSWER_CACHE.keys().next().value;
+    if (oldest !== undefined) ANSWER_CACHE.delete(oldest);
+  }
+  ANSWER_CACHE.set(key, said);
+}
+
 export async function takeLLMTurn(
   llm: LLMClient,
   state: GameState,
@@ -141,7 +181,13 @@ export async function takeLLMTurn(
     fired: [], truncated: false, promptTokens: 0, narratorError: null };
 
   // ---------------------------------------------------------- 1. intent
-  const parsed = await parseIntent(llm, state, playerText);
+  // Two instructions in one line are common and used to cost the player the second one.
+  // Split BEFORE parsing, so the first clause is read on its own terms.
+  const compound = splitCompound(playerText);
+  const firstText = compound ? compound[0] : playerText;
+  const rest = compound ? compound[1] : null;
+
+  const parsed = await parseIntent(llm, state, firstText);
 
   if (!parsed.ok) {
     // A question is answered from state and costs nothing: no event, no turn, no roll.
@@ -160,7 +206,11 @@ export async function takeLLMTurn(
        * It is still not a turn: no event, no roll, no time. If the model is unreachable
        * the lines go out as they always did, which is worse prose and the same facts.
        */
-      const said = await sayIt(llm, playerText, a);
+      // Asked this already, and nothing has happened since? Then the answer is the one
+      // already given. See ANSWER_CACHE.
+      const key = answerKey(state, parsed.question, parsed.subject ?? null, playerText);
+      const said = ANSWER_CACHE.get(key) ?? await sayIt(llm, playerText, a);
+      rememberAnswer(key, said);
       return {
         ok: false, kind: "answer", text: said,
         state, journal: [], rejects: [], suggestedActions: [],
@@ -202,10 +252,41 @@ export async function takeLLMTurn(
   }
 
   const root = played.root;
-  const mechanics = played.message;
   const reduced = { state: played.state, journal: played.journal, fired: played.fired, truncated: played.truncated };
   let working = reduced.state;
   const journal: GameEvent[] = [...reduced.journal];
+  let mechanics = played.message;
+
+  /**
+   * "Thank Severi and go to the Fetterlock" is two instructions.
+   *
+   * The game used to play the first and silently drop the second, so the player typed the
+   * second one again having already said it. The second clause is parsed against the
+   * world the FIRST one left behind, which is the only correct order: where you can walk
+   * depends on what just happened.
+   *
+   * Chained at most once, never into or inside a fight, and abandoned the moment a clause
+   * is refused \u2014 the first half still stands, and the refusal is reported rather than
+   * swallowed. A chain that pushed on through a refusal would be guessing at what the
+   * player meant after their plan stopped working.
+   */
+  if (rest && !working.combat) {
+    const second = await parseIntent(llm, working, rest);
+    if (second.ok) {
+      const alsoPlayed = takeTurn(working, second.action);
+      if (alsoPlayed.ok && alsoPlayed.root) {
+        working = alsoPlayed.state;
+        journal.push(...alsoPlayed.journal);
+        reduced.fired = [...reduced.fired, ...alsoPlayed.fired];
+        mechanics = `${mechanics}\nThen: ${alsoPlayed.message}`;
+        opts.hooks?.onIntent?.({ intent: second.intent, action: second.action });
+      } else {
+        mechanics = `${mechanics}\nThen: ${alsoPlayed.message}`;
+      }
+    } else if ("clarify" in second) {
+      mechanics = `${mechanics}\nThen: ${second.clarify}`;
+    }
+  }
 
   // The world has moved and the dice have landed. This is the moment the serving contract
   // cares about most: whoever is listening gets the roll card NOW, and the narrator has not
@@ -273,6 +354,8 @@ export async function takeLLMTurn(
   const shortlist = suggest(working, {
     ...(opts.triedThisScene ? { triedThisScene: opts.triedThisScene } : {}),
     newThisTurn: [...new Set(newThisTurn)],
+    // What the last few turns WERE, so four turns of talking push the bar elsewhere.
+    ...(opts.recentGroups ? { recentGroups: opts.recentGroups } : {}),
   });
 
   // Companions who spoke this turn. The reducer already wrote their line and moved their

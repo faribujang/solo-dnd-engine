@@ -30,3 +30,31 @@ describe("what may appear on a suggestion chip", () => {
   for (const t of ok) it(`keeps: ${t}`, () => expect(looksLikeAnAction(t)).toBe(true));
   for (const t of no) it(`drops: ${t.slice(0, 44)}`, () => expect(looksLikeAnAction(t)).toBe(false));
 });
+
+import { groupOf, suggest } from "../../src/rules/suggest.js";
+import { tinyWorld } from "../helpers/world.js";
+
+/**
+ * Four different ways to talk to four different people is still a receiving line. The
+ * per-action penalty never noticed, because none of them was the same action twice.
+ */
+describe("variety across kinds of thing, not just actions", () => {
+  it("sorts actions into the kind a player would recognise", () => {
+    expect(groupOf({ action: { type: "talk" } })).toBe("talking");
+    expect(groupOf({ action: { type: "interact" } })).toBe("handling");
+    expect(groupOf({ action: { type: "travel" } })).toBe("moving");
+    expect(groupOf({ action: { type: "attack" } })).toBe("fighting");
+  });
+
+  it("pushes the bar away from a kind the last few turns were all made of", () => {
+    const s = tinyWorld();
+    const plain = suggest(s, { limit: 4 });
+    const afterTalking = suggest(s, { limit: 4, recentGroups: ["talking", "talking", "talking"] });
+
+    const talkingIn = (list: ReturnType<typeof suggest>) =>
+      list.filter((x) => groupOf(x.affordance as { action: { type: string } }) === "talking").length;
+
+    // Not a ban — a thumb on the scale. It must never come out heavier than before.
+    expect(talkingIn(afterTalking)).toBeLessThanOrEqual(talkingIn(plain));
+  });
+});

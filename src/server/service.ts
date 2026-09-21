@@ -9,7 +9,7 @@ import { answer, classify } from "../engine/questions.js";
 import { rewind } from "../engine/rollback.js";
 import type { Action } from "../engine/turn.js";
 import { preview, type Preview } from "../rules/preview.js";
-import { actionKeyOf } from "../rules/suggest.js";
+import { actionKeyOf, groupOf } from "../rules/suggest.js";
 import { Rng, seedToState } from "../rules/rng.js";
 import { BACKGROUNDS, CLASSES, RACES } from "../content/srd/data.js";
 import { BACKGROUND_SOCIAL } from "../rules/backgrounds.js";
@@ -112,6 +112,14 @@ interface SaveContext {
   version: number;
   /** Action keys reached for this scene, so chips rotate. Reset when the scene changes. */
   tried: string[];
+  /**
+   * What the last few turns WERE: talking, moving, handling, fighting.
+   *
+   * Kept here because this is the only layer that can see further back than the turn
+   * being played. Four turns of talking should push the suggestion bar toward
+   * something that is not more talking.
+   */
+  groups: string[];
   sceneId: string;
   /** Tokens spent on this save so far, for the budget ceiling. */
   tokens: number;
@@ -300,6 +308,7 @@ export class GameService {
         takeLLMTurn(this.llm, c.state, req.text, {
           recent,
           triedThisScene: c.tried,
+          recentGroups: c.groups,
           ...(overBudget ? { skipNarration: true } : {}),
           hooks: {
             onIntent: (i) => emit({ t: "intent", action: i.action, confidence: i.intent.confidence }),
@@ -381,7 +390,12 @@ export class GameService {
         if (!tried.includes(k)) tried.push(k);
         if (tried.length > 12) tried = tried.slice(-12);
       }
-      this.ctx.set(saveId, { ...c, state: out.state, version, tried, sceneId });
+      const groups = [...(c.groups ?? [])];
+      if (out.debug.action) {
+        groups.push(groupOf({ action: out.debug.action as { type: string } }));
+        if (groups.length > 6) groups.splice(0, groups.length - 6);
+      }
+      this.ctx.set(saveId, { ...c, state: out.state, version, tried, sceneId, groups });
 
       // The one line that makes a silent narrator diagnosable. It does not reach the
       // player — they were already told the prose is missing — it reaches whoever is
@@ -549,7 +563,10 @@ export class GameService {
     const state = await this.store.load(saveId);
     const journal = await this.store.readJournal(saveId);
     const tokens = sumTokens(await this.store.readCosts(saveId));
-    const c: SaveContext = { state, version: journal.length, tried: [], sceneId: state.world.scene_id, tokens, recentAt: [] };
+    const c: SaveContext = {
+      state, version: journal.length, tried: [], groups: [],
+      sceneId: state.world.scene_id, tokens, recentAt: [],
+    };
     this.ctx.set(saveId, c);
     return c;
   }

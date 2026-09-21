@@ -168,7 +168,7 @@ describe("the cycle guard", () => {
   it("treats a redundant status change as a no-op rather than a new cascade", () => {
     const s = tinyWorld();
     s.quests["q_x"] = {
-      id: "q_x", title: "X", giver_entity_id: null, status: "active",
+      id: "q_x", title: "X", giver_entity_id: null, status: "active", updated_turn: 0,
       visibility: "known", summary: "", dm_notes: "", current_step_id: null, steps: [],
       leads: [], rewards: { xp: 0, gold: 0, item_def_ids: [], relationship_deltas: [] },
       deadline_world_minute: null, failure_triggers: [], requires: [], blocks: [],
@@ -230,7 +230,7 @@ describe("the clock", () => {
   it("expires a quest whose deadline has passed", () => {
     const s = tinyWorld();
     s.quests["q_timed"] = {
-      id: "q_timed", title: "Timed", giver_entity_id: null, status: "active",
+      id: "q_timed", title: "Timed", giver_entity_id: null, status: "active", updated_turn: 0,
       visibility: "known", summary: "", dm_notes: "", current_step_id: null, steps: [],
       leads: [], rewards: { xp: 0, gold: 0, item_def_ids: [], relationship_deltas: [] },
       deadline_world_minute: 700, failure_triggers: [], requires: [], blocks: [],
