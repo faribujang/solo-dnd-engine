@@ -1394,11 +1394,12 @@ VIEWS.journal = (() => {
 
   let h = "<h2>Journal</h2>"
     + '<div class="jtabs">'
-    + ["quests", "people"].map((t) =>
+    + ["quests", "people", "pack"].map((t) =>
         '<button class="jtab' + (JOURNAL_TAB === t ? " on" : "") + '" data-jtab="' + t + '">' + t + "</button>").join("")
     + "</div>";
 
   if (JOURNAL_TAB === "people") return h + journalPeople(s);
+  if (JOURNAL_TAB === "pack") return h + journalPack(s);
 
   // Threads first. A promise the player made themselves outranks an errand they were
   // handed, and it is the half of the story nobody authored.
@@ -1473,6 +1474,40 @@ VIEWS.journal = (() => {
  * nowhere in the interface — every name lived in scrollback. Only people you have met,
  * because this is your journal and not the DM's notes.
  */
+/**
+ * What you are carrying, where you would look for it.
+ *
+ * It was only ever on the character sheet, behind stats, which is not where anybody
+ * looks for their bag — and "what did that person just hand me" is a question about the
+ * story, not about your armour class.
+ */
+function journalPack(s) {
+  const sh = s.sheet || {};
+  const items = sh.inventory || [];
+  let h = "";
+
+  if (sh.purse != null) {
+    h += '<div class="note">Purse: ' + esc(fmtPurse(sh.purse)) + "</div>";
+  }
+  if (!items.length) {
+    return h + '<div class="note" style="margin-top:8px">Nothing but what you stand up in.</div>';
+  }
+
+  const worn = items.filter((i) => i.equipped);
+  const carried = items.filter((i) => !i.equipped);
+
+  const row = (i) =>
+    '<div class="li"><div class="t">' + esc(i.name) + (i.qty > 1 ? " ×" + i.qty : "")
+    + (i.importance === "quest" ? ' <span class="note" style="color:var(--brass)">· this matters</span>' : "")
+    + "</div>"
+    + (i.nickname ? '<div class="d serif">' + esc(i.nickname) + "</div>" : "")
+    + "</div>";
+
+  if (worn.length) h += "<h3>In hand or worn</h3><div class=\"list\">" + worn.map(row).join("") + "</div>";
+  if (carried.length) h += "<h3>Carried</h3><div class=\"list\">" + carried.map(row).join("") + "</div>";
+  return h;
+}
+
 function journalPeople(s) {
   const here = new Set((s.scene && s.scene.present ? s.scene.present : []).map((p) => p.id));
   const party = new Set((s.party || []).map((p) => p.id));

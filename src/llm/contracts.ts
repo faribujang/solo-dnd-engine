@@ -154,6 +154,19 @@ export const Narration = z.object({
 });
 export type Narration = z.infer<typeof Narration>;
 
+/**
+ * The DM answering a question, rather than reciting what it knows.
+ *
+ * Asking is free and never a turn, so this used to hand the player the raw facts the
+ * engine had selected — every true thing about Cotter Vane, in a wall, which answers
+ * nothing. Code still decides WHAT the player may know; this only decides how it is said.
+ */
+export const DMAnswer = z.object({
+  /** One or two sentences. Second person, in the DM's voice. */
+  answer: z.string().min(1),
+});
+export type DMAnswer = z.infer<typeof DMAnswer>;
+
 // ------------------------------------------------------------ scene digest
 
 export const SceneDigest = z.object({

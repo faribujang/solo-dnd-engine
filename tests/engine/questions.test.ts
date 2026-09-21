@@ -33,10 +33,22 @@ describe("asking the DM is not taking a turn", () => {
     expect(out.text.length).toBeGreaterThan(20);
   });
 
-  it("never calls the narrator for one — a question should not take four seconds", async () => {
+  /**
+   * The rule was "never call a model for a question", and the reason was latency. The
+   * reason still holds; the rule was too strong. Handing the player the raw selected
+   * facts made "did we get any gear from Cotter" come back as a list of true statements
+   * and no answer — so the DM says it, on the cheap `answer` role.
+   *
+   * What must never happen is the NARRATOR being called: that is the four-second one,
+   * and a question is not a turn.
+   */
+  it("uses the cheap answer role for a question, never the narrator", async () => {
     const llm = new MockLLM({ seed: "q" });
     await takeLLMTurn(llm, await load(), "who is here?", {});
-    expect(llm.calls.map((c) => c.role)).toEqual(["intent"]);
+    const roles = llm.calls.map((c) => c.role);
+    expect(roles).not.toContain("narrate");
+    expect(roles).not.toContain("narrate_hi");
+    expect(roles[0]).toBe("intent");
   });
 
   it("tells the difference between asking and doing", () => {

@@ -7,7 +7,7 @@ import type { z } from "zod";
  * whole test suite), and OpenAI-compatible adapters for Gemini and OpenRouter.
  */
 
-export type Role = "intent" | "narrate" | "narrate_hi" | "companion" | "digest" | "ambient";
+export type Role = "intent" | "narrate" | "narrate_hi" | "companion" | "digest" | "ambient" | "answer";
 
 export interface LLMRequest<T> {
   role: Role;

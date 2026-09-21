@@ -23,7 +23,8 @@
         "martial",
         "metal"
       ],
-      "stackable": false
+      "stackable": false,
+      "gift_ok": true
     },
     "item_def_leather_armor": {
       "id": "item_def_leather_armor",
@@ -40,7 +41,8 @@
       "tags": [
         "light_armor"
       ],
-      "stackable": false
+      "stackable": false,
+      "gift_ok": true
     },
     "item_def_lantern": {
       "id": "item_def_lantern",
@@ -59,7 +61,8 @@
       "tags": [
         "adventuring_gear"
       ],
-      "stackable": false
+      "stackable": false,
+      "gift_ok": true
     },
     "item_def_healing_draught": {
       "id": "item_def_healing_draught",
@@ -79,7 +82,8 @@
         "potion",
         "supplied"
       ],
-      "stackable": true
+      "stackable": true,
+      "gift_ok": true
     },
     "item_def_crowbar": {
       "id": "item_def_crowbar",
@@ -109,7 +113,8 @@
           },
           "advantage": true
         }
-      ]
+      ],
+      "gift_ok": true
     },
     "item_def_rope": {
       "id": "item_def_rope",
@@ -139,7 +144,8 @@
           },
           "advantage": true
         }
-      ]
+      ],
+      "gift_ok": true
     },
     "item_def_thieves_tools": {
       "id": "item_def_thieves_tools",
@@ -168,7 +174,8 @@
           },
           "advantage": false
         }
-      ]
+      ],
+      "gift_ok": true
     },
     "item_def_good_hammer": {
       "id": "item_def_good_hammer",
@@ -205,7 +212,8 @@
           },
           "advantage": true
         }
-      ]
+      ],
+      "gift_ok": true
     },
     "item_def_hunting_bow": {
       "id": "item_def_hunting_bow",
@@ -230,7 +238,8 @@
         "weapon"
       ],
       "stackable": false,
-      "grants": []
+      "grants": [],
+      "gift_ok": true
     },
     "item_def_lamp_oil": {
       "id": "item_def_lamp_oil",
@@ -249,7 +258,8 @@
         "adventuring_gear"
       ],
       "stackable": true,
-      "grants": []
+      "grants": [],
+      "gift_ok": true
     },
     "item_def_bread": {
       "id": "item_def_bread",
@@ -267,7 +277,8 @@
         "food"
       ],
       "stackable": true,
-      "grants": []
+      "grants": [],
+      "gift_ok": true
     },
     "item_def_fishing_line": {
       "id": "item_def_fishing_line",
@@ -285,7 +296,8 @@
         "adventuring_gear"
       ],
       "stackable": false,
-      "grants": []
+      "grants": [],
+      "gift_ok": true
     },
     "item_def_apprentice_piece": {
       "id": "item_def_apprentice_piece",
@@ -304,7 +316,8 @@
         "quest"
       ],
       "stackable": false,
-      "grants": []
+      "grants": [],
+      "gift_ok": true
     },
     "item_def_vosk_letter": {
       "id": "item_def_vosk_letter",
@@ -323,7 +336,88 @@
         "document"
       ],
       "stackable": false,
-      "grants": []
+      "grants": [],
+      "gift_ok": false
+    },
+    "item_def_buckler": {
+      "id": "item_def_buckler",
+      "name": "Iron-Shod Buckler",
+      "kind": "shield",
+      "desc": "Small, plain, and kept greased for eleven years by somebody who expected to need it.",
+      "weight": 6,
+      "value_cp": 1000,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 2,
+      "dex_cap": null,
+      "properties": [],
+      "stackable": false,
+      "tags": [
+        "accord"
+      ],
+      "grants": [],
+      "gift_ok": true
+    },
+    "item_def_woodaxe": {
+      "id": "item_def_woodaxe",
+      "name": "Woodsman's Axe",
+      "kind": "weapon",
+      "desc": "Heavy at the head and honest about it. Made for timber, and it does not mind.",
+      "weight": 4,
+      "value_cp": 1000,
+      "damage": {
+        "dice": "1d8",
+        "type": "slashing",
+        "versatile": null
+      },
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [
+        "heavy"
+      ],
+      "stackable": false,
+      "tags": [
+        "accord"
+      ],
+      "grants": [],
+      "gift_ok": true
+    },
+    "item_def_arrows": {
+      "id": "item_def_arrows",
+      "name": "Broadhead Arrows",
+      "kind": "misc",
+      "desc": "Twenty of them, fletched grey, the glue still sound.",
+      "weight": 1,
+      "value_cp": 100,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "stackable": true,
+      "tags": [
+        "ammunition"
+      ],
+      "grants": [],
+      "gift_ok": true
+    },
+    "item_def_whetstone": {
+      "id": "item_def_whetstone",
+      "name": "Whetstone",
+      "kind": "tool",
+      "desc": "From the lip of the slack tub. Steel that has slept eleven years wants an edge.",
+      "weight": 1,
+      "value_cp": 50,
+      "damage": null,
+      "ac_base": null,
+      "ac_bonus": 0,
+      "dex_cap": null,
+      "properties": [],
+      "stackable": false,
+      "tags": [],
+      "grants": [],
+      "gift_ok": true
     }
   },
   "instances": {

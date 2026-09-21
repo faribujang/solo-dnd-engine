@@ -3,12 +3,12 @@ import type { GameState } from "../schema/state.js";
 import type { Roll } from "../schema/common.js";
 import type { LLMClient } from "../llm/client.js";
 import type { Intent } from "../llm/contracts.js";
-import { Narration } from "../llm/contracts.js";
+import { DMAnswer, Narration } from "../llm/contracts.js";
 import { buildContext, type BuiltContext } from "../context/build.js";
 import { parseIntent } from "../llm/intent.js";
 import { validateNarration, type Reject } from "../llm/validate.js";
 import { npcsPresent, pc } from "../state/selectors.js";
-import { answer } from "./questions.js";
+import { answer, type Answer } from "./questions.js";
 import { chipsFrom, renderSuggestionsForPrompt, suggest, type SuggestionOut } from "../rules/suggest.js";
 import { reduce } from "./reduce.js";
 import { type Action } from "./turn.js";
@@ -97,6 +97,39 @@ export interface LLMTurnOutcome {
   };
 }
 
+/**
+ * Put an answer into the DM's mouth. Falls back to the raw lines on any failure, because
+ * a question the player asked must always get something back.
+ */
+async function sayIt(llm: LLMClient, question: string, a: Answer): Promise<string> {
+  const raw = a.lines.join("\n");
+  if (a.lines.length === 0) return raw;
+  try {
+    const res = await llm.complete({
+      role: "answer",
+      system: [
+        "You are the Dungeon Master, answering a question between beats. Not narrating.",
+        "",
+        "Answer the question in one or two sentences, second person, in your own voice.",
+        "Use ONLY what is listed below — it has already been filtered to what this player",
+        "knows, and anything else would be invention. Do not list the items back; do not",
+        "recite everything you were given; do not add colour that is not in them.",
+        "If what you were given does not answer the question, say so plainly in one line.",
+        a.brief ? `Guidance: ${a.brief}` : "",
+      ].filter(Boolean).join("\n"),
+      user: `QUESTION: ${question}\n\nWHAT THEY KNOW:\n${a.lines.map((l: string) => `- ${l}`).join("\n")}`,
+      schema: DMAnswer,
+      schemaName: "DMAnswer",
+      maxTokens: 220,
+      temperature: 0.4,
+    });
+    const text = res.value.answer.trim();
+    return text.length > 0 ? text : raw;
+  } catch {
+    return raw;
+  }
+}
+
 export async function takeLLMTurn(
   llm: LLMClient,
   state: GameState,
@@ -113,9 +146,23 @@ export async function takeLLMTurn(
   if (!parsed.ok) {
     // A question is answered from state and costs nothing: no event, no turn, no roll.
     if ("question" in parsed) {
-      const a = answer(state, parsed.question, parsed.subject ?? undefined);
+      const a = answer(state, parsed.question, parsed.subject ?? undefined, playerText);
+
+      /**
+       * Code selects, the DM speaks.
+       *
+       * The selection above is the part that must not be guessed at — it is filtered by
+       * what this player actually knows. But handing those lines to the player raw is how
+       * "did we get any gear from Cotter" came back as a list of true statements and no
+       * answer. So the DM is given exactly those lines and asked to answer the question
+       * with them, and nothing else.
+       *
+       * It is still not a turn: no event, no roll, no time. If the model is unreachable
+       * the lines go out as they always did, which is worse prose and the same facts.
+       */
+      const said = await sayIt(llm, playerText, a);
       return {
-        ok: false, kind: "answer", text: a.lines.join("\n"),
+        ok: false, kind: "answer", text: said,
         state, journal: [], rejects: [], suggestedActions: [],
         debug: { ...empty, intent: parsed.intent },
       };
