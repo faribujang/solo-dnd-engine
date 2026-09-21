@@ -321,6 +321,16 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
      * answers by recapping the situation and its threads.
      */
     case "options": {
+      // The ROOM, first. A player who is never told the boards can be pried will talk to
+      // somebody instead, every time, and conclude the game is a conversation simulator.
+      const workable = loc.features.flatMap((f) =>
+        f.interactions
+          .filter((i) => !i.hidden_until_flag || s.world.flags[i.hidden_until_flag] === true)
+          .filter((i) => !(i.once && f.state[`did_${i.verb}`] === true))
+          .map((i) => i.label || `${i.verb} the ${f.name.toLowerCase()}`),
+      );
+      if (workable.length) lines.push(`Here you could: ${workable.slice(0, 6).join("; ")}.`);
+
       if (s.combat) {
         const me = combatantOf(s.combat, player.id);
         const whose = currentCombatant(s.combat).entity_id;

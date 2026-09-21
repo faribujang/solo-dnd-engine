@@ -376,6 +376,60 @@ export function toAction(s: GameState, intent: Intent): IntentResult {
       return { ok: true, intent, action: { type: "wait", minutes: Math.max(1, intent.minutes ?? 10) } };
 
     /**
+     * Doing something to the room. "pry up the boards", "cut the chain", "search the mud".
+     *
+     * Matched against the features actually present, because the alternative is the
+     * narrator's vocabulary drifting away from the world's: a player who types the words
+     * the prose just used must hit the thing the prose just described.
+     */
+    case "interact": {
+      const said = (intent.feature_name ?? intent.target_name ?? "").toLowerCase().trim();
+      const verb = (intent.verb ?? "").toLowerCase().trim();
+      const visible = loc.features.filter((f) =>
+        f.interactions.some((i) => !i.hidden_until_flag || s.world.flags[i.hidden_until_flag] === true));
+
+      if (visible.length === 0) {
+        return { ok: false, intent, clarify: "There is nothing here to work on." };
+      }
+
+      const forms = (f: (typeof visible)[number]) =>
+        [f.id.toLowerCase(), f.name.toLowerCase(), ...f.aliases.map((a) => a.toLowerCase())];
+      const hit =
+        visible.find((f) => forms(f).includes(said)) ??
+        visible.find((f) => forms(f).some((n) => said.includes(n) || (n.includes(said) && said.length >= 3))) ??
+        // They named only the verb — "search", "climb" — and exactly one thing here takes it.
+        (said.length < 3 && verb
+          ? (() => {
+              const takers = visible.filter((f) => f.interactions.some((i) => i.verb === verb));
+              return takers.length === 1 ? takers[0] : undefined;
+            })()
+          : undefined);
+
+      if (!hit) {
+        return {
+          ok: false, intent,
+          clarify: `Work on what? Here: ${visible.map((f) => f.name).join(", ")}.`,
+        };
+      }
+
+      const offered = hit.interactions.filter(
+        (i) => !i.hidden_until_flag || s.world.flags[i.hidden_until_flag] === true);
+      // Their word, then a near miss, then the only thing it takes.
+      const chosen =
+        offered.find((i) => i.verb === verb) ??
+        offered.find((i) => verb.length >= 3 && (i.verb.includes(verb) || verb.includes(i.verb))) ??
+        (offered.length === 1 ? offered[0] : undefined);
+
+      if (!chosen) {
+        return {
+          ok: false, intent,
+          clarify: `What do you want to do to the ${hit.name.toLowerCase()}? You could: ${offered.map((i) => i.verb).join(", ")}.`,
+        };
+      }
+      return { ok: true, intent, action: { type: "interact", feature_id: hit.id, verb: chosen.verb } };
+    }
+
+    /**
      * "equip the bow", "drink the draught", "put on the mail". One verb from the player's
      * side; the split into the engine's `equip` and `use_item` is ours to make, not theirs.
      *
@@ -542,6 +596,12 @@ const SYSTEM = [
   "  something ON somebody — \"give Sibby the draught\" as first aid — also set target_name.",
   "  Do not worry which of the two verbs is right: name the item and the engine decides.",
   "  \"take\"/\"pick up\"/\"grab\" something lying in the room is `take`.",
+  "- DOING SOMETHING TO THE ROOM is `interact`. The scene lists Features and the verbs",
+  "  each one takes. \"pry up the boards\", \"cut the chain\", \"search the mud\", \"climb the",
+  "  winch\", \"listen at the door\" are all this. Put the thing in `feature_name` as the",
+  "  player named it and ONE word in `verb`. Prefer `interact` over a bare `skill_check`",
+  "  whenever the player named a thing that is in the scene \u2014 the feature carries its own",
+  "  skill and difficulty, and using it means the world remembers what was done to it.",
   "- FOLLOWING SOMEBODY — \"follow Teal\", \"go after her\", \"stay with him\" — is `move`, with",
   "  the person's name in `direction`. The engine walks you to where they are.",
 ].join("\n");

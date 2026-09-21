@@ -3,7 +3,7 @@ import type { Effect } from "../schema/dsl.js";
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
 import { rollD20, rollDamage, rollDice } from "../rules/dice.js";
-import { abilityModOf, dcForBand, skillModifier, skillParts, DEGREE_LABEL } from "../rules/checks.js";
+import { abilityModOf, dcForBand, skillModifier, skillParts, toolPhrase, DEGREE_LABEL } from "../rules/checks.js";
 void abilityModOf; void combatOver;
 import { collectSkillModifiers, combineModifiers } from "../rules/modifiers.js";
 import { Rng, freshNonce, karmicLean, seedFor, seedToState } from "../rules/rng.js";
@@ -75,6 +75,11 @@ export type Action =
   | { type: "equip"; item_instance_id: string; slot: "main_hand" | "off_hand" | "armor" | "trinket" | null }
   /** Drink it, eat it, apply it. What it does is on the definition, not decided here. */
   | { type: "use_item"; item_instance_id: string; target_id?: string }
+  /**
+   * Do something to the ROOM: pry the boards, cut the chain, climb the winch.
+   * The verb and its consequences are authored on the feature; this only names which.
+   */
+  | { type: "interact"; feature_id: string; verb: string }
   | { type: "travel"; location_id: string }
   | { type: "buy"; merchant_id: string; item_def_id: string; qty?: number }
   | { type: "sell"; merchant_id: string; item_instance_id: string }
@@ -347,6 +352,102 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
           witnesses: witnessIds(s, loc.id, actor.id),
         },
         `${action.skill} (DC ${roll.target}): ${fmt(roll)} — ${DEGREE_LABEL[roll.degree ?? "failure"]}.`,
+      );
+    }
+
+    // ------------------------------------------------------------ interact
+    /**
+     * Doing something to the room rather than to a person.
+     *
+     * This is the verb the game did not have. Features have sat in the schema since the
+     * first commit as scenery with a list of verb names that nothing read, so a place
+     * could be described but never touched, and every scene had to resolve through
+     * somebody's mouth. A world you can only talk to is a world with one verb in it.
+     */
+    case "interact": {
+      const feat = loc.features.find((f) => f.id === action.feature_id);
+      if (!feat) return { ok: false, reason: "That is not here." };
+
+      const useable = feat.interactions.filter(
+        (i) => !i.hidden_until_flag || s.world.flags[i.hidden_until_flag] === true,
+      );
+      const inter = useable.find((i) => i.verb === action.verb);
+      if (!inter) {
+        const verbs = useable.map((i) => i.verb);
+        return {
+          ok: false,
+          reason: verbs.length
+            ? `You cannot ${action.verb} the ${feat.name.toLowerCase()}. You could: ${verbs.join(", ")}.`
+            : `There is nothing to be done with the ${feat.name.toLowerCase()}.`,
+        };
+      }
+
+      // Once means once. Tracked on the feature's own state bag, so it survives replay
+      // like everything else rather than living in a set somewhere.
+      const doneKey = `did_${inter.verb}`;
+      if (inter.once && feat.state[doneKey] === true) {
+        return { ok: false, reason: `You have already done that to the ${feat.name.toLowerCase()}.` };
+      }
+
+      // A tool you do not have is a refusal, not a failed roll: being told to come back
+      // with a pry-bar is information, and losing a turn to learn it is not.
+      if (inter.requires_item_tag) {
+        const tag = inter.requires_item_tag;
+        const has = Object.values(s.items).some(
+          (i) => i.owner.t === "entity" && i.owner.id === actor.id
+            && (s.item_defs[i.def_id]?.tags.includes(tag) ?? false),
+        );
+        if (!has) return { ok: false, reason: `You would need ${toolPhrase(tag)} for that.` };
+      }
+
+      const label = inter.label || `${inter.verb} the ${feat.name.toLowerCase()}`;
+      const mark: Effect[] = inter.once
+        ? [{ t: "set_feature_state", location_id: loc.id, feature_id: feat.id, key: doneKey, value: true }]
+        : [];
+
+      // No skill named means it simply works. Opening an unbarred door is not a check,
+      // and rolling for it teaches the player that the game rolls for everything.
+      if (!inter.skill) {
+        return finish(
+          {
+            type: "effect",
+            target_ids: [],
+            payload: { feature: feat.id, verb: inter.verb, outcome: "success" },
+            rolls: [],
+            direct_effects: [...inter.on_success, ...mark],
+            duration_minutes: s.combat ? 0 : inter.minutes,
+            witnesses: witnessIds(s, loc.id, actor.id),
+          },
+          `${label}.`,
+        );
+      }
+
+      const dc = dcForBand(inter.band, levers.dc_shift);
+      const roll = check(s, rng, actor.id, inter.skill, dc, inter.verb, undefined, lean, []);
+      const got = roll.degree !== "failure";
+
+      return finish(
+        {
+          type: "skill_check",
+          target_ids: [],
+          payload: {
+            feature: feat.id,
+            verb: inter.verb,
+            skill: inter.skill,
+            band: inter.band,
+            dc: roll.target,
+            outcome: roll.degree ?? (roll.success ? "success" : "failure"),
+            [inter.verb]: true,
+            ...(got ? { [`success_${inter.verb}`]: true } : {}),
+          } as GameEvent["payload"],
+          rolls: [roll],
+          // A failed attempt still happened, so a `once` interaction that failed is not
+          // spent — you may try the boards again. Only success closes it.
+          direct_effects: got ? [...inter.on_success, ...mark] : [...inter.on_failure],
+          duration_minutes: s.combat ? 0 : inter.minutes,
+          witnesses: witnessIds(s, loc.id, actor.id),
+        },
+        `${label} — ${inter.skill} (DC ${roll.target}): ${fmt(roll)} \u2014 ${DEGREE_LABEL[roll.degree ?? "failure"]}.`,
       );
     }
 
@@ -1211,6 +1312,7 @@ function actionKey(a: Action): string {
     case "death_save": return "death_save";
     case "equip": return `equip:${a.item_instance_id}:${a.slot ?? "none"}`;
     case "use_item": return `use:${a.item_instance_id}:${a.target_id ?? "self"}`;
+    case "interact": return `interact:${a.feature_id}:${a.verb}`;
     case "travel": return `travel:${a.location_id}`;
     case "buy": return `buy:${a.merchant_id}:${a.item_def_id}`;
     case "sell": return `sell:${a.merchant_id}:${a.item_instance_id}`;

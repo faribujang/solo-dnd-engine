@@ -16,6 +16,8 @@ export const IntentAction = z.enum([
   "move", "skill_check", "attack", "cast", "talk", "use_item", "take", "give",
   // Wearing and drawing gear. Split from use_item by the ITEM, in toAction.
   "equip", "unequip",
+  // Doing something to the ROOM: pry, cut, climb, search a thing that is here.
+  "interact",
   "trade", "rest", "wait", "look", "inventory", "meta", "unclear",
   // Hours rather than a moment: "ask around town", "spend the morning searching".
   "montage",
@@ -35,6 +37,10 @@ export const Intent = z.object({
   skill: Skill.nullable().default(null),
   ability: Ability.nullable().default(null),
   item_name: z.string().nullable().default(null),
+  /** For `interact`: the thing in the room, as the player named it. */
+  feature_name: z.string().nullable().default(null),
+  /** For `interact`: one word for what they are doing to it. */
+  verb: z.string().nullable().default(null),
   /** A BAND, never a number. Only rules/checks.ts turns this into a DC. */
   difficulty_band: DifficultyBand.nullable().default(null),
   /** Names what the check is FOR, so authored triggers can match a specific attempt. */

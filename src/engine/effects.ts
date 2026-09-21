@@ -463,6 +463,14 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       break;
     }
 
+    case "set_feature_state": {
+      const loc = s.locations[eff.location_id];
+      const feat = loc?.features.find((f) => f.id === eff.feature_id);
+      if (!feat) break;
+      feat.state[eff.key] = eff.value;
+      break;
+    }
+
     case "introduce_place": {
       const here = s.locations[s.entities[s.meta.pc_id]!.location_id]!;
       // Never mint a second copy of a room the campaign already has under that name; the

@@ -21,12 +21,58 @@ export const Exit = z.object({
 });
 export type Exit = z.infer<typeof Exit>;
 
+/**
+ * One thing you can do to a feature.
+ *
+ * Features existed from the start as scenery with a list of verb NAMES, and nothing in
+ * the engine ever read them — there was no action that touched a room. So every scene
+ * resolved the only way it could, by talking to somebody, and a campaign with nineteen
+ * locations shipped with zero things to pick up, pry, cut or climb. This is the shape
+ * that makes a place playable: a verb, what it costs, and what it does.
+ *
+ * The effects are AUTHORED, which is the usual rule — the roll happens at resolution and
+ * the outcome was written by a person, so the world is the same on replay.
+ */
+export const FeatureInteraction = z.object({
+  /** One word, how a player would say it: "pry", "search", "climb", "cut", "listen". */
+  verb: z.string(),
+  /** What the button says: "Pry up the rotted boards". Falls back to "<verb> the <name>". */
+  label: z.string().default(""),
+  /** Null means it simply works — opening an unlocked door is not a Strength check. */
+  skill: Skill.nullable().default(null),
+  band: DifficultyBand.default("medium"),
+  minutes: z.number().int().nonnegative().default(2),
+  /** Needs a tool: an item the player carries whose def carries this tag. */
+  requires_item_tag: z.string().nullable().default(null),
+  /** Hidden until a flag is set, for things you must learn about first. */
+  hidden_until_flag: z.string().nullable().default(null),
+  on_success: z.array(Trigger.shape.then.element).default([]),
+  on_failure: z.array(Trigger.shape.then.element).default([]),
+  /** A line for the DM about what it looks like. Never mechanics. */
+  narrate: z.string().default(""),
+  /** A board is only pried up once. Tracked in the feature's own state bag. */
+  once: z.boolean().default(false),
+});
+export type FeatureInteraction = z.infer<typeof FeatureInteraction>;
+
+/**
+ * Accept the old shape. Four authored features in the demo campaign list their verbs as
+ * bare strings, and a schema change that invalidates existing content is a migration
+ * nobody asked for: a bare "search" becomes a plain medium Investigation check.
+ */
+const AnyInteraction = z.union([
+  z.string().transform((verb) => FeatureInteraction.parse({ verb })),
+  FeatureInteraction,
+]);
+
 /** Something in the room the player can interact with, holding its own small state bag. */
 export const Feature = z.object({
   id: z.string(),
   name: z.string(),
   desc: z.string().default(""),
-  interactions: z.array(z.string()).default([]),  // "search", "climb_down", "listen"
+  interactions: z.array(AnyInteraction).default([]),
+  /** Aliases the player might say: "the boards", "the floor". */
+  aliases: z.array(z.string()).default([]),
   state: Flags,
 });
 export type Feature = z.infer<typeof Feature>;

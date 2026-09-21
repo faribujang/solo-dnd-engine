@@ -1,7 +1,7 @@
 import type { Skill } from "../schema/common.js";
 import type { GameState } from "../schema/state.js";
 import type { Action } from "../engine/turn.js";
-import { abilityModOf, skillModifier } from "./checks.js";
+import { abilityModOf, skillModifier, toolPhrase } from "./checks.js";
 import { collectSkillModifiers, combineModifiers } from "./modifiers.js";
 import { countOfDef, itemsAt, itemsOwnedBy, mustEntity, npcsPresent, relationship, visibleExits } from "../state/selectors.js";
 import { adjacentZones, combatantOf, currentCombatant, hasSlot, hitChance, inReach, sameZone, castingMod } from "../engine/combat.js";
@@ -209,6 +209,51 @@ export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affor
   }
   out.push({ action: { type: "look" }, label: "Look around", cost: "free", detail: "", available: true, group: "self" });
 
+  /**
+   * Everything in the room that can be worked on.
+   *
+   * This is what turns a place from scenery into something you play. Each one arrives
+   * with its skill and its difficulty already attached, so the chip can say what it will
+   * cost before it is tapped, and an interaction needing a tool you lack is shown greyed
+   * with the reason rather than hidden — knowing the boards need a pry-bar is the half of
+   * the puzzle you can act on.
+   */
+  for (const f of loc.features) {
+    for (const inter of f.interactions) {
+      if (inter.hidden_until_flag && s.world.flags[inter.hidden_until_flag] !== true) continue;
+      const spent = inter.once && f.state[`did_${inter.verb}`] === true;
+
+      let tool = true;
+      if (inter.requires_item_tag) {
+        const tag = inter.requires_item_tag;
+        tool = itemsOwnedBy(s, actor.id).some((i) => s.item_defs[i.def_id]?.tags.includes(tag) ?? false);
+      }
+
+      const mods = inter.skill
+        ? collectSkillModifiers({ actor, skill: inter.skill, location: loc })
+        : [];
+      const { dc_delta, advantage } = combineModifiers(mods);
+
+      out.push({
+        action: { type: "interact", feature_id: f.id, verb: inter.verb },
+        label: inter.label || `${cap(inter.verb)} the ${f.name.toLowerCase()}`,
+        cost: "action",
+        detail: inter.skill
+          ? fmtCheck(skillModifier(actor, inter.skill), dc_delta, advantage, mods.map((m) => m.reason))
+          : "",
+        available: !spent && tool,
+        group: "feature",
+        ...(spent
+          ? { why_unavailable: "Already done." }
+          : !tool
+            ? { why_unavailable: `Needs ${toolPhrase(inter.requires_item_tag!)}.` }
+            : {}),
+        ...(inter.skill ? { teaches: advantage !== "none" ? TEACH.advantage : TEACH.skill_check } : {}),
+      });
+    }
+  }
+
+
   for (const i of itemsAt(s, loc.id)) {
     const def = s.item_defs[i.def_id];
     out.push({ action: { type: "take", item_instance_id: i.id }, label: `Take ${def?.name ?? i.def_id}`, cost: "action", detail: "", available: true, group: "item" });
@@ -227,7 +272,8 @@ export function affordances(s: GameState, actorId: string = s.meta.pc_id): Affor
       if (g.requires.t === "location_flag") {
         applies = loc.flags[g.requires.key] === true;
       } else if (g.requires.t === "feature") {
-        const f = loc.features.find((x) => x.interactions.includes(g.requires.t === "feature" ? g.requires.interaction : ""));
+        const want = g.requires.t === "feature" ? g.requires.interaction : "";
+        const f = loc.features.find((x) => x.interactions.some((i) => i.verb === want));
         applies = !!f;
         if (f) note = ` — ${f.name}`;
       } else {

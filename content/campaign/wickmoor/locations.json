@@ -23,7 +23,130 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_hearth",
+        "name": "The forge hearth",
+        "desc": "Banked but never out, and the stone under it does not sit flush.",
+        "aliases": [
+          "the hearth",
+          "the fire",
+          "the forge"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search under the hearth stone",
+            "band": "medium",
+            "minutes": 3,
+            "once": true,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The hearth stone at Vane's forge lifts, and there is a cavity under it.",
+                "subjects": [
+                  "npc_cotter"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              },
+              {
+                "t": "set_flag",
+                "key": "found_hearth_cache",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "The stone lifts a finger's width before it grinds.",
+            "skill": "investigation"
+          },
+          {
+            "verb": "bank",
+            "label": "Bank the fire down",
+            "band": "medium",
+            "minutes": 2,
+            "once": false,
+            "on_success": [],
+            "on_failure": [],
+            "narrate": "Ash over the coals. It will keep until morning."
+          }
+        ]
+      },
+      {
+        "id": "feat_wall_work",
+        "name": "Your own work on the wall",
+        "desc": "Three years of it, the early pieces crooked, the later ones not.",
+        "aliases": [
+          "the wall",
+          "my work",
+          "the ironwork"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "take",
+            "label": "Take a bar of your own stock",
+            "band": "medium",
+            "minutes": 1,
+            "once": true,
+            "on_success": [
+              {
+                "t": "give_item",
+                "entity_id": "pc_main",
+                "item_def_id": "item_def_whetstone",
+                "qty": 1
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Yours to take, and always was."
+          },
+          {
+            "verb": "study",
+            "label": "Look properly at what you have made",
+            "band": "trivial",
+            "minutes": 2,
+            "once": false,
+            "on_success": [],
+            "on_failure": [],
+            "narrate": "The joins got tighter every winter.",
+            "skill": "investigation"
+          }
+        ]
+      },
+      {
+        "id": "feat_anvil",
+        "name": "The anvil",
+        "desc": "Scarred, and worth more than the roof over it.",
+        "aliases": [
+          "anvil"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "work",
+            "label": "Work a piece at the anvil",
+            "band": "easy",
+            "minutes": 30,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "worked_the_anvil",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Heat, hammer, quench. An hour goes without asking.",
+            "skill": "athletics",
+            "requires_item_tag": "smithing"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_anvil",
@@ -123,7 +246,102 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_moot_stone",
+        "name": "The moot stone",
+        "desc": "Older than the hall, and nobody has ever moved it.",
+        "aliases": [
+          "the stone",
+          "moot stone"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the cut marks on the moot stone",
+            "band": "medium",
+            "minutes": 5,
+            "once": true,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The moot stone carries older marks than the Syndicate's: this was a holding before it was a parish.",
+                "subjects": [
+                  "loc_green"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Under the lichen, older strokes.",
+            "skill": "history"
+          },
+          {
+            "verb": "climb",
+            "label": "Stand up on the moot stone",
+            "band": "trivial",
+            "minutes": 1,
+            "once": false,
+            "on_success": [],
+            "on_failure": [],
+            "narrate": "From up here you can see the whole green at once.",
+            "skill": "athletics"
+          }
+        ]
+      },
+      {
+        "id": "feat_well",
+        "name": "The village well",
+        "desc": "Deep, cold, and the windlass rope is fraying.",
+        "aliases": [
+          "the well",
+          "windlass"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Look down the well",
+            "band": "medium",
+            "minutes": 3,
+            "once": false,
+            "on_success": [],
+            "on_failure": [],
+            "narrate": "Black water a long way down, and something pale on the ledge.",
+            "skill": "perception"
+          },
+          {
+            "verb": "climb",
+            "label": "Climb down the well rope",
+            "band": "hard",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "down_the_well",
+                "value": true
+              }
+            ],
+            "on_failure": [
+              {
+                "t": "damage",
+                "entity_id": "pc_main",
+                "amount": 3,
+                "damage_type": "bludgeoning"
+              }
+            ],
+            "narrate": "The rope is older than you are.",
+            "skill": "athletics"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_well",
@@ -297,7 +515,60 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_oven",
+        "name": "The bread oven",
+        "desc": "Big enough to stand in, and warm long after it is out.",
+        "aliases": [
+          "the oven"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the cold oven",
+            "band": "easy",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Somebody has been sleeping in Nell Gower's oven when it is out.",
+                "subjects": [
+                  "npc_nell"
+                ],
+                "importance": 2,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "hide",
+            "label": "Get inside the oven",
+            "band": "easy",
+            "minutes": 2,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "hid_in_oven",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Soot and warmth, and nobody looks in an oven.",
+            "skill": "stealth"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_ovens",
@@ -363,7 +634,112 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_parish_chest",
+        "name": "The parish chest",
+        "desc": "Three locks, and the parish only ever had two keys.",
+        "aliases": [
+          "the chest",
+          "parish chest"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "force",
+            "label": "Force the parish chest",
+            "band": "hard",
+            "minutes": 5,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "opened_parish_chest",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "The parish chest holds the lamp-tithe rolls going back eleven years.",
+                "subjects": [
+                  "loc_moot_hall"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "athletics",
+            "requires_item_tag": "tool"
+          },
+          {
+            "verb": "search",
+            "label": "Search around the chest",
+            "band": "easy",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The third lock on the parish chest is new, and Syndicate-stamped.",
+                "subjects": [
+                  "loc_moot_hall"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      },
+      {
+        "id": "feat_roll_board",
+        "name": "The roll board",
+        "desc": "Every household in the parish, and what it owes.",
+        "aliases": [
+          "the board",
+          "rolls",
+          "roll board"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the parish rolls",
+            "band": "easy",
+            "minutes": 4,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Wick household is entered twice on the parish rolls, in two different hands.",
+                "subjects": [
+                  "npc_dunn",
+                  "npc_halla"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_floor",
@@ -454,7 +830,63 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_gravel_shelf",
+        "name": "The gravel shelf",
+        "desc": "Where the current drops what it is carrying.",
+        "aliases": [
+          "the shelf",
+          "gravel",
+          "the bank"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Sift the gravel shelf",
+            "band": "easy",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The river brings down milled timber from somewhere upstream that has no mill.",
+                "subjects": [
+                  "loc_riverbend"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "perception"
+          },
+          {
+            "verb": "fish",
+            "label": "Set the lines and wait",
+            "band": "easy",
+            "minutes": 60,
+            "once": false,
+            "on_success": [
+              {
+                "t": "give_item",
+                "entity_id": "pc_main",
+                "item_def_id": "item_def_bread",
+                "qty": 1
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Not much of a catch, but it passes the afternoon.",
+            "skill": "survival"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_bank",
@@ -574,7 +1006,62 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_deadfall",
+        "name": "The deadfall",
+        "desc": "Storm-thrown timber nobody has cleared in two winters.",
+        "aliases": [
+          "deadfall",
+          "the timber",
+          "fallen trees"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the deadfall",
+            "band": "medium",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Somebody has been camping in the High Wood deadfall, and recently.",
+                "subjects": [
+                  "loc_high_wood"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "climb",
+            "label": "Get up above the deadfall",
+            "band": "easy",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "high_wood_vantage",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "From the leaning trunk you can see the North Road.",
+            "skill": "athletics"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_rise",
@@ -650,7 +1137,107 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_road_mud",
+        "name": "The churned verge",
+        "desc": "Where the paving ends and the mud keeps a record.",
+        "aliases": [
+          "the mud",
+          "the verge",
+          "tracks",
+          "the road"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the tracks in the verge",
+            "band": "easy",
+            "minutes": 5,
+            "once": true,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Eight horses went north off the Wickmoor cut, shod alike, carrying weight.",
+                "subjects": [
+                  "loc_north_road"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "survival"
+          },
+          {
+            "verb": "search",
+            "label": "Search the ditch along the road",
+            "band": "medium",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "A Syndicate transit warrant, torn across, was dropped in the North Road ditch.",
+                "subjects": [
+                  "loc_north_road"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      },
+      {
+        "id": "feat_milestone",
+        "name": "The Syndicate milestone",
+        "desc": "Fresh-cut, and it does not agree with the old one.",
+        "aliases": [
+          "milestone",
+          "the stone",
+          "marker"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the milestone",
+            "band": "trivial",
+            "minutes": 2,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Syndicate has re-measured the road, and Wickmoor is now four miles further from Harrowmoot than it was.",
+                "subjects": [
+                  "loc_north_road"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_road",
@@ -746,7 +1333,45 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_undercroft_stores",
+        "name": "The stores",
+        "desc": "What the parish keeps for a bad winter, and a bad winter has not come.",
+        "aliases": [
+          "the stores",
+          "stores",
+          "crates"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the parish stores",
+            "band": "easy",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The parish stores are short by more than one winter's worth.",
+                "subjects": [
+                  "loc_undercroft"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_under",
@@ -832,7 +1457,111 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_toll_ledger",
+        "name": "The toll ledger",
+        "desc": "Open on its stand, and everyone who passes goes in it.",
+        "aliases": [
+          "the ledger",
+          "the book",
+          "toll book"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the open toll ledger",
+            "band": "medium",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The tollgate ledger logs every name through the gate, and the last four days are written in one hand.",
+                "subjects": [
+                  "loc_tollgate"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "forge",
+            "label": "Put a false name in the ledger",
+            "band": "hard",
+            "minutes": 3,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "forged_toll_entry",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "There is a name in the Harrowmoot toll ledger that was never at the gate.",
+                "subjects": [
+                  "loc_tollgate"
+                ],
+                "importance": 4,
+                "secret": true,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "deception",
+            "requires_item_tag": "document"
+          }
+        ]
+      },
+      {
+        "id": "feat_gate_bar",
+        "name": "The gate bar",
+        "desc": "Iron-bound oak, and two wardens on the winch.",
+        "aliases": [
+          "the bar",
+          "the gate"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "listen",
+            "label": "Listen to the wardens on the gate",
+            "band": "easy",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Harrowmoot gate wardens change on the third bell and do not overlap.",
+                "subjects": [
+                  "loc_tollgate"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "perception"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_gate",
@@ -993,7 +1722,70 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_filing_press",
+        "name": "The filing presses",
+        "desc": "Third press, lower shelf, twelve hundred and forty-two.",
+        "aliases": [
+          "the press",
+          "presses",
+          "the files",
+          "shelves"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the filing presses",
+            "band": "hard",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Assay Row files closed bonds separately, and the closed drawer has its own lock.",
+                "subjects": [
+                  "loc_assay_row"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "read",
+            "label": "Read what is left out on the bench",
+            "band": "easy",
+            "minutes": 4,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Wickmoor's lamp-tithe was assessed twice in one year, under two different bond numbers.",
+                "subjects": [
+                  "loc_assay_row"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_steps",
@@ -1064,7 +1856,115 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_card_table",
+        "name": "The card table",
+        "desc": "A bad hand slapped down, and money that is not being counted.",
+        "aliases": [
+          "the table",
+          "cards",
+          "the game"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "watch",
+            "label": "Watch the table without sitting down",
+            "band": "easy",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The card game at the Fetterlock is a cover for handing over stamped paper.",
+                "subjects": [
+                  "loc_fetterlock"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "insight"
+          },
+          {
+            "verb": "play",
+            "label": "Sit in on a hand",
+            "band": "medium",
+            "minutes": 30,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "played_at_the_fetterlock",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "You lose a little, on purpose, and they talk.",
+            "skill": "deception"
+          }
+        ]
+      },
+      {
+        "id": "feat_taproom_hatch",
+        "name": "The cellar hatch",
+        "desc": "Behind the zinc counter, and it is not bolted from this side.",
+        "aliases": [
+          "the hatch",
+          "the cellar",
+          "trapdoor"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "open",
+            "label": "Lift the cellar hatch",
+            "band": "medium",
+            "minutes": 1,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "fetterlock_cellar_open",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Cold air, and a smell of river."
+          },
+          {
+            "verb": "listen",
+            "label": "Listen at the cellar hatch",
+            "band": "medium",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Something is moved through the Fetterlock cellar at night, and it is not barrels.",
+                "subjects": [
+                  "loc_fetterlock"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "perception"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_common",
@@ -1120,7 +2020,110 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_brazier",
+        "name": "The cold braziers",
+        "desc": "Arcanate issue, and not one of them lit.",
+        "aliases": [
+          "braziers",
+          "the brazier"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Look over the dead braziers",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Pensioners' Hall braziers are Arcanate work, and they were not put out — they were drained.",
+                "subjects": [
+                  "loc_pensioners_hall"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "arcana"
+          },
+          {
+            "verb": "light",
+            "label": "Try to bring a brazier up",
+            "band": "hard",
+            "minutes": 10,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "brazier_lit",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "An Arcanate brazier will still take a charge, eleven years after the seals came off.",
+                "subjects": [
+                  "loc_pensioners_hall"
+                ],
+                "importance": 5,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "arcana"
+          }
+        ]
+      },
+      {
+        "id": "feat_ward_rolls",
+        "name": "The ward rolls",
+        "desc": "Who is owed, and for what, in a hand that gave up halfway.",
+        "aliases": [
+          "the rolls",
+          "ward rolls",
+          "the register"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the ward rolls",
+            "band": "easy",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Pensioners' Hall register stops taking new names the year the Accord ended.",
+                "subjects": [
+                  "loc_pensioners_hall"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_floor",
@@ -1196,7 +2199,130 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_lamp_post",
+        "name": "The dead lamp",
+        "desc": "One at each end of the Cut and none in the middle.",
+        "aliases": [
+          "the lamp",
+          "lamp post",
+          "the light"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Look over the dead lamp",
+            "band": "easy",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The middle lamps of the Cut were not broken. The tithe was simply never paid on them.",
+                "subjects": [
+                  "loc_the_cut"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "climb",
+            "label": "Get up the lamp post",
+            "band": "medium",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "cut_vantage",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "From the crossbar you can see down the whole lane.",
+            "skill": "athletics"
+          }
+        ]
+      },
+      {
+        "id": "feat_drain_grate",
+        "name": "The salt drain grate",
+        "desc": "Iron, rusted thin at the hinge, and the run-off under it turns black.",
+        "aliases": [
+          "the grate",
+          "the drain",
+          "drains",
+          "sluice"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "pry",
+            "label": "Pry up the drain grate",
+            "band": "medium",
+            "minutes": 4,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "cut_drain_open",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "The salt drains under the Cut run all the way to the slips.",
+                "subjects": [
+                  "loc_the_cut",
+                  "loc_waterline"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "The hinge goes with a crack you feel in your teeth.",
+            "skill": "athletics"
+          },
+          {
+            "verb": "listen",
+            "label": "Listen at the drain",
+            "band": "easy",
+            "minutes": 2,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "There are chains moving somewhere under the Cut, on the bells.",
+                "subjects": [
+                  "loc_the_cut"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "perception"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_lane",
@@ -1252,7 +2378,63 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_vault_door",
+        "name": "The closed-bond vault",
+        "desc": "Syndicate iron, and a lock that was made in Harrowmoot.",
+        "aliases": [
+          "the vault",
+          "the door",
+          "vault door"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Look over the vault lock",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The closed-bond vault under Assay Row was locked by a Harrowmoot smith, not a Syndicate one.",
+                "subjects": [
+                  "loc_undercroft_row"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "force",
+            "label": "Work the vault lock",
+            "band": "very_hard",
+            "minutes": 15,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "vault_open",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "Four wards, and the fourth is newer than the rest.",
+            "skill": "sleight_of_hand",
+            "requires_item_tag": "tool"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_presses",
@@ -1330,7 +2512,153 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_slips_crane",
+        "name": "The slips crane",
+        "desc": "Heavy timber over the bilge, chains hanging, not inspected in living memory.",
+        "aliases": [
+          "the crane",
+          "slips crane",
+          "the chains"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "climb",
+            "label": "Climb the crane frame",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "on_the_crane",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "The catwalk runs above the whole quay.",
+            "skill": "athletics"
+          },
+          {
+            "verb": "cut",
+            "label": "Cut the crane chain",
+            "band": "hard",
+            "minutes": 5,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "crane_chain_cut",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "The slips crane will not lift until somebody replaces the chain.",
+                "subjects": [
+                  "loc_waterline"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "It goes into the bilge with a sound the whole quay hears.",
+            "skill": "athletics",
+            "requires_item_tag": "martial"
+          },
+          {
+            "verb": "search",
+            "label": "Search the crane housing",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The slips crane housing has a gap where the salt rotted the floorboards out.",
+                "subjects": [
+                  "loc_waterline"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          }
+        ]
+      },
+      {
+        "id": "feat_barges",
+        "name": "The barges",
+        "desc": "Four deep, and everything the Row never saw goes out on them.",
+        "aliases": [
+          "barges",
+          "the boats",
+          "the barge"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the nearest barge",
+            "band": "hard",
+            "minutes": 10,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "A barge on the Waterline is carrying crates stamped with an Accord mark eleven years out of date.",
+                "subjects": [
+                  "loc_waterline"
+                ],
+                "importance": 5,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "watch",
+            "label": "Watch the loading from cover",
+            "band": "medium",
+            "minutes": 30,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The night load at the Waterline goes out on the tide, and the wardens are gone before it does.",
+                "subjects": [
+                  "loc_waterline"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "stealth"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_quay",
@@ -1409,7 +2737,75 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_bond_ledger",
+        "name": "The bonding ledger",
+        "desc": "Bound, stamped, and chained to its stand.",
+        "aliases": [
+          "the ledger",
+          "the book",
+          "bond ledger"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "read",
+            "label": "Read the bonding ledger",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Every lamp-tithe bond in the Bonding House is counter-signed by the same hand.",
+                "subjects": [
+                  "loc_lamp_house"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "take",
+            "label": "Cut the ledger from its chain",
+            "band": "hard",
+            "minutes": 3,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "took_bond_ledger",
+                "value": true
+              },
+              {
+                "t": "add_fact",
+                "text": "The Bonding House ledger is missing, and they will know who took it.",
+                "subjects": [
+                  "loc_lamp_house"
+                ],
+                "importance": 5,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "sleight_of_hand",
+            "requires_item_tag": "martial"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_vats",
@@ -1487,7 +2883,64 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_burnt_thatch",
+        "name": "The burnt thatch",
+        "desc": "What is left of the row, and it is still warm.",
+        "aliases": [
+          "the thatch",
+          "the ruins",
+          "the ashes",
+          "the rubble"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the burnt row",
+            "band": "medium",
+            "minutes": 15,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The fires at Wickmoor were set from inside the houses, not thrown onto the roofs.",
+                "subjects": [
+                  "loc_wickmoor_after"
+                ],
+                "importance": 5,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "dig",
+            "label": "Dig out what can be saved",
+            "band": "easy",
+            "minutes": 60,
+            "once": false,
+            "on_success": [
+              {
+                "t": "give_item",
+                "entity_id": "pc_main",
+                "item_def_id": "item_def_whetstone",
+                "qty": 1
+              }
+            ],
+            "on_failure": [],
+            "narrate": "An hour on your knees for very little.",
+            "skill": "athletics"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_green_after",
@@ -1555,7 +3008,63 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_strongbox",
+        "name": "The counting strongbox",
+        "desc": "Bolted through the floor, and the floor is stone.",
+        "aliases": [
+          "strongbox",
+          "the box",
+          "the safe"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Look over the strongbox",
+            "band": "easy",
+            "minutes": 3,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The Counting House strongbox is emptied nightly and carried out the back.",
+                "subjects": [
+                  "loc_counting_house"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "force",
+            "label": "Work the strongbox",
+            "band": "very_hard",
+            "minutes": 15,
+            "once": true,
+            "on_success": [
+              {
+                "t": "set_flag",
+                "key": "strongbox_open",
+                "value": true
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "sleight_of_hand",
+            "requires_item_tag": "tool"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_desks",
@@ -1621,7 +3130,69 @@
         "revealed": false
       }
     ],
-    "features": [],
+    "features": [
+      {
+        "id": "feat_moor_cairn",
+        "name": "The cairn",
+        "desc": "Somebody keeps it, and nobody admits to it.",
+        "aliases": [
+          "the cairn",
+          "cairn",
+          "stones"
+        ],
+        "state": {},
+        "interactions": [
+          {
+            "verb": "search",
+            "label": "Search the cairn",
+            "band": "medium",
+            "minutes": 5,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "The High Moor cairn is kept, and there is fresh stone on it.",
+                "subjects": [
+                  "loc_high_moor"
+                ],
+                "importance": 3,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "investigation"
+          },
+          {
+            "verb": "watch",
+            "label": "Lie up and watch the moor road",
+            "band": "easy",
+            "minutes": 60,
+            "once": false,
+            "on_success": [
+              {
+                "t": "add_fact",
+                "text": "Riders use the High Moor at night and carry no lamps.",
+                "subjects": [
+                  "loc_high_moor"
+                ],
+                "importance": 4,
+                "secret": false,
+                "known_by": [
+                  "pc_main"
+                ]
+              }
+            ],
+            "on_failure": [],
+            "narrate": "",
+            "skill": "perception"
+          }
+        ]
+      }
+    ],
     "zones": [
       {
         "id": "z_causeway",

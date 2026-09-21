@@ -165,3 +165,22 @@ export const DEGREE_BRIEF: Record<Degree, string> = {
 export function initiativeModifier(e: Entity): number {
   return abilityModOf(e, "dex");
 }
+
+/**
+ * What a tool tag sounds like when you tell somebody they need one.
+ *
+ * The tags are data ("tool", "martial"); this is the sentence. Without it a refusal read
+ * "You would need tool for that", which is neither English nor a hint you can act on.
+ */
+export const TOOL_NOUN: Record<string, string> = {
+  tool: "something to lever or pick with",
+  martial: "a proper blade",
+  smithing: "smith's tools",
+  document: "papers of your own",
+  metal: "a piece of iron",
+  light: "a light",
+};
+
+export function toolPhrase(tag: string): string {
+  return TOOL_NOUN[tag] ?? `a ${tag.replace(/_/g, " ")}`;
+}

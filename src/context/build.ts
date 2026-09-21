@@ -489,6 +489,13 @@ function renderSystem(s: GameState): string {
     "Null on a turn where nothing was promised or settled. An open thread you never close",
     "is a promise the world forgot it made.",
     "",
+    "THE ROOM IS SOMETHING THE PLAYER CAN WORK ON. Every Feature in the scene lists the",
+    "verbs it takes. Those verbs are REAL \u2014 the player can type them and the engine will",
+    "roll for them. So put the feature in your prose when it matters, and let the player",
+    "reach for it. Do not invent a different affordance for the same object: if the boards",
+    "can be pried, do not write that they can be burned.",
+    "A scene where the only thing to do is talk to somebody is a scene you under-described.",
+    "",
     "ANYWHERE YOU SEND THE PLAYER MUST BE REAL, TOO. If your prose opens a cellar, a back",
     "room, a winch house or a tunnel that is not already a location, propose",
     "`introduce_place` for it in the SAME turn. Otherwise you have told the player to",
@@ -529,7 +536,18 @@ function renderScene(s: GameState, verbose: boolean): string {
   ];
   if (loc.ambient.sound) lines.push(`Sound: ${loc.ambient.sound}. Smell: ${loc.ambient.smell}.`);
   for (const f of loc.features) {
-    lines.push(`Feature — ${f.name}: ${f.desc}`);
+    // The VERBS, not just the name. A feature the narrator cannot see the verbs of gets
+    // described as scenery, and the player never learns the room can be worked on.
+    const verbs = f.interactions
+      .filter((i) => !i.hidden_until_flag || s.world.flags[i.hidden_until_flag] === true)
+      .map((i) => i.verb);
+    const done = Object.keys(f.state).filter((k) => k.startsWith("did_") && f.state[k] === true)
+      .map((k) => k.slice(4));
+    lines.push(
+      `Feature — ${f.name}: ${f.desc}`
+      + (verbs.length ? ` [can be: ${verbs.join(", ")}]` : "")
+      + (done.length ? ` [already done: ${done.join(", ")}]` : ""),
+    );
   }
   const loose = itemsAt(s, loc.id);
   if (loose.length) {

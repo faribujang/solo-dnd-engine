@@ -151,6 +151,28 @@ export function suggest(s: GameState, ctx: SuggestContext = {}): Suggestion[] {
       else score -= 3;
     }
 
+    /**
+     * Doing something to the room.
+     *
+     * Talking scored +2 and working on a place scored nothing, so conversation won every
+     * ranking and the chips taught the player, four at a time and for a hundred turns,
+     * that this is a game about asking people things. The bias was in the scoring, not in
+     * the player.
+     */
+    if (a.action.type === "interact") {
+      score += 3;
+      because.push("there is something here to work on");
+    }
+
+    /**
+     * Background insights are colour, not a lead.
+     *
+     * They are always open and never spent until used, so "not tried yet" kept them
+     * permanently fresh and "read the weather for them" appeared on the bar in the middle
+     * of a break-in. Worth having, worth offering last.
+     */
+    if (a.action.type === "talk" && a.action.topic_id?.startsWith("t_insight_")) score -= 3;
+
     // Attacking is a big decision and should never be *suggested* out of nowhere.
     if (a.action.type === "attack" && !s.combat) score -= 6;
 
@@ -179,6 +201,20 @@ export function suggest(s: GameState, ctx: SuggestContext = {}): Suggestion[] {
     perGroup.set(g, (perGroup.get(g) ?? 0) + 1);
     if (target) perTarget.set(target, (perTarget.get(target) ?? 0) + 1);
     picked.push(sug);
+  }
+
+  /**
+   * Keep a seat for the world itself.
+   *
+   * Scoring alone is not enough: four talkable people in a room will still crowd out the
+   * one pryable grate, and then the only thing the bar ever offers is another
+   * conversation. If this place can be worked on at all, one of those ways is shown.
+   */
+  const physical = out.find((sg) => sg.affordance.action.type === "interact" && sg.affordance.available);
+  if (physical && !picked.some((sg) => sg.affordance.action.type === "interact")) {
+    // Drop the weakest pick rather than growing the bar: four chips is the shape that fits.
+    if (picked.length >= (ctx.limit ?? 4)) picked.pop();
+    picked.push(physical);
   }
   return picked;
 }

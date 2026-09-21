@@ -135,6 +135,7 @@ export function describe(a: Action): string {
     case "talk": return `talk ${a.target_id}${a.topic ? ` about ${a.topic}` : ""}`;
     case "take": return `take ${a.item_instance_id}`;
     case "use_item": return `use ${a.item_instance_id}${a.target_id ? ` on ${a.target_id}` : ""}`;
+    case "interact": return `${a.verb} ${a.feature_id}`;
     case "give": return `give ${a.item_instance_id} to ${a.target_id}`;
     case "look": return "look";
     case "wait": return `wait ${a.minutes}`;

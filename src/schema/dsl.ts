@@ -172,6 +172,18 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("spend_slot"), entity_id: Id, level: z.number().int().min(1).max(9) }),
   z.object({ t: z.literal("set_concentration"), entity_id: Id, spell_id: z.string().nullable() }),
   z.object({ t: z.literal("set_entity_flag"), entity_id: Id, key: z.string(), value: Json }),
+  /**
+   * A feature's own small state bag: the boards are pried up, the chain is cut, the
+   * ledger has been read. Kept on the feature rather than in world flags so a room
+   * carries its own history and two winch houses cannot share one barred lock.
+   */
+  z.object({
+    t: z.literal("set_feature_state"),
+    location_id: Id,
+    feature_id: z.string(),
+    key: z.string(),
+    value: Json,
+  }),
   // Inspiration. Earned by playing your character, spent to reroll.
   z.object({ t: z.literal("grant_inspiration"), entity_id: Id, reason: z.string().default("") }),
   z.object({ t: z.literal("spend_inspiration"), entity_id: Id }),
