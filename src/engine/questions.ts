@@ -159,7 +159,38 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
       const facts = factsKnownToPc(s).filter(
         (f) => f.subjects.includes(about) || f.text.toLowerCase().includes(name),
       );
+      /**
+       * A question about HAVING something is answered by the pack, not by the ledger.
+       *
+       * "Did we get any gear from Cotter" came back "I cannot say" while the player was
+       * carrying his Accord steel. The item ledger is ground truth about possession; the
+       * fact ledger is only what somebody once said about it. Asked BEFORE the no-facts
+       * exit, because knowing nothing about a person is not the same as holding nothing
+       * of theirs.
+       */
+      const POSSESSION = /\b(gear|item|items|carry|carrying|have|had|got|get|gave|give|given|receive|received|take|took|weapon|weapons|armou?r|equipment|pack|kit)\b/;
+      const askedAboutHaving = !!asked && POSSESSION.test(asked.toLowerCase());
+      const heldLine = (): string => {
+        const held = itemsOwnedBy(s, player.id)
+          .map((i) => {
+            const nm = s.item_defs[i.def_id]?.name;
+            if (!nm) return null;
+            // Provenance, where the object itself remembers it.
+            const from = i.flags["from_entity_id"];
+            const who = typeof from === "string" ? s.entities[from]?.name : null;
+            return who ? `${nm} (from ${who})` : nm;
+          })
+          .filter((n): n is string => !!n);
+        return held.length ? `You are carrying: ${held.join(", ")}.` : "You are carrying nothing.";
+      };
+
       if (facts.length === 0) {
+        if (askedAboutHaving) {
+          return {
+            kind, lines: [heldLine()],
+            brief: "Answer from what they are carrying. If nothing in it came from whoever they asked about, say so plainly.",
+          };
+        }
         return { kind, lines: ["Nothing you can call to mind."], brief: "They know nothing about this. Say so; do not invent." };
       }
 
@@ -187,9 +218,12 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
       const keep = (relevant.length
         ? relevant
         : scored.slice().sort((a, b) => b.f.turn - a.f.turn)
-      ).slice(0, 3);
+      ).slice(0, 4);
 
       lines.push(...keep.map((x) => x.f.text));
+
+      if (askedAboutHaving) lines.push(heldLine());
+
       return {
         kind, lines,
         brief: "ANSWER the question in a sentence or two using only these. Do not list them, "
@@ -229,7 +263,10 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
         const def = s.item_defs[i.def_id];
         const eq = Object.values(player.equipped).includes(i.id) ? " (in hand)" : "";
         const q = def?.tags.includes("quest") ? " — this matters" : "";
-        lines.push(`${def?.name ?? i.def_id}${i.qty > 1 ? ` ×${i.qty}` : ""}${eq}${q}`);
+        const src = i.flags["from_entity_id"];
+        const who = typeof src === "string" ? s.entities[src]?.name : null;
+        const from = who ? ` (from ${who})` : "";
+        lines.push(`${def?.name ?? i.def_id}${i.qty > 1 ? ` ×${i.qty}` : ""}${eq}${from}${q}`);
       }
       return { kind, lines, brief: "" };
     }

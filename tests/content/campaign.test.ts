@@ -142,7 +142,7 @@ describe("the narrator whitelist", () => {
     const shape = (defId: string) => ({
       narration: "He puts it into your hands without a word.",
       facts: [], attitude_deltas: [], opinion_updates: [],
-      proposals: [{ t: "give_item", entity_id: s.meta.pc_id, item_def_id: defId, qty: 1 }],
+      proposals: [{ t: "give_item", entity_id: s.meta.pc_id, item_def_id: defId, qty: 1 , from_entity_id: null }],
       suggested_actions: [], scene_change: null, new_thread: null, settled_thread: null,
     }) as never;
 

@@ -537,6 +537,8 @@ export interface PackItemModel {
   slot: string | null;
   /** Things that matter to a quest are worth marking. */
   notable: boolean;
+  /** Who handed it over, if anybody did. */
+  from: string | null;
   actions: Array<{ label: string; action: unknown; detail: string }>;
 }
 
@@ -583,6 +585,11 @@ export function packModel(s: GameState, actorId?: string): PackItemModel[] {
       desc: def?.desc ?? "",
       slot,
       notable: def?.tags.includes("quest") ?? false,
+      // Where it came from, when the object remembers being handed over.
+      from: (() => {
+        const src = inst.flags["from_entity_id"];
+        return typeof src === "string" ? s.entities[src]?.name ?? null : null;
+      })(),
       actions,
     };
   });

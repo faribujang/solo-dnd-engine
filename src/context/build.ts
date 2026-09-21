@@ -476,7 +476,7 @@ function renderSystem(s: GameState): string {
     "  {\"t\":\"teach_fact\", \"entity_id\":\"npc_x\", \"fact_id\":\"fact_x\"}",
     "  {\"t\":\"move_entity\", \"entity_id\":\"npc_x\", \"location_id\":\"loc_x\"}",
     "  {\"t\":\"advance_time\", \"minutes\":30}",
-    "  {\"t\":\"give_item\", \"entity_id\":\"pc_main\", \"item_def_id\":\"item_def_x\", \"qty\":1}",
+    "  {\"t\":\"give_item\", \"entity_id\":\"pc_main\", \"item_def_id\":\"item_def_x\", \"qty\":1, \"from_entity_id\":\"npc_x\"}",
     "",
     "SET `new_thread` WHENEVER THE PLAYER SAYS THEY WILL DO SOMETHING. It is a top-level",
     "field, beside `facts`, not a proposal. \"I will find out what happened to him\", \"I will",

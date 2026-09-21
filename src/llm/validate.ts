@@ -509,7 +509,17 @@ export function validateNarration(
           break;
         }
         if (!ctx.presentEntityIds.includes(p.entity_id)) { reject("proposal", `${p.entity_id} is not here to receive anything`, p); break; }
-        effects.push({ t: "give_item", entity_id: p.entity_id, item_def_id: p.item_def_id, qty: Math.min(5, Math.max(1, p.qty ?? 1)) });
+        // Who handed it over, so the pack can answer where a thing came from. The
+        // narrator names them; an unresolvable name simply leaves the object anonymous,
+        // which is no worse than before and never a reason to drop the gift.
+        const giver = p.from_entity_id ? entityId(String(p.from_entity_id)) : null;
+        effects.push({
+          t: "give_item",
+          entity_id: p.entity_id,
+          item_def_id: p.item_def_id,
+          qty: Math.min(5, Math.max(1, p.qty ?? 1)),
+          from_entity_id: giver,
+        });
         gifts += 1;
         break;
       }

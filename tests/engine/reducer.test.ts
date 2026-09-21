@@ -17,7 +17,7 @@ describe("the reducer is pure", () => {
     const s = tinyWorld();
     const ev = rootEvent("effect", [
       { t: "set_flag", key: "x", value: 1 },
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 5 },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 5 , from_entity_id: null },
     ]);
     expect(stable(reduce(s, ev).state)).toBe(stable(reduce(s, ev).state));
   });
@@ -200,7 +200,7 @@ describe("once semantics", () => {
   it("fires a `once` trigger exactly one time across separate turns", () => {
     const t = {
       id: "t_first", on: "observe" as const, once: true,
-      then: [{ t: "give_item" as const, entity_id: "pc_a", item_def_id: "item_def_coin", qty: 1 }],
+      then: [{ t: "give_item" as const, entity_id: "pc_a", item_def_id: "item_def_coin", qty: 1 , from_entity_id: null }],
     };
     let s = tinyWorld({ triggers: [t] });
 
@@ -291,10 +291,10 @@ describe("items", () => {
   it("stacks stackable definitions rather than creating parallel instances", () => {
     const s = tinyWorld();
     const r1 = reduce(s, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 3 },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 3 , from_entity_id: null },
     ]));
     const r2 = reduce(r1.state, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 4 },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 4 , from_entity_id: null },
     ], { id: "evt_r0002", turn: 2 }));
 
     const coins = Object.values(r2.state.items).filter((i) => i.def_id === "item_def_coin");
@@ -305,7 +305,7 @@ describe("items", () => {
   it("removes an emptied instance from inventory and from the item table", () => {
     const s = tinyWorld();
     const given = reduce(s, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 2 },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 2 , from_entity_id: null },
     ])).state;
 
     const taken = reduce(given, rootEvent("item_transfer", [

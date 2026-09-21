@@ -83,8 +83,8 @@ describe("armour class is computed, not stored", () => {
   it("caps dex under medium armour and adds a shield", async () => {
     const s = await loadCampaign(CAMPAIGN);
     const out1 = reduce(s, rootEvent("effect", [
-      { t: "give_item", entity_id: "pc_main", item_def_id: "item_def_chain_shirt", qty: 1 },
-      { t: "give_item", entity_id: "pc_main", item_def_id: "item_def_shield", qty: 1 },
+      { t: "give_item", entity_id: "pc_main", item_def_id: "item_def_chain_shirt", qty: 1 , from_entity_id: null },
+      { t: "give_item", entity_id: "pc_main", item_def_id: "item_def_shield", qty: 1 , from_entity_id: null },
     ], { actor_id: "pc_main", location_id: "loc_flagon" })).state;
     const shirt = Object.values(out1.items).find((i) => i.def_id === "item_def_chain_shirt")!;
     const shield = Object.values(out1.items).find((i) => i.def_id === "item_def_shield")!;
