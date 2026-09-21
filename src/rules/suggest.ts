@@ -270,14 +270,45 @@ function mechanicOf(a: Affordance): string {
  * counts disagree the ranked labels win, since a chip that does the wrong thing is worse
  * than one that reads plainly.
  */
+/**
+ * Does this read as something the player DOES, or as the narrator talking?
+ *
+ * The narrator is asked to rephrase the ranked shortlist as instructions, and mostly it
+ * does. When it drifts it produces recaps — "Sibby said the smoke is coming off the
+ * green, not the fields. That means houses" — which is a sentence about the past sitting
+ * on a button that claims to be a next move. A player taps that and gets nothing they
+ * expected, which is worse than a plainer chip.
+ *
+ * So the phrasing is checked rather than trusted, and a line that fails falls back to the
+ * ranked label. Per chip, not all-or-nothing: one bad line should cost one chip.
+ */
+export function looksLikeAnAction(text: string): boolean {
+  const t = text.trim();
+  if (t.length < 3 || t.length > 72) return false;
+  // Two sentences is a paragraph, not a button.
+  if (/[.!?]\s+\S/.test(t)) return false;
+  // Reported speech and commentary, rather than an instruction.
+  if (/\b(said|says|told|tells|means|meant|seems|looks like|apparently|remember(s|ed)?)\b/i.test(t)) return false;
+  if (/["“”]/.test(t)) return false;
+  // "You have ...", "There is ..." — describing the world, not acting on it.
+  if (/^(you|there|it|that|this|he|she|they|the)\b/i.test(t)) return false;
+  return true;
+}
+
 export function chipsFrom(shortlist: readonly Suggestion[], phrased: readonly string[]): SuggestionOut[] {
-  const usePhrased = phrased.length === shortlist.length;
-  return shortlist.map((sg, i) => ({
-    text: (usePhrased ? phrased[i] : undefined) ?? sg.fallback,
-    action: sg.affordance.action,
-    mechanic: mechanicOf(sg.affordance),
-    detail: sg.affordance.detail ?? "",
-  }));
+  // Line i phrases entry i, and only if the model returned one line per entry. A model
+  // that returns a different count has not rephrased the shortlist, it has written its
+  // own list, and mapping those onto these actions would mislabel every button.
+  const aligned = phrased.length === shortlist.length;
+  return shortlist.map((sg, i) => {
+    const said = aligned ? phrased[i] : undefined;
+    return {
+      text: said && looksLikeAnAction(said) ? said : sg.fallback,
+      action: sg.affordance.action,
+      mechanic: mechanicOf(sg.affordance),
+      detail: sg.affordance.detail ?? "",
+    };
+  });
 }
 
 /** Everyone worth naming in a chip, for the client. */

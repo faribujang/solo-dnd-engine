@@ -214,17 +214,12 @@ footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 /*
- * On a phone you swipe the chips. With a mouse there is nothing to swipe, and a hidden
- * scrollbar meant the only way to read past the third suggestion was to select the text
- * and drag. So on a pointer device they WRAP instead: every suggestion is on screen at
- * once, up to three rows, and then the row itself scrolls vertically like anything else.
+ * One row, always, and no scrollbar. A phone swipes it; a mouse gets the wheel handler
+ * below. Wrapping it into a scrolling block was worse than the problem it solved: a
+ * chip strip that grows and shrinks vertically makes the composer jump under the
+ * player's hands. A chip cut off at the edge is its own affordance.
  */
-@media (pointer:fine){
-  .chips{flex-wrap:wrap;overflow-x:visible;overflow-y:auto;max-height:104px;scrollbar-width:thin}
-  .chips::-webkit-scrollbar{display:block;height:6px;width:6px}
-  .chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
-  .chip{max-width:min(46ch,100%)}
-}
+@media (pointer:fine){ .chip{max-width:min(46ch,42vw)} }
 .chip{
   flex:0 0 auto;font-size:13.5px;padding:7px 13px;border-radius:999px;
   border:1px solid var(--line);background:var(--raised);color:var(--ink);
@@ -658,7 +653,7 @@ function paintChips(list) {
  */
 $("chips").addEventListener("wheel", (e) => {
   const el = e.currentTarget;
-  if (el.scrollWidth <= el.clientWidth) return;   // wrapped; let the page have the wheel
+  if (el.scrollWidth <= el.clientWidth) return;   // nothing hidden; let the page scroll
   if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
   el.scrollLeft += e.deltaY;
   e.preventDefault();
