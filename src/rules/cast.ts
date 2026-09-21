@@ -119,12 +119,10 @@ export function canAdmit(s: GameState, tier: CastTier): { ok: true } | { ok: fal
 }
 
 /**
- * Has anybody touched this person?
+ * Is this person REFERENCED anywhere in the world's bookkeeping?
  *
- * An edge is the whole test for whether somebody is worth keeping: a relationship in
- * either direction, a fact that names them, a thread that involves them, a place in the
- * party. It is deliberately the same question the promotion rule asks, so an extra who
- * survives retirement and an extra who earns a budget slot are never two different sets.
+ * Conservative and cheap. Used to make sure forgetting somebody can never leave a
+ * dangling id behind, never to decide that somebody is important.
  */
 export function hasEdges(s: GameState, id: string): boolean {
   if (s.meta.party_ids.includes(id)) return true;
@@ -134,5 +132,59 @@ export function hasEdges(s: GameState, id: string): boolean {
   }
   if (s.facts.some((f) => f.subjects.includes(id) || f.known_by.includes(id))) return true;
   if (Object.values(s.threads).some((t) => t.subject_ids.includes(id) || t.from_entity_id === id)) return true;
+  return false;
+}
+
+/** A feeling this strong is a relationship, not a first impression. */
+export const MEMORABLE_DIM = 20;
+
+/** Talked to in this many DIFFERENT scenes: the same innkeeper twice is an innkeeper. */
+export const PROMOTION_TALKS = 2;
+
+/** A fact at this importance or above is plot, not texture. */
+export const MEMORABLE_FACT = 4;
+
+/**
+ * Should this face become part of the named cast?
+ *
+ * Deliberately STRICT, and much stricter than "has an edge". The first version promoted
+ * on any attitude change at all — and every conversation adjusts attitude, so one
+ * exchange of pleasantries with a guard spent a permanent slot out of 250. A cap you
+ * reach by talking to people is a cap that punishes playing the game.
+ *
+ * So contact is not enough. One of these has to be true:
+ *
+ *   · they are in the party, or they give or feature in a quest;
+ *   · an obligation names them — a thread is somebody the story owes something to;
+ *   · the player feels something about them worth the word: any dimension past
+ *     MEMORABLE_DIM in either direction, which a single polite conversation will not do;
+ *   · a fact of real importance names them;
+ *   · they have been spoken to across PROMOTION_TALKS separate SCENES, which is the
+ *     honest signal that this is somebody the player keeps coming back to.
+ *
+ * Everything else stays an extra: fully alive, fully talkable, and costing nothing.
+ */
+export function deservesPromotion(s: GameState, id: string): boolean {
+  if (s.meta.party_ids.includes(id)) return true;
+
+  for (const q of Object.values(s.quests)) {
+    if (q.giver_entity_id === id) return true;
+    if (q.leads.some((l) => l.source_entity_id === id)) return true;
+  }
+
+  if (Object.values(s.threads).some((t) => t.subject_ids.includes(id) || t.from_entity_id === id)) return true;
+
+  for (const key of [`${id}->${s.meta.pc_id}`, `${s.meta.pc_id}->${id}`]) {
+    const rel = s.relationships[key];
+    if (!rel) continue;
+    if (Object.values(rel.dims).some((v) => Math.abs(v) >= MEMORABLE_DIM)) return true;
+  }
+
+  if (s.facts.some((f) => f.subjects.includes(id) && f.importance >= MEMORABLE_FACT)) return true;
+
+  const e = s.entities[id];
+  const scenes = e?.flags["talked_in_scenes"];
+  if (Array.isArray(scenes) && scenes.length >= PROMOTION_TALKS) return true;
+
   return false;
 }

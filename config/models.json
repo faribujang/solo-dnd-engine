@@ -50,7 +50,9 @@
         "reasoning": {
           "effort": "low"
         }
-      }
+      },
+      "cache_system": false,
+      "_cache_system_note": "Measured 2026-09-20 against google/gemini-3.1-flash-lite via OpenRouter: the cache_control block form is ACCEPTED but reports cached_tokens 0 and identical cost on a repeated 1,989-token system prefix, so it buys nothing on this route today. The plumbing is in place (src/llm/openaiCompat.ts) - set this true when narrate moves to a model whose provider honours prefix caching, and watch cached_input_tokens in costs.jsonl to confirm it is real."
     },
     "gemini": {
       "model": "models/gemini-3.1-flash-lite"

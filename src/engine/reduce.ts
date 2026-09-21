@@ -1,6 +1,6 @@
 import type { GameEvent } from "../schema/event.js";
 import type { GameState } from "../schema/state.js";
-import { applyEffect, adjustAttitude, derived, newEffectCtx, type EffectCtx } from "./effects.js";
+import { applyEffect, adjustAttitude, castUpkeep, derived, newEffectCtx, type EffectCtx } from "./effects.js";
 import { propagateKnowledge } from "./knowledge.js";
 import { collectTriggers, expiredQuestIds, markFired } from "./triggers.js";
 import { reactionEffects, reactionsTo, signOf } from "../rules/approval.js";
@@ -132,6 +132,10 @@ export function reduce(state: GameState, root: GameEvent): ReduceResult {
     frontier = next;
     depth++;
   }
+
+  // 6. Who is cast and who was scenery. Runs last, because promotion asks how strong a
+  //    relationship is and the effects above are what just made it that strong.
+  castUpkeep(s);
 
   return { state: s, journal, fired, truncated };
 }

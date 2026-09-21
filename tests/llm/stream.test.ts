@@ -102,7 +102,7 @@ describe("the OpenAI-compatible adapter, streaming", () => {
     );
     expect(res.value.narration).toBe(payload.narration);
     expect(prose).toBe(payload.narration);
-    expect(res.usage).toEqual({ input_tokens: 11, output_tokens: 7 });
+    expect(res.usage).toMatchObject({ input_tokens: 11, output_tokens: 7 });
     expect(res.value.suggested_actions).toEqual(["Listen"]);
   });
 

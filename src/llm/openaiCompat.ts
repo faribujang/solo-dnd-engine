@@ -22,6 +22,8 @@ export interface OpenAICompatOptions {
   headers?: Record<string, string>;
   /** Extra top-level request fields this provider needs. See ModelConfig.providers. */
   extraBody?: Record<string, unknown>;
+  /** Mark the system prompt as cacheable. Off unless the provider is known to accept it. */
+  cacheSystem?: boolean;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }
@@ -122,8 +124,21 @@ export class OpenAICompatClient implements LLMClient {
           model: req.model ?? this.opts.model,
           temperature: req.temperature ?? 0.7,
           max_tokens: req.maxTokens ?? 1000,
+          /**
+           * The system prompt is the same ~2,200 tokens on every single turn, and it sits
+           * at the FRONT of the request, which is exactly the shape a prefix cache wants.
+           * Marking it lets a provider that supports caching charge a fraction for it and
+           * skip re-reading it; providers that do not understand the block form get the
+           * plain string instead, because a rejected request is worse than a full-price
+           * one. See `cache_system` in config/models.json.
+           */
           messages: [
-            { role: "system", content: req.system },
+            this.opts.cacheSystem
+              ? {
+                  role: "system",
+                  content: [{ type: "text", text: req.system, cache_control: { type: "ephemeral" } }],
+                }
+              : { role: "system", content: req.system },
             { role: "user", content: req.user },
           ],
           response_format: {
@@ -183,13 +198,32 @@ export class OpenAICompatClient implements LLMClient {
       usage: {
         input_tokens: usage?.prompt_tokens ?? estimateTokens(req.system + req.user),
         output_tokens: usage?.completion_tokens ?? estimateTokens(raw),
+        // Of the input tokens, how many the provider served from its cache.
+        cached_input_tokens: cachedTokensOf(usage),
       },
       ms: Date.now() - started,
     };
   }
 }
 
-type Usage = { prompt_tokens?: number; completion_tokens?: number };
+/**
+ * What came back about tokens.
+ *
+ * Providers disagree on where a cache hit is reported: OpenAI-compatible endpoints nest
+ * it under `prompt_tokens_details`, while Anthropic-style ones put it at the top level.
+ * Both are read, because a number we do not read is a saving we cannot prove.
+ */
+type Usage = {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  prompt_tokens_details?: { cached_tokens?: number };
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+};
+
+export function cachedTokensOf(u: Usage | undefined): number {
+  return u?.prompt_tokens_details?.cached_tokens ?? u?.cache_read_input_tokens ?? 0;
+}
 
 /** The `narration` field of a finished JSON object, for the non-streaming fallback. */
 function narrationOf(raw: string): string {
@@ -210,10 +244,11 @@ function narrationOf(raw: string): string {
 export function providersFromEnv(
   models: Record<string, { provider: string; model: string }>,
   env: NodeJS.ProcessEnv = process.env,
-  defaults: Record<string, { model: string; extra_body?: Record<string, unknown> }> = {},
+  defaults: Record<string, { model: string; extra_body?: Record<string, unknown>; cache_system?: boolean }> = {},
 ): Map<string, LLMClient> {
   const out = new Map<string, LLMClient>();
   const extraFor = (provider: string) => defaults[provider]?.extra_body ?? {};
+  const cacheFor = (provider: string) => defaults[provider]?.cache_system === true;
   // A provider's own default first — it is the only thing that is right when this provider
   // is standing in for another. Then the first role that names it. Then nothing, and the
   // router will skip it rather than send a request with no model.
@@ -229,6 +264,7 @@ export function providersFromEnv(
       apiKey: env["GEMINI_API_KEY"],
       model: modelFor("gemini"),
       extraBody: extraFor("gemini"),
+      cacheSystem: cacheFor("gemini"),
     }));
   }
 
@@ -239,6 +275,7 @@ export function providersFromEnv(
       apiKey: env["OPENROUTER_API_KEY"],
       model: modelFor("openrouter"),
       extraBody: extraFor("openrouter"),
+      cacheSystem: cacheFor("openrouter"),
       headers: { "x-title": "Solo D&D Engine" },
     }));
   }

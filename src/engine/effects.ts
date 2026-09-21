@@ -20,7 +20,7 @@ import { Clock, vowComplete } from "../schema/clock.js";
 import { Entity } from "../schema/entity.js";
 import { Relationship } from "../schema/relationship.js";
 import { Thread, THREAD_FADE_MINUTES } from "../schema/thread.js";
-import { EXTRA_FADE_MINUTES, canAdmit, hasEdges } from "../rules/cast.js";
+import { EXTRA_FADE_MINUTES, canAdmit, deservesPromotion } from "../rules/cast.js";
 import { Feature, Location } from "../schema/location.js";
 import type { ProposedFeature } from "../schema/dsl.js";
 
@@ -73,8 +73,42 @@ export function newEffectCtx(
 export function promoteToLocal(s: GameState, id: string): void {
   const e = s.entities[id];
   if (!e || e.tier !== "extra") return;
+  // The strict test, asked here rather than at each call site, so no future caller can
+  // promote somebody by accident. See rules/cast.ts for what actually counts.
+  if (!deservesPromotion(s, id)) return;
   if (!canAdmit(s, "local").ok) return;
   e.tier = "local";
+}
+
+/**
+ * Record that the player spoke to somebody, once per scene.
+ *
+ * Coming back to the same person in a later scene is the clearest signal there is that
+ * they are part of this story rather than part of the scenery, and it is the signal a
+ * single conversation cannot fake.
+ */
+function noteTalk(s: GameState, id: string): void {
+  const e = s.entities[id];
+  if (!e || e.tier !== "extra") return;
+  const seen = Array.isArray(e.flags["talked_in_scenes"]) ? [...(e.flags["talked_in_scenes"] as string[])] : [];
+  if (seen.includes(s.world.scene_id)) return;
+  seen.push(s.world.scene_id);
+  e.flags["talked_in_scenes"] = seen.slice(-4);
+}
+
+/**
+ * Sort out the faces, once, at the end of an event.
+ *
+ * Promotion cannot live inside the effects that create edges: `adjust_attitude` has to
+ * WRITE the row before anybody can ask how strong it is, and the first version asked
+ * first and so never saw anything. One pass, after the dust settles, is both correct and
+ * impossible for a future call site to forget.
+ */
+export function castUpkeep(s: GameState): void {
+  for (const id of Object.keys(s.entities).sort()) {
+    if (s.entities[id]?.tier === "extra") promoteToLocal(s, id);
+  }
+  retireExtras(s);
 }
 
 /**
@@ -95,7 +129,14 @@ function retireExtras(s: GameState): void {
     if (e.location_id === here) continue;
     const minted = e.flags["minted_world_minute"];
     if (typeof minted !== "number" || now - minted < EXTRA_FADE_MINUTES) continue;
-    if (hasEdges(s, id)) { promoteToLocal(s, id); continue; }
+    // Exactly one question, and the same one promotion asks: is this somebody the story
+    // is using? If so they become cast; if not, the scene forgets them, and their
+    // bookkeeping goes with them so no dangling row is left behind.
+    if (deservesPromotion(s, id)) { promoteToLocal(s, id); continue; }
+    for (const key of Object.keys(s.relationships)) {
+      const [a, b] = key.split("->");
+      if (a === id || b === id) delete s.relationships[key];
+    }
     delete s.entities[id];
   }
 }
@@ -407,8 +448,10 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "adjust_attitude": {
-      promoteToLocal(s, eff.subject);
-      promoteToLocal(s, eff.object);
+      // Talking to somebody is CONTACT, not importance. Note it and let the strict test
+      // decide: a polite word with a guard must not spend a slot out of 250.
+      if (eff.object === s.meta.pc_id) noteTalk(s, eff.subject);
+      if (eff.subject === s.meta.pc_id) noteTalk(s, eff.object);
       adjustAttitude(s, ctx, eff.subject, eff.object, eff.dims, eff.reason);
       break;
     }
@@ -586,8 +629,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "open_thread": {
-      for (const sub of eff.subject_ids) promoteToLocal(s, sub);
-      if (eff.from_entity_id) promoteToLocal(s, eff.from_entity_id);
       const id = nextId(s, "thr");
       s.threads[id] = Thread.parse({
         id,
@@ -614,7 +655,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "add_fact": {
-      for (const sub of eff.subjects) promoteToLocal(s, sub);
       const id = nextId(s, "fact");
       /**
        * `known_by` is taken LITERALLY, empty included.
@@ -709,7 +749,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       }
       expireConditions(s);
       relocateOnSchedule(s);
-  retireExtras(s);
       // A night, or a day on the road. Long enough that what comes next is a new scene.
       emitted.push(...breakScene(s, ctx, { kind: eff.minutes >= 480 ? "rested" : "time_passed", minutes: eff.minutes }));
       break;
@@ -1002,7 +1041,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     }
 
     case "join_party": {
-      promoteToLocal(s, eff.entity_id);
       const e = s.entities[eff.entity_id];
       if (!e || !e.alive) break;
       if (s.meta.party_ids.includes(e.id)) break;

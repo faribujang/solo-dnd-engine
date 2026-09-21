@@ -618,6 +618,7 @@ class RecordingLLM implements LLMClient {
     this.rows.push({
       turn: this.turn, role: req.role, provider: res.provider, model: res.model,
       input_tokens: res.usage.input_tokens, output_tokens: res.usage.output_tokens, ms: Math.round(res.ms),
+      ...(res.usage.cached_input_tokens ? { cached_input_tokens: res.usage.cached_input_tokens } : {}),
     });
   }
 }

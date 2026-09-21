@@ -40,7 +40,7 @@ export interface LLMResponse<T> {
   raw: string;
   provider: string;
   model: string;
-  usage: { input_tokens: number; output_tokens: number };
+  usage: { input_tokens: number; output_tokens: number; cached_input_tokens?: number };
   /** Milliseconds of wall time, so the UI can show why a turn felt slow. */
   ms: number;
 }

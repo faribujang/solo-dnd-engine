@@ -170,6 +170,14 @@ export const CostLedgerEntry = z.object({
   provider: z.string(),
   model: z.string(),
   input_tokens: z.number().int(),
+  /**
+   * How many of those input tokens the provider served from its cache.
+   *
+   * The system prompt is the same ~2,200 tokens on every turn, so this is the number that
+   * says whether marking it cacheable actually bought anything. Optional, because not
+   * every provider reports it and a zero we invented would be a lie.
+   */
+  cached_input_tokens: z.number().int().optional(),
   output_tokens: z.number().int(),
   ms: z.number().int(),
 });
