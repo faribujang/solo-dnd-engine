@@ -231,6 +231,7 @@ export class MockLLM implements LLMClient {
         text: `${locName} carries a smell of cold iron that does not belong to the river.`,
         kind: "world",
         subjects: [],
+        quest_id: null,
         importance: 2,
         secret: false,
       });

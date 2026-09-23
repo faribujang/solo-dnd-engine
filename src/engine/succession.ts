@@ -114,6 +114,7 @@ export function planSuccession(
         importance: 4,
         secret: false,
         known_by: [],   // nobody knows it yet; the next party has to find it
+        quest_ids: [],
       });
       effects.push({ t: "promote_seed", arc_id: arc.id, seed_id: seed.id });
       summary.push(`Unfinished: ${seed.text}`);

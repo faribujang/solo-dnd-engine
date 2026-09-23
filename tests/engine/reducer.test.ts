@@ -17,7 +17,7 @@ describe("the reducer is pure", () => {
     const s = tinyWorld();
     const ev = rootEvent("effect", [
       { t: "set_flag", key: "x", value: 1 },
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 5 , from_entity_id: null },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 5  },
     ]);
     expect(stable(reduce(s, ev).state)).toBe(stable(reduce(s, ev).state));
   });
@@ -168,7 +168,7 @@ describe("the cycle guard", () => {
   it("treats a redundant status change as a no-op rather than a new cascade", () => {
     const s = tinyWorld();
     s.quests["q_x"] = {
-      id: "q_x", title: "X", giver_entity_id: null, status: "active", updated_turn: 0,
+      id: "q_x", title: "X", giver_entity_id: null, status: "active", updated_turn: 0, entries: [],
       visibility: "known", summary: "", dm_notes: "", current_step_id: null, steps: [],
       leads: [], rewards: { xp: 0, gold: 0, item_def_ids: [], relationship_deltas: [] },
       deadline_world_minute: null, failure_triggers: [], requires: [], blocks: [],
@@ -200,7 +200,7 @@ describe("once semantics", () => {
   it("fires a `once` trigger exactly one time across separate turns", () => {
     const t = {
       id: "t_first", on: "observe" as const, once: true,
-      then: [{ t: "give_item" as const, entity_id: "pc_a", item_def_id: "item_def_coin", qty: 1 , from_entity_id: null }],
+      then: [{ t: "give_item" as const, entity_id: "pc_a", item_def_id: "item_def_coin", qty: 1  }],
     };
     let s = tinyWorld({ triggers: [t] });
 
@@ -230,7 +230,7 @@ describe("the clock", () => {
   it("expires a quest whose deadline has passed", () => {
     const s = tinyWorld();
     s.quests["q_timed"] = {
-      id: "q_timed", title: "Timed", giver_entity_id: null, status: "active", updated_turn: 0,
+      id: "q_timed", title: "Timed", giver_entity_id: null, status: "active", updated_turn: 0, entries: [],
       visibility: "known", summary: "", dm_notes: "", current_step_id: null, steps: [],
       leads: [], rewards: { xp: 0, gold: 0, item_def_ids: [], relationship_deltas: [] },
       deadline_world_minute: 700, failure_triggers: [], requires: [], blocks: [],
@@ -291,10 +291,10 @@ describe("items", () => {
   it("stacks stackable definitions rather than creating parallel instances", () => {
     const s = tinyWorld();
     const r1 = reduce(s, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 3 , from_entity_id: null },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 3  },
     ]));
     const r2 = reduce(r1.state, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 4 , from_entity_id: null },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 4  },
     ], { id: "evt_r0002", turn: 2 }));
 
     const coins = Object.values(r2.state.items).filter((i) => i.def_id === "item_def_coin");
@@ -305,7 +305,7 @@ describe("items", () => {
   it("removes an emptied instance from inventory and from the item table", () => {
     const s = tinyWorld();
     const given = reduce(s, rootEvent("item_transfer", [
-      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 2 , from_entity_id: null },
+      { t: "give_item", entity_id: "pc_a", item_def_id: "item_def_coin", qty: 2  },
     ])).state;
 
     const taken = reduce(given, rootEvent("item_transfer", [

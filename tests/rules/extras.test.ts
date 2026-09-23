@@ -54,7 +54,7 @@ describe("faces the narrator invents", () => {
     let s = withFace();
     const id = faceIn(s).id;
     s = reduce(s, rootEvent("effect", [
-      { t: "add_fact", text: "The clerk hums while stamping.", subjects: [id], importance: 2, secret: false, known_by: [s.meta.pc_id] },
+      { t: "add_fact", text: "The clerk hums while stamping.", subjects: [id], importance: 2, secret: false, known_by: [s.meta.pc_id], quest_ids: [] },
     ])).state;
     expect(s.entities[id]!.tier).toBe("extra");
   });
@@ -90,7 +90,7 @@ describe("faces the narrator invents", () => {
     let s = withFace();
     const id = faceIn(s).id;
     s = reduce(s, rootEvent("effect", [
-      { t: "add_fact", text: "The clerk logs every name through the gate for the Syndicate.", subjects: [id], importance: 4, secret: false, known_by: [s.meta.pc_id] },
+      { t: "add_fact", text: "The clerk logs every name through the gate for the Syndicate.", subjects: [id], importance: 4, secret: false, known_by: [s.meta.pc_id], quest_ids: [] },
     ])).state;
     expect(s.entities[id]!.tier).toBe("local");
   });

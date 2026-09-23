@@ -60,6 +60,18 @@ export const ItemDef = z.object({
   dex_cap: z.number().int().nullable().default(null),    // medium armor caps dex mod at 2
   properties: z.array(z.string()).default([]),           // "versatile", "finesse", "two_handed"
   tags: z.array(z.string()).default([]),
+  /**
+   * The quest this object belongs to, if it belongs to one.
+   *
+   * Only for things that MATTER: the sealed docket, the ledger you were sent for, the
+   * sister's toggle. Ordinary gear has none, and should not — a journal that annotates
+   * your whetstone with a quest is a journal nobody reads twice.
+   *
+   * It is what lets the world keep track of a quest object after it leaves your hands:
+   * the item ledger always knew who owned what, and nothing ever asked it on a quest's
+   * behalf.
+   */
+  quest_id: Id.nullable().default(null),
   stackable: z.boolean().default(false),
   grants: z.array(ItemGrant).default([]),
   /**

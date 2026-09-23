@@ -86,19 +86,7 @@ export type ProposedFeature = z.infer<typeof ProposedFeature>;
 export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("set_flag"), key: z.string(), value: Json }),
   // give_item MINTS a new object from a definition — a reward, a spawn, loot appearing.
-  z.object({
-    t: z.literal("give_item"), entity_id: Id, item_def_id: Id,
-    qty: z.number().int().positive().default(1),
-    /**
-     * Who it came from, when somebody handed it over.
-     *
-     * "Did we get any gear from Cotter" was answered "I cannot say" while the player
-     * was carrying his Accord steel: the fact ledger knew Cotter OWNED such things and
-     * nothing anywhere knew the player had been given them. Provenance is a property
-     * of the object, so it lives on the object.
-     */
-    from_entity_id: Id.nullable().default(null),
-  }),
+  z.object({ t: z.literal("give_item"), entity_id: Id, item_def_id: Id, qty: z.number().int().positive().default(1) }),
   z.object({ t: z.literal("remove_item"), entity_id: Id, item_def_id: Id, qty: z.number().int().positive().default(1) }),
   // move_item MOVES an object that already exists. Picking something up must use this:
   // minting a copy would leave the original where it lay and duplicate the world's things.
@@ -114,7 +102,7 @@ export const Effect = z.discriminatedUnion("t", [
   z.object({ t: z.literal("add_lead"), quest_id: Id, text: z.string(), points_to_location_id: Id.nullable().default(null), source_entity_id: Id.nullable().default(null) }),
   z.object({ t: z.literal("reveal_location"), location_id: Id }),
   z.object({ t: z.literal("reveal_exit"), location_id: Id, dir: z.string() }),
-  z.object({ t: z.literal("add_fact"), text: z.string(), subjects: z.array(Id).default([]), importance: z.number().int().min(1).max(5).default(3), secret: z.boolean().default(false), known_by: z.array(Id).default([]) }),
+  z.object({ t: z.literal("add_fact"), text: z.string(), subjects: z.array(Id).default([]), importance: z.number().int().min(1).max(5).default(3), secret: z.boolean().default(false), known_by: z.array(Id).default([]), quest_ids: z.array(Id).default([]) }),
   z.object({ t: z.literal("teach_fact"), entity_id: Id, fact_id: Id }),
   /**
    * A named local, invented at the table and then real.

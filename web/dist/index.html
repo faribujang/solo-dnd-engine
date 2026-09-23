@@ -214,6 +214,19 @@ footer{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 /* Buttons that act on one object in the pack. Small, quiet, and never wider than the row. */
+/* A quest, openable. The title row is the control; everything under it is the account. */
+.qhead{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+  background:none;border:0;padding:9px 0;color:var(--ink);font:inherit;
+}
+.qhead .caret{color:var(--dim);font-size:11px;width:10px;flex:0 0 auto}
+.qhead .qt{font-family:var(--serif);font-size:16px;letter-spacing:.2px}
+.qhead .qnew{color:var(--ember);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.qbody{padding:0 0 10px 18px;border-left:1px solid var(--line);margin-left:4px}
+.qent{position:relative;padding:5px 0 5px 14px;font-size:14px;line-height:1.5;color:var(--dim)}
+.qent:before{content:"";position:absolute;left:0;top:13px;width:6px;height:1px;background:var(--line)}
+.qent.now{color:var(--ink)}
+.qent.fresh{color:var(--ember)}
 .itemacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .ibtn{
   font-size:12.5px;padding:5px 10px;border-radius:7px;cursor:pointer;
@@ -644,6 +657,8 @@ function paintFight() {
 // Chips carry the action they were ranked from, so tapping one and sending it unedited
 // does exactly what the chip advertised instead of being re-guessed from its wording.
 let CHIP_ACTIONS = new Map();
+/** Quests the player has opened. Survives a repaint; resets on reload, like a journal. */
+const QUEST_OPEN = new Set();
 
 function paintChips(list) {
   CHIP_ACTIONS = new Map();
@@ -1464,28 +1479,49 @@ VIEWS.journal = (() => {
 
   if (!open.length) h += '<div class="note">Nothing pressing.</div>';
   for (const q of open) {
-    h += "<h3>" + esc(q.title) + "</h3>";
-    if (q.summary) h += '<div class="note" style="font-family:var(--serif);font-size:14.5px;line-height:1.5">' + esc(q.summary) + "</div>";
-    if (q.objective) h += '<div class="note" style="margin-top:6px">→ ' + esc(q.objective) + "</div>";
-    for (const c of q.clocks || []) {
-      h += '<div class="note" style="margin-top:4px">' + esc(c.name) + " — "
-        + "●".repeat(c.filled) + "○".repeat(Math.max(0, c.segments - c.filled)) + "</div>";
-    }
     /*
-     * WHAT YOU COULD DO ABOUT IT, from where you are standing right now.
+     * A quest is a running account, not a title and a status.
      *
-     * The journal used to list the quest and its leads and stop there, which reads as a
-     * record of the past rather than a way into the next scene. These are derived from
-     * live state every turn: a place you can reach says how far away it is, a person
-     * says where you last knew them to be.
+     * It used to print the summary, the current objective and every lead it had ever
+     * collected, flat, which says what you are doing and nothing about how you got here.
+     * Entries arrive in the order things happened -- objectives, what you were told,
+     * what you found out -- so reading down reconstructs the story. Collapsed by default
+     * past the first, because four open quests of history is a wall.
      */
+    const isOpen = QUEST_OPEN.has(q.id) || open.length === 1;
+    const moved = S.lastTurn != null && q.updated_turn >= S.lastTurn;
+    h += '<button class="qhead" data-quest="' + esc(q.id) + '">'
+      + '<span class="caret">' + (isOpen ? "\u25be" : "\u25b8") + "</span>"
+      + '<span class="qt">' + esc(q.title) + "</span>"
+      + (moved ? '<span class="qnew">updated</span>' : "")
+      + "</button>";
+    if (!isOpen) continue;
+
+    h += '<div class="qbody">';
+    if (q.summary) h += '<div class="note serif" style="margin:0 0 6px">' + esc(q.summary) + "</div>";
+
+    const entries = q.entries || [];
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      // The last step entry is the live objective; anything from this turn is new.
+      const isNow = e.kind === "step" && !entries.slice(i + 1).some((x) => x.kind === "step");
+      const fresh = S.lastTurn != null && e.turn >= S.lastTurn;
+      h += '<div class="qent' + (isNow ? " now" : "") + (fresh ? " fresh" : "") + '">' + esc(e.text) + "</div>";
+    }
+    if (!entries.length && q.objective) h += '<div class="qent now">' + esc(q.objective) + "</div>";
+
+    for (const c of q.clocks || []) {
+      h += '<div class="note" style="margin-top:6px">' + esc(c.name) + " \u2014 "
+        + "\u25cf".repeat(c.filled) + "\u25cb".repeat(Math.max(0, c.segments - c.filled)) + "</div>";
+    }
     if ((q.next || []).length) {
       h += '<div class="note" style="margin-top:8px">What you could do now</div>';
       for (const n of q.next) {
         h += '<button class="lead" data-say="' + esc(n.text) + '">' + esc(n.text)
-          + (n.detail ? ' <span class="note">· ' + esc(n.detail) + "</span>" : "") + "</button>";
+          + (n.detail ? ' <span class="note">\u00b7 ' + esc(n.detail) + "</span>" : "") + "</button>";
       }
     }
+    h += "</div>";
   }
 
   const c = s.conversation;
@@ -1553,7 +1589,8 @@ function journalPack(s) {
   const row = (i) => {
     let r = '<div class="li"><div class="t">' + esc(i.name) + (i.qty > 1 ? " ×" + i.qty : "")
       + (i.slot ? ' <span class="note">· ' + esc(i.slot.replace(/_/g, " ")) + "</span>" : "")
-      + (i.notable ? ' <span class="note" style="color:var(--brass)">· this matters</span>' : "")
+      + (i.quest ? ' <span class="note" style="color:var(--brass)" title="' + esc(i.quest) + '">· ' + esc(i.quest) + "</span>"
+         : i.notable ? ' <span class="note" style="color:var(--brass)">· this matters</span>' : "")
       + "</div>";
     if (i.desc) r += '<div class="d serif">' + esc(i.desc) + "</div>";
     if ((i.actions || []).length) {
@@ -1642,6 +1679,15 @@ document.addEventListener("click", (e) => {
       closePane();
       submit(act.label, act.action);
     }
+    return;
+  }
+
+  const qb = e.target.closest && e.target.closest("[data-quest]");
+  if (qb) {
+    const id = qb.dataset.quest;
+    if (QUEST_OPEN.has(id)) QUEST_OPEN.delete(id); else QUEST_OPEN.add(id);
+    const pane = document.querySelector(".sheetpane");
+    if (pane) pane.innerHTML = sheetChrome(VIEWS.journal());
     return;
   }
 

@@ -20,12 +20,12 @@ function armed(): GameState {
   s.item_defs["item_def_axe"] = {
     id: "item_def_axe", name: "Woodsman's Axe", kind: "weapon", desc: "", weight: 4, value_cp: 100,
     gift_ok: true, damage: { dice: "1d8", type: "slashing", versatile: null }, ac_base: null, ac_bonus: 0,
-    dex_cap: null, properties: [], tags: [], stackable: false, grants: [], on_use: null,
+    dex_cap: null, properties: [], tags: [], quest_id: null, stackable: false, grants: [], on_use: null,
   };
   s.item_defs["item_def_draught"] = {
     id: "item_def_draught", name: "Healing Draught", kind: "consumable", desc: "", weight: 0.5,
     value_cp: 5000, gift_ok: true, damage: null, ac_base: null, ac_bonus: 0, dex_cap: null,
-    properties: [], tags: [], stackable: false, grants: [],
+    properties: [], tags: [], quest_id: null, stackable: false, grants: [],
     on_use: { heal: "2d4+2", minutes: 1, consumed: true, text: "Iron filings and mint." },
   };
   s.items["itm_axe"] = { id: "itm_axe", def_id: "item_def_axe", owner: { t: "entity", id: "pc_a" }, qty: 1 } as never;

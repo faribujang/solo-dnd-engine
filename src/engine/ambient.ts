@@ -229,8 +229,7 @@ export function worldTick(s: GameState, minutes: number, rng: Rng): TickResult {
       subjects: b.subjects,
       importance: b.importance,
       secret: false,
-      known_by: [s.meta.pc_id],
-    });
+      known_by: [s.meta.pc_id], quest_ids: [] });
   }
 
   return { effects, beats };

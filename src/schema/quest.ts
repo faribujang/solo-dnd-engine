@@ -47,6 +47,24 @@ export const Quest = z.object({
    * be wrong the moment a lead arrives without a fact attached.
    */
   updated_turn: z.number().int().nonnegative().default(0),
+  /**
+   * The running account of this quest, oldest first.
+   *
+   * A quest used to show its title, its current objective, and a flat list of every lead
+   * it had ever collected — which says what you are doing and nothing about how you got
+   * here or what you just learned. This is the shape a tabletop journal actually has, and
+   * the shape BG3 uses: a line added each time something happened, so reading down it
+   * reconstructs the story.
+   *
+   * Written by the reducer wherever a quest genuinely moves, never by the narrator
+   * directly, so an entry always corresponds to something the world did.
+   */
+  entries: z.array(z.object({
+    turn: z.number().int().nonnegative(),
+    text: z.string(),
+    /** step: the objective changed. lead: somewhere to go. learned: you found something out. */
+    kind: z.enum(["step", "lead", "learned", "status"]).default("learned"),
+  })).default([]),
   status: QuestStatus.default("unknown"),
   visibility: QuestVisibility.default("hidden"),
   summary: z.string(),                       // player-facing, shown in the quest log

@@ -212,6 +212,14 @@ export function validateNarration(
       importance: Math.min(4, f.importance) as 1 | 2 | 3 | 4,   // only authors get importance 5
       secret: f.secret,
       known_by: [s.meta.pc_id],
+      /**
+       * Which quest this told the player something about.
+       *
+       * Checked against the quests that are actually RUNNING, because an entry in the
+       * journal of a quest nobody has taken on is worse than no entry: it answers a
+       * question the player never asked and puts the story out of order.
+       */
+      quest_ids: f.quest_id && s.quests[f.quest_id]?.status === "active" ? [f.quest_id] : [],
     });
   }
   if (n.facts.length > MAX_FACTS_PER_TURN) {
@@ -509,16 +517,11 @@ export function validateNarration(
           break;
         }
         if (!ctx.presentEntityIds.includes(p.entity_id)) { reject("proposal", `${p.entity_id} is not here to receive anything`, p); break; }
-        // Who handed it over, so the pack can answer where a thing came from. The
-        // narrator names them; an unresolvable name simply leaves the object anonymous,
-        // which is no worse than before and never a reason to drop the gift.
-        const giver = p.from_entity_id ? entityId(String(p.from_entity_id)) : null;
         effects.push({
           t: "give_item",
           entity_id: p.entity_id,
           item_def_id: p.item_def_id,
           qty: Math.min(5, Math.max(1, p.qty ?? 1)),
-          from_entity_id: giver,
         });
         gifts += 1;
         break;

@@ -702,6 +702,7 @@ export function resolve(s: GameState, action: Action, opts?: { nonce?: string; a
           t: "add_fact",
           text: `${target.name} let something slip: ${press.lead}`,
           subjects: [target.id],
+          quest_ids: [],
           importance: 4,
           secret: false,
           known_by: [s.meta.pc_id],

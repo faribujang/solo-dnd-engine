@@ -172,14 +172,7 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
       const askedAboutHaving = !!asked && POSSESSION.test(asked.toLowerCase());
       const heldLine = (): string => {
         const held = itemsOwnedBy(s, player.id)
-          .map((i) => {
-            const nm = s.item_defs[i.def_id]?.name;
-            if (!nm) return null;
-            // Provenance, where the object itself remembers it.
-            const from = i.flags["from_entity_id"];
-            const who = typeof from === "string" ? s.entities[from]?.name : null;
-            return who ? `${nm} (from ${who})` : nm;
-          })
+          .map((i) => s.item_defs[i.def_id]?.name ?? null)
           .filter((n): n is string => !!n);
         return held.length ? `You are carrying: ${held.join(", ")}.` : "You are carrying nothing.";
       };
@@ -262,11 +255,11 @@ export function answer(s: GameState, kind: QuestionKind, subject?: string, asked
       for (const i of held) {
         const def = s.item_defs[i.def_id];
         const eq = Object.values(player.equipped).includes(i.id) ? " (in hand)" : "";
-        const q = def?.tags.includes("quest") ? " — this matters" : "";
-        const src = i.flags["from_entity_id"];
-        const who = typeof src === "string" ? s.entities[src]?.name : null;
-        const from = who ? ` (from ${who})` : "";
-        lines.push(`${def?.name ?? i.def_id}${i.qty > 1 ? ` ×${i.qty}` : ""}${eq}${from}${q}`);
+        // What it is FOR, where it is for something. Not who handed it over: that is
+        // bookkeeping nobody asked to read.
+        const quest = def?.quest_id ? s.quests[def.quest_id]?.title : null;
+        const q = quest ? ` — ${quest}` : def?.tags.includes("quest") ? " — this matters" : "";
+        lines.push(`${def?.name ?? i.def_id}${i.qty > 1 ? ` ×${i.qty}` : ""}${eq}${q}`);
       }
       return { kind, lines, brief: "" };
     }

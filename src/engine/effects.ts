@@ -172,6 +172,30 @@ function featureFrom(s: GameState, p: ProposedFeature): Feature {
   });
 }
 
+/**
+ * Add a line to a quest's running account.
+ *
+ * The journal reads as a story because entries arrive in the order things happened, from
+ * the places where a quest genuinely MOVES. Deduped on the text, because an idempotent
+ * effect replayed or re-fired should not write the same line twice, and capped, because
+ * a campaign-long quest should not carry a hundred lines nobody scrolls to.
+ */
+const MAX_QUEST_ENTRIES = 40;
+
+function noteQuest(
+  s: GameState,
+  questId: string,
+  kind: "step" | "lead" | "learned" | "status",
+  text: string,
+): void {
+  const q = s.quests[questId];
+  if (!q || !text.trim()) return;
+  q.updated_turn = s.meta.turn;
+  if (q.entries.some((e) => e.text === text)) return;
+  q.entries.push({ turn: s.meta.turn, text, kind });
+  if (q.entries.length > MAX_QUEST_ENTRIES) q.entries.splice(0, q.entries.length - MAX_QUEST_ENTRIES);
+}
+
 export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEvent[] {
   const emitted: GameEvent[] = [];
 
@@ -195,9 +219,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const id = nextId(s, "item_inst");
       s.items[id] = {
         id, def_id: def.id, owner: { t: "entity", id: e.id }, qty: eff.qty,
-        charges: null, attunement: null, nickname: null, condition: "fine",
-        // Where it came from, if anybody handed it over. See the give_item effect.
-        flags: eff.from_entity_id ? { from_entity_id: eff.from_entity_id } : {},
+        charges: null, attunement: null, nickname: null, condition: "fine", flags: {},
       };
       e.inventory.push(id);
       break;
@@ -228,7 +250,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
     case "move_item": {
       const inst = s.items[eff.instance_id];
       if (!inst) break;
-      const wasOwner = inst.owner.t === "entity" ? inst.owner.id : null;
 
       // Detach from wherever it currently is. `owner` is the single source of truth, but
       // an entity's inventory list and a room's item list both mirror it, so both are
@@ -250,9 +271,6 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       if (eff.to.t === "entity") {
         const to = s.entities[eff.to.id];
         if (!to) break;
-        // Passing an object hand to hand is provenance too, and it is how most gear
-        // actually changes owner. `wasOwner` was captured before the detach above.
-        if (wasOwner && wasOwner !== to.id) inst.flags["from_entity_id"] = wasOwner;
         inst.owner = { t: "entity", id: to.id };
         if (!to.inventory.includes(inst.id)) to.inventory.push(inst.id);
       } else if (eff.to.t === "location") {
@@ -483,13 +501,21 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const q = s.quests[eff.quest_id];
       if (!q || q.status === eff.status) break;
       q.status = eff.status;
+      noteQuest(s, q.id, "status", {
+        active: "Taken on.",
+        complete: "Done.",
+        failed: "Failed.",
+        expired: "Too late for this now.",
+        available: "There is something in this for you.",
+        unknown: "",
+      }[eff.status] ?? "");
       if (eff.status === "active" && q.visibility === "hidden") q.visibility = "known";
       if (eff.status === "complete") {
         for (const d of q.rewards.relationship_deltas) {
           adjustAttitude(s, ctx, d.subject, d.object, d.dims, `Completed: ${q.title}`);
         }
         for (const defId of q.rewards.item_def_ids) {
-          emitted.push(...applyEffect(s, { t: "give_item", entity_id: s.meta.pc_id, item_def_id: defId, qty: 1 , from_entity_id: null }, ctx));
+          emitted.push(...applyEffect(s, { t: "give_item", entity_id: s.meta.pc_id, item_def_id: defId, qty: 1 }, ctx));
         }
       }
       emitted.push(derived(s, ctx, {
@@ -506,6 +532,9 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const prev = q.steps.find((st) => st.id === q.current_step_id);
       if (prev && prev.status === "active") prev.status = "complete";
       const next = q.steps.find((st) => st.id === eff.step_id);
+      // The objective that just arrived is the most useful line in the journal: it is
+      // what the game wants from the player NEXT.
+      if (next?.desc) noteQuest(s, q.id, "step", next.desc);
       if (next) { next.status = "active"; q.current_step_id = next.id; }
       break;
     }
@@ -515,6 +544,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       const q = s.quests[eff.quest_id];
       if (!q) break;
       if (q.leads.some((l) => l.text === eff.text)) break;   // idempotent
+      noteQuest(s, q.id, "lead", eff.text);
       q.leads.push({
         text: eff.text,
         learned_turn: s.meta.turn,
@@ -682,7 +712,7 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
         kind: "world",
         subjects: [...eff.subjects],
         location_id: ctx.root.location_id,
-        quest_ids: [],
+        quest_ids: [...eff.quest_ids],
         importance: eff.importance,
         secret: eff.secret,
         known_by: knownBy,
@@ -692,6 +722,11 @@ export function applyEffect(s: GameState, eff: Effect, ctx: EffectCtx): GameEven
       for (const holder of knownBy) {
         const e = s.entities[holder];
         if (e && !e.known_fact_ids.includes(id)) e.known_fact_ids.push(id);
+      }
+      // Something the PLAYER now knows, about a quest they are running: that is a line in
+      // the journal. A fact the player has not learned is not, however true it is.
+      if (knownBy.includes(s.meta.pc_id)) {
+        for (const qid of eff.quest_ids) noteQuest(s, qid, "learned", eff.text);
       }
       break;
     }

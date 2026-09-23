@@ -329,7 +329,8 @@
       ],
       "stackable": false,
       "grants": [],
-      "gift_ok": true
+      "gift_ok": true,
+      "quest_id": "q_what_cotter_did"
     },
     "item_def_vosk_letter": {
       "id": "item_def_vosk_letter",
@@ -349,7 +350,8 @@
       ],
       "stackable": false,
       "grants": [],
-      "gift_ok": false
+      "gift_ok": false,
+      "quest_id": "q_the_ledger"
     },
     "item_def_buckler": {
       "id": "item_def_buckler",

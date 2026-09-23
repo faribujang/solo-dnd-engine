@@ -70,6 +70,13 @@ export const ProposedFact = z.object({
   subjects: z.array(z.string()).default([]),      // names or ids; code resolves and drops misses
   importance: z.number().int().min(1).max(5).default(3),
   secret: z.boolean().default(false),
+  /**
+   * Which quest this tells the player something about, if it tells them anything.
+   *
+   * It is what puts "you found something out" into the quest journal instead of leaving
+   * it in the fact ledger where only the prompt reads it.
+   */
+  quest_id: z.string().nullable().default(null),
 });
 
 export const ProposedAttitude = z.object({
@@ -105,7 +112,7 @@ export const NarratorProposal = z.discriminatedUnion("t", [
   z.object({ t: z.literal("introduce_local"), name: z.string(), descriptor: z.string(), pronouns: z.string().default("they/them"), location_id: z.string(), voice: z.string().default(""), trait: z.string().default("") }),
   z.object({ t: z.literal("introduce_place"), name: z.string(), short_desc: z.string(), dir: z.string(), back: z.string().default("back"), light: z.enum(["bright", "dim", "dark"]).default("bright"), features: z.array(z.object({ name: z.string(), desc: z.string(), aliases: z.array(z.string()).default([]), verbs: z.array(z.object({ verb: z.string(), label: z.string().default(""), skill: z.string().nullable().default(null), band: z.string().default("medium") })).default([]) })).default([]) }),
   z.object({ t: z.literal("introduce_feature"), location_id: z.string(), feature: z.object({ name: z.string(), desc: z.string(), aliases: z.array(z.string()).default([]), verbs: z.array(z.object({ verb: z.string(), label: z.string().default(""), skill: z.string().nullable().default(null), band: z.string().default("medium") })).default([]) }) }),
-  z.object({ t: z.literal("give_item"), entity_id: z.string(), item_def_id: z.string(), qty: z.number().int().positive().default(1), from_entity_id: z.string().nullable().default(null) }),
+  z.object({ t: z.literal("give_item"), entity_id: z.string(), item_def_id: z.string(), qty: z.number().int().positive().default(1) }),
   z.object({ t: z.literal("open_thread"), text: z.string(), subject_ids: z.array(z.string()).default([]), location_id: z.string().nullable().default(null), from_entity_id: z.string().nullable().default(null) }),
   z.object({ t: z.literal("resolve_thread"), thread_id: z.string(), as: z.enum(["kept", "broken", "faded"]), outcome: z.string().default("") }),
 ]);

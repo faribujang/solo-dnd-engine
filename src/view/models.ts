@@ -417,6 +417,11 @@ export interface QuestModel {
   next: Array<{ text: string; detail: string }>;
   /** The turn this quest last moved, so the client can mark what is new. */
   updated_turn: number;
+  /**
+   * The running account, oldest first: what you were told to do, what you found out,
+   * where you were pointed. Reading down it reconstructs the story of this quest.
+   */
+  entries: Array<{ turn: number; text: string; kind: string }>;
 }
 
 export function questModel(s: GameState): QuestModel[] {
@@ -437,6 +442,7 @@ export function questModel(s: GameState): QuestModel[] {
         .map((c) => ({ id: c.id, name: c.name, filled: c.filled, segments: c.segments })),
       next: q.status === "active" ? nextMoves(s, q.id) : [],
       updated_turn: q.updated_turn ?? 0,
+      entries: (q.entries ?? []).map((e) => ({ turn: e.turn, text: e.text, kind: e.kind })),
     }));
 }
 
@@ -537,8 +543,8 @@ export interface PackItemModel {
   slot: string | null;
   /** Things that matter to a quest are worth marking. */
   notable: boolean;
-  /** Who handed it over, if anybody did. */
-  from: string | null;
+  /** The quest this belongs to, shown on hover. Null for ordinary gear. */
+  quest: string | null;
   actions: Array<{ label: string; action: unknown; detail: string }>;
 }
 
@@ -584,12 +590,9 @@ export function packModel(s: GameState, actorId?: string): PackItemModel[] {
       kind: def?.kind ?? "misc",
       desc: def?.desc ?? "",
       slot,
-      notable: def?.tags.includes("quest") ?? false,
-      // Where it came from, when the object remembers being handed over.
-      from: (() => {
-        const src = inst.flags["from_entity_id"];
-        return typeof src === "string" ? s.entities[src]?.name ?? null : null;
-      })(),
+      notable: (def?.quest_id ?? null) !== null || (def?.tags.includes("quest") ?? false),
+      // What it is FOR, so hovering it in the journal says why you are carrying it.
+      quest: def?.quest_id ? s.quests[def.quest_id]?.title ?? null : null,
       actions,
     };
   });

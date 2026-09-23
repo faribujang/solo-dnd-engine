@@ -132,16 +132,16 @@ describe("bounds", () => {
     // Importance 5 means "never drop this from context". That is the author's call and the
     // engine's, not something the model should be able to award itself.
     const n = narration({
-      facts: [{ text: "A thing of enormous consequence.", kind: "world", subjects: [], importance: 5, secret: false }],
+      facts: [{ text: "A thing of enormous consequence.", kind: "world", subjects: [], importance: 5, quest_id: null, secret: false }],
     });
     const v = validateNarration(await state(), n, CTX);
-    expect(v.effects[0]).toMatchObject({ t: "add_fact", importance: 4 });
+    expect(v.effects[0]).toMatchObject({ t: "add_fact", importance: 4, quest_ids: [] });
   });
 
   it("keeps only the first few facts and says how many it dropped", async () => {
     const many = Array.from({ length: 9 }, (_, i) => ({
       text: `Fact number ${i} about the room.`, kind: "world" as const,
-      subjects: [], importance: 2, secret: false,
+      subjects: [], importance: 2, secret: false, quest_id: null,
     }));
     const v = validateNarration(await state(), narration({ facts: many }), CTX);
     expect(v.effects.filter((e) => e.t === "add_fact")).toHaveLength(4);
